@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppResultsRouteImport } from './routes/app.results'
 import { Route as AppPlaquesIndexRouteImport } from './routes/app.plaques.index'
 import { Route as AppPlaquesIdRouteImport } from './routes/app.plaques.$id'
 
@@ -30,6 +31,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppResultsRoute = AppResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPlaquesIndexRoute = AppPlaquesIndexRouteImport.update({
   id: '/plaques/',
   path: '/plaques/',
@@ -44,12 +50,14 @@ const AppPlaquesIdRoute = AppPlaquesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/results': typeof AppResultsRoute
   '/app/': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/results': typeof AppResultsRoute
   '/app': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques': typeof AppPlaquesIndexRoute
@@ -58,16 +66,30 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/results': typeof AppResultsRoute
   '/app/': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/app/' | '/app/plaques/$id' | '/app/plaques/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/results'
+    | '/app/'
+    | '/app/plaques/$id'
+    | '/app/plaques/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/app/plaques/$id' | '/app/plaques'
-  id: '__root__' | '/' | '/app' | '/app/' | '/app/plaques/$id' | '/app/plaques/'
+  to: '/' | '/app/results' | '/app' | '/app/plaques/$id' | '/app/plaques'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/results'
+    | '/app/'
+    | '/app/plaques/$id'
+    | '/app/plaques/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -98,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/results': {
+      id: '/app/results'
+      path: '/results'
+      fullPath: '/app/results'
+      preLoaderRoute: typeof AppResultsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/plaques/': {
       id: '/app/plaques/'
       path: '/plaques'
@@ -116,12 +145,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppResultsRoute: typeof AppResultsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppPlaquesIdRoute: typeof AppPlaquesIdRoute
   AppPlaquesIndexRoute: typeof AppPlaquesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppResultsRoute: AppResultsRoute,
   AppIndexRoute: AppIndexRoute,
   AppPlaquesIdRoute: AppPlaquesIdRoute,
   AppPlaquesIndexRoute: AppPlaquesIndexRoute,

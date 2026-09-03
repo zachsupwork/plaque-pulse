@@ -43,7 +43,7 @@ function ResultsPage() {
   const intents = intentBreakdown(events);
 
   const snaps = snapshots.data ?? [];
-  const metricKeys = [...new Set(snaps.map((s) => s.metric_key))];
+  const metricKeys = [...new Set(snaps.map((s) => s.metric_type))];
 
   return (
     <div className="space-y-5">
@@ -94,7 +94,7 @@ function ResultsPage() {
           <p className="font-display text-[14px] font-semibold tracking-tight">Your connected accounts</p>
           <div className="mt-3 space-y-2.5">
             {metricKeys.map((key) => {
-              const series = snaps.filter((s) => s.metric_key === key);
+              const series = snaps.filter((s) => s.metric_type === key);
               const first = series[0];
               const last = series[series.length - 1];
               if (!first || !last) return null;
