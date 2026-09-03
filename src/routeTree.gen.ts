@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as ActivateTokenRouteImport } from './routes/activate.$token'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppResultsRouteImport } from './routes/app.results'
@@ -41,6 +42,11 @@ const ActivateTokenRoute = ActivateTokenRouteImport.update({
   id: '/activate/$token',
   path: '/activate/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
@@ -85,7 +91,7 @@ const AppPlaquesIdRoute = AppPlaquesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
@@ -93,19 +99,20 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/q/$slug': typeof QSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/q/$slug': typeof QSlugRoute
+  '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques': typeof AppPlaquesIndexRoute
@@ -113,7 +120,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
@@ -121,6 +128,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/q/$slug': typeof QSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
@@ -137,19 +145,20 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/q/$slug'
+    | '/admin/'
     | '/app/'
     | '/app/plaques/$id'
     | '/app/plaques/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/activate/$token'
     | '/app/activity'
     | '/app/results'
     | '/app/settings'
     | '/n/$slug'
     | '/q/$slug'
+    | '/admin'
     | '/app'
     | '/app/plaques/$id'
     | '/app/plaques'
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/q/$slug'
+    | '/admin/'
     | '/app/'
     | '/app/plaques/$id'
     | '/app/plaques/'
@@ -171,7 +181,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   ActivateTokenRoute: typeof ActivateTokenRoute
   NSlugRoute: typeof NSlugRoute
@@ -207,6 +217,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/activate/$token'
       preLoaderRoute: typeof ActivateTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/app/': {
       id: '/app/'
@@ -267,6 +284,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface AppRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppResultsRoute: typeof AppResultsRoute
@@ -289,7 +316,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   ActivateTokenRoute: ActivateTokenRoute,
   NSlugRoute: NSlugRoute,
