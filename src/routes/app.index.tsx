@@ -67,7 +67,7 @@ function PortalHome() {
                     <div className="min-w-0">
                       <p className="truncate text-[14px] font-semibold">{p.plaque_name ?? p.plaque_code}</p>
                       <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
-                        {PLACEMENT_LABEL[p.placement_type] ?? p.placement_type} ·{" "}
+                        {PLACEMENT_LABEL[p.placement_type ?? ""] ?? p.placement_type ?? "Unplaced"} ·{" "}
                         {dest ? DESTINATION_LABEL[dest.destination_type] ?? dest.destination_type : "Not set up"}
                       </p>
                     </div>
