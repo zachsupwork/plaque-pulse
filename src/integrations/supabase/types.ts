@@ -725,11 +725,71 @@ export type Database = {
           },
         ]
       }
+      plaque_programming: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          device_info: Json
+          expected_nfc_url: string
+          id: string
+          notes: string | null
+          plaque_id: string
+          programmed_at: string | null
+          programmed_by_user_id: string | null
+          updated_at: string
+          verification_status: string
+          verified_at: string | null
+          verified_by_user_id: string | null
+          write_status: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          device_info?: Json
+          expected_nfc_url: string
+          id?: string
+          notes?: string | null
+          plaque_id: string
+          programmed_at?: string | null
+          programmed_by_user_id?: string | null
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by_user_id?: string | null
+          write_status?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          device_info?: Json
+          expected_nfc_url?: string
+          id?: string
+          notes?: string | null
+          plaque_id?: string
+          programmed_at?: string | null
+          programmed_by_user_id?: string | null
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by_user_id?: string | null
+          write_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plaque_programming_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: true
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plaques: {
         Row: {
           activated_at: string | null
           activation_token_hash: string | null
           base_type: string | null
+          batch_id: string | null
           business_id: string | null
           created_at: string
           id: string
@@ -747,6 +807,7 @@ export type Database = {
           activated_at?: string | null
           activation_token_hash?: string | null
           base_type?: string | null
+          batch_id?: string | null
           business_id?: string | null
           created_at?: string
           id?: string
@@ -764,6 +825,7 @@ export type Database = {
           activated_at?: string | null
           activation_token_hash?: string | null
           base_type?: string | null
+          batch_id?: string | null
           business_id?: string | null
           created_at?: string
           id?: string
@@ -820,6 +882,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      programming_events: {
+        Row: {
+          actual_value: string | null
+          created_at: string
+          device_info: Json
+          event_type: string
+          expected_value: string | null
+          id: string
+          plaque_id: string | null
+          result: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actual_value?: string | null
+          created_at?: string
+          device_info?: Json
+          event_type: string
+          expected_value?: string | null
+          id?: string
+          plaque_id?: string | null
+          result?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actual_value?: string | null
+          created_at?: string
+          device_info?: Json
+          event_type?: string
+          expected_value?: string | null
+          id?: string
+          plaque_id?: string | null
+          result?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programming_events_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recommendations: {
         Row: {
@@ -968,6 +1074,7 @@ export type Database = {
         | "booking_started"
         | "booking_completed"
         | "custom_conversion"
+        | "manufacturing_test"
       initiated_by: "owner" | "copilot" | "admin" | "automation"
       intent_type:
         | "review"
@@ -1152,6 +1259,7 @@ export const Constants = {
         "booking_started",
         "booking_completed",
         "custom_conversion",
+        "manufacturing_test",
       ],
       initiated_by: ["owner", "copilot", "admin", "automation"],
       intent_type: [
