@@ -48,11 +48,11 @@ function BatchPage() {
                 <div>
                   <p className="text-[14px] font-bold">{b.batchId}</p>
                   <p className="mt-0.5 text-[12px] text-muted-foreground">
-                    {b.verified} of {b.total} verified
+                    {b.programmed} of {b.total} verified
                   </p>
                 </div>
-                <Chip tone={b.verified === b.total ? "ok" : "idle"}>
-                  {b.verified === b.total ? "Complete" : "In progress"}
+                <Chip tone={b.programmed === b.total ? "ok" : "idle"}>
+                  {b.programmed === b.total ? "Complete" : "In progress"}
                 </Chip>
               </GlassPanel>
             </button>
@@ -65,9 +65,9 @@ function BatchPage() {
     );
   }
 
-  const list = items.data?.plaques ?? [];
-  const current = list[index] as ProgrammablePlaque | undefined;
-  const done = list.filter((p) => p.verification_status === "verified").length;
+  const list = items.data?.items ?? [];
+  const current = list[index]?.plaque as ProgrammablePlaque | undefined;
+  const done = list.filter((item) => item.verificationStatus === "verified").length;
 
   return (
     <div className="space-y-4">
@@ -86,17 +86,17 @@ function BatchPage() {
       <GlassPanel className="p-4">
         <Label>Queue</Label>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {list.map((p, i) => (
+          {list.map((item, i) => (
             <button
-              key={p.id}
+              key={item.plaque.id}
               type="button"
               onClick={() => setIndex(i)}
               className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold ${
                 i === index ? "border-primary/50 bg-primary/20 text-foreground" : "border-border bg-foreground/5 text-muted-foreground"
               }`}
             >
-              {p.plaque_code}
-              {p.verification_status === "verified" ? " ✓" : ""}
+              {item.plaque.plaque_code}
+              {item.verificationStatus === "verified" ? " ✓" : ""}
             </button>
           ))}
         </div>
