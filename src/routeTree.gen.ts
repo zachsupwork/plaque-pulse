@@ -16,6 +16,7 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppResultsRouteImport } from './routes/app.results'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as NSlugRouteImport } from './routes/n.$slug'
 import { Route as AppPlaquesIndexRouteImport } from './routes/app.plaques.index'
 import { Route as AppPlaquesIdRouteImport } from './routes/app.plaques.$id'
 
@@ -54,6 +55,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const NSlugRoute = NSlugRouteImport.update({
+  id: '/n/$slug',
+  path: '/n/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppPlaquesIndexRoute = AppPlaquesIndexRouteImport.update({
   id: '/plaques/',
   path: '/plaques/',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
+  '/n/$slug': typeof NSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
+  '/n/$slug': typeof NSlugRoute
   '/app': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques': typeof AppPlaquesIndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
+  '/n/$slug': typeof NSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/app/activity'
     | '/app/results'
     | '/app/settings'
+    | '/n/$slug'
     | '/app/'
     | '/app/plaques/$id'
     | '/app/plaques/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/app/activity'
     | '/app/results'
     | '/app/settings'
+    | '/n/$slug'
     | '/app'
     | '/app/plaques/$id'
     | '/app/plaques'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/app/activity'
     | '/app/results'
     | '/app/settings'
+    | '/n/$slug'
     | '/app/'
     | '/app/plaques/$id'
     | '/app/plaques/'
@@ -137,6 +149,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   ActivateTokenRoute: typeof ActivateTokenRoute
+  NSlugRoute: typeof NSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -190,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/n/$slug': {
+      id: '/n/$slug'
+      path: '/n/$slug'
+      fullPath: '/n/$slug'
+      preLoaderRoute: typeof NSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/plaques/': {
       id: '/app/plaques/'
       path: '/plaques'
@@ -231,6 +251,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   ActivateTokenRoute: ActivateTokenRoute,
+  NSlugRoute: NSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
