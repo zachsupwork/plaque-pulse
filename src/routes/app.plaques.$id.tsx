@@ -46,7 +46,7 @@ function PlaqueDetail() {
   const maxDay = Math.max(1, ...days.map((d) => d.count));
 
   const change = useMutation({
-    mutationFn: async (destinationType: string) => {
+    mutationFn: async (destinationType: DestinationType) => {
       if (!businessId || !dest) throw new Error("missing");
       const now = new Date().toISOString();
       const { error: closeError } = await supabase
@@ -58,7 +58,7 @@ function PlaqueDetail() {
         business_id: businessId,
         plaque_id: id,
         destination_type: destinationType,
-        destination_url: dest.destination_url,
+        url: dest.url,
         effective_from: now,
         active: true,
       });
@@ -67,8 +67,9 @@ function PlaqueDetail() {
         business_id: businessId,
         plaque_id: id,
         action_type: "destination_change",
-        description: `Destination changed to ${DESTINATION_LABEL[destinationType] ?? destinationType}`,
         initiated_by: "owner",
+        previous_value: { destination_type: dest.destination_type },
+        new_value: { destination_type: destinationType },
       });
     },
     onSuccess: () => {
