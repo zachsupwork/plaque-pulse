@@ -62,9 +62,9 @@ function ActivityPage() {
       <section>
         <h2 className="font-display text-[15px] font-semibold tracking-tight">Latest taps</h2>
         <div className="mt-2.5 space-y-1.5">
-          {recent.map((e) => (
+          {recent.map((e, i) => (
             <div
-              key={e.id}
+              key={`${e.occurred_at}-${i}`}
               className="flex items-center justify-between rounded-xl border border-border bg-foreground/[0.04] px-3.5 py-2.5"
             >
               <div className="min-w-0">
