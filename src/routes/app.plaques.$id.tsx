@@ -30,7 +30,7 @@ function PlaqueDetail() {
   const { id } = useParams({ from: "/app/plaques/$id" });
   const { businessId, plaques, destinations, events } = usePortal();
   const queryClient = useQueryClient();
-  const [pending, setPending] = useState<string | null>(null);
+  const [pending, setPending] = useState<DestinationType | null>(null);
 
   const plaque = plaques.find((p) => p.id === id);
   const dest = activeDestination(destinations, id);
@@ -203,8 +203,8 @@ function PlaqueDetail() {
             {placement.data.map((m) => (
               <p key={m.id} className="text-[12px] text-muted-foreground">
                 {PLACEMENT_LABEL[m.placement_type ?? ""] ?? m.placement_type} ·{" "}
-                {new Date(m.moved_at).toLocaleDateString()}
-                {m.note ? ` · ${m.note}` : ""}
+                {new Date(m.effective_from).toLocaleDateString()}
+                {m.reason ? ` · ${m.reason}` : ""}
               </p>
             ))}
           </div>
