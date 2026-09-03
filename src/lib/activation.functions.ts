@@ -67,8 +67,9 @@ export const completeActivation = createServerFn({ method: "POST" })
       .eq("activation_token_hash", hash)
       .maybeSingle();
 
-    if (!plaque) return { ok: false as const, demo: false as const, error: "not_found" };
+    if (!plaque || !plaque.business_id) return { ok: false as const, demo: false as const, error: "not_found" };
     if (plaque.status === "active") return { ok: false as const, demo: false as const, error: "already_active" };
+    const businessId = plaque.business_id;
 
     const now = new Date().toISOString();
 
