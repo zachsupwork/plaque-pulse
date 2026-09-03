@@ -14,16 +14,990 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      action_history: {
+        Row: {
+          action_type: string
+          approved_by_user_id: string | null
+          business_id: string
+          created_at: string
+          id: string
+          initiated_by: Database["public"]["Enums"]["initiated_by"]
+          new_value: Json | null
+          plaque_id: string | null
+          previous_value: Json | null
+        }
+        Insert: {
+          action_type: string
+          approved_by_user_id?: string | null
+          business_id: string
+          created_at?: string
+          id?: string
+          initiated_by?: Database["public"]["Enums"]["initiated_by"]
+          new_value?: Json | null
+          plaque_id?: string | null
+          previous_value?: Json | null
+        }
+        Update: {
+          action_type?: string
+          approved_by_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          initiated_by?: Database["public"]["Enums"]["initiated_by"]
+          new_value?: Json | null
+          plaque_id?: string | null
+          previous_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_history_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "action_history_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_members: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["member_role"]
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_members_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      businesses: {
+        Row: {
+          created_at: string
+          id: string
+          industry: string
+          is_demo: boolean
+          name: string
+          primary_goal: string | null
+          status: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          industry?: string
+          is_demo?: boolean
+          name: string
+          primary_goal?: string | null
+          status?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          industry?: string
+          is_demo?: boolean
+          name?: string
+          primary_goal?: string | null
+          status?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      conversation_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          tool_calls: Json | null
+        }
+        Insert: {
+          content?: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          tool_calls?: Json | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          tool_calls?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      destinations: {
+        Row: {
+          active: boolean
+          business_id: string
+          created_at: string
+          destination_type: Database["public"]["Enums"]["destination_type"]
+          effective_from: string
+          effective_to: string | null
+          id: string
+          metadata: Json
+          plaque_id: string | null
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          created_at?: string
+          destination_type: Database["public"]["Enums"]["destination_type"]
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          metadata?: Json
+          plaque_id?: string | null
+          url: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          created_at?: string
+          destination_type?: Database["public"]["Enums"]["destination_type"]
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          metadata?: Json
+          plaque_id?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "destinations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "destinations_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          anonymous_visitor_key: string | null
+          browser_family: string | null
+          business_id: string | null
+          coarse_country: string | null
+          coarse_region: string | null
+          destination_id: string | null
+          destination_type:
+            | Database["public"]["Enums"]["destination_type"]
+            | null
+          device_family: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id: string
+          intent_type: Database["public"]["Enums"]["intent_type"] | null
+          location_id: string | null
+          metadata: Json
+          occurred_at: string
+          plaque_id: string | null
+          source_type: Database["public"]["Enums"]["source_type"] | null
+        }
+        Insert: {
+          anonymous_visitor_key?: string | null
+          browser_family?: string | null
+          business_id?: string | null
+          coarse_country?: string | null
+          coarse_region?: string | null
+          destination_id?: string | null
+          destination_type?:
+            | Database["public"]["Enums"]["destination_type"]
+            | null
+          device_family?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          intent_type?: Database["public"]["Enums"]["intent_type"] | null
+          location_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          plaque_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+        }
+        Update: {
+          anonymous_visitor_key?: string | null
+          browser_family?: string | null
+          business_id?: string | null
+          coarse_country?: string | null
+          coarse_region?: string | null
+          destination_id?: string | null
+          destination_type?:
+            | Database["public"]["Enums"]["destination_type"]
+            | null
+          device_family?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          intent_type?: Database["public"]["Enums"]["intent_type"] | null
+          location_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          plaque_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experiment_variants: {
+        Row: {
+          configuration: Json
+          experiment_id: string
+          id: string
+          label: string | null
+          plaque_id: string | null
+        }
+        Insert: {
+          configuration?: Json
+          experiment_id: string
+          id?: string
+          label?: string | null
+          plaque_id?: string | null
+        }
+        Update: {
+          configuration?: Json
+          experiment_id?: string
+          id?: string
+          label?: string | null
+          plaque_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_variants_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiment_variants_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experiments: {
+        Row: {
+          business_id: string
+          created_by_user_id: string | null
+          ended_at: string | null
+          experiment_type: string
+          hypothesis: string | null
+          id: string
+          name: string
+          primary_goal: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_by_user_id?: string | null
+          ended_at?: string | null
+          experiment_type?: string
+          hypothesis?: string | null
+          id?: string
+          name: string
+          primary_goal?: string | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_by_user_id?: string | null
+          ended_at?: string | null
+          experiment_type?: string
+          hypothesis?: string | null
+          id?: string
+          name?: string
+          primary_goal?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          active: boolean
+          business_id: string
+          created_at: string
+          goal_type: string
+          id: string
+          priority: number
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          created_at?: string
+          goal_type: string
+          id?: string
+          priority?: number
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          created_at?: string
+          goal_type?: string
+          id?: string
+          priority?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integrations: {
+        Row: {
+          business_id: string
+          connected_at: string | null
+          credentials_reference: string | null
+          external_account_id: string | null
+          id: string
+          integration_type: string
+          last_sync_at: string | null
+          scopes: string[] | null
+          status: string
+        }
+        Insert: {
+          business_id: string
+          connected_at?: string | null
+          credentials_reference?: string | null
+          external_account_id?: string | null
+          id?: string
+          integration_type: string
+          last_sync_at?: string | null
+          scopes?: string[] | null
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          connected_at?: string | null
+          credentials_reference?: string | null
+          external_account_id?: string | null
+          id?: string
+          integration_type?: string
+          last_sync_at?: string | null
+          scopes?: string[] | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          active: boolean
+          address: string | null
+          business_id: string
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          name: string
+          province_state: string | null
+          timezone: string | null
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          business_id: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          province_state?: string | null
+          timezone?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          business_id?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          province_state?: string | null
+          timezone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_snapshots: {
+        Row: {
+          business_id: string
+          captured_at: string
+          id: string
+          integration_id: string | null
+          location_id: string | null
+          metadata: Json
+          metric_type: string
+          metric_value: number
+        }
+        Insert: {
+          business_id: string
+          captured_at?: string
+          id?: string
+          integration_id?: string | null
+          location_id?: string | null
+          metadata?: Json
+          metric_type: string
+          metric_value: number
+        }
+        Update: {
+          business_id?: string
+          captured_at?: string
+          id?: string
+          integration_id?: string | null
+          location_id?: string | null
+          metadata?: Json
+          metric_type?: string
+          metric_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_snapshots_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metric_snapshots_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metric_snapshots_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outcomes: {
+        Row: {
+          attribution_type: Database["public"]["Enums"]["attribution_type"]
+          business_id: string
+          destination_id: string | null
+          external_id: string | null
+          id: string
+          metadata: Json
+          occurred_at: string
+          outcome_type: string
+          plaque_id: string | null
+          value: number | null
+        }
+        Insert: {
+          attribution_type?: Database["public"]["Enums"]["attribution_type"]
+          business_id: string
+          destination_id?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          outcome_type: string
+          plaque_id?: string | null
+          value?: number | null
+        }
+        Update: {
+          attribution_type?: Database["public"]["Enums"]["attribution_type"]
+          business_id?: string
+          destination_id?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          outcome_type?: string
+          plaque_id?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outcomes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outcomes_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outcomes_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plaque_placement_history: {
+        Row: {
+          changed_by_user_id: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          location_id: string | null
+          placement_name: string | null
+          placement_type: string | null
+          plaque_id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_by_user_id?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          location_id?: string | null
+          placement_name?: string | null
+          placement_type?: string | null
+          plaque_id: string
+          reason?: string | null
+        }
+        Update: {
+          changed_by_user_id?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          location_id?: string | null
+          placement_name?: string | null
+          placement_type?: string | null
+          plaque_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plaque_placement_history_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plaque_placement_history_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plaques: {
+        Row: {
+          activated_at: string | null
+          activation_token_hash: string | null
+          base_type: string | null
+          business_id: string | null
+          created_at: string
+          id: string
+          location_id: string | null
+          placement_type: string | null
+          plaque_code: string
+          plaque_name: string | null
+          product_type: string
+          public_slug: string
+          sku: string | null
+          status: Database["public"]["Enums"]["plaque_status"]
+          style: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activation_token_hash?: string | null
+          base_type?: string | null
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          placement_type?: string | null
+          plaque_code: string
+          plaque_name?: string | null
+          product_type?: string
+          public_slug: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["plaque_status"]
+          style?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          activation_token_hash?: string | null
+          base_type?: string | null
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          placement_type?: string | null
+          plaque_code?: string
+          plaque_name?: string | null
+          product_type?: string
+          public_slug?: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["plaque_status"]
+          style?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plaques_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plaques_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recommendations: {
+        Row: {
+          business_id: string
+          confidence: number | null
+          created_at: string
+          evidence: Json
+          explanation: string
+          id: string
+          proposed_action: Json
+          recommendation_type: string
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["recommendation_status"]
+          title: string
+        }
+        Insert: {
+          business_id: string
+          confidence?: number | null
+          created_at?: string
+          evidence?: Json
+          explanation: string
+          id?: string
+          proposed_action?: Json
+          recommendation_type: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["recommendation_status"]
+          title: string
+        }
+        Update: {
+          business_id?: string
+          confidence?: number | null
+          created_at?: string
+          evidence?: Json
+          explanation?: string
+          id?: string
+          proposed_action?: Json
+          recommendation_type?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["recommendation_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          business_id: string
+          id: string
+          plan: string
+          renews_at: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          plan?: string
+          renews_at?: string | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          plan?: string
+          renews_at?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_business_member: { Args: { _business_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      attribution_type: "direct" | "correlated" | "unknown"
+      destination_type:
+        | "google_review"
+        | "instagram"
+        | "facebook"
+        | "website"
+        | "menu"
+        | "booking"
+        | "directions"
+        | "call"
+        | "quote"
+        | "coupon"
+        | "loyalty"
+        | "custom"
+      event_type:
+        | "interaction"
+        | "redirect_success"
+        | "redirect_failure"
+        | "lead_started"
+        | "lead_submitted"
+        | "coupon_claimed"
+        | "coupon_redeemed"
+        | "booking_started"
+        | "booking_completed"
+        | "custom_conversion"
+      initiated_by: "owner" | "copilot" | "admin" | "automation"
+      intent_type:
+        | "review"
+        | "social"
+        | "menu"
+        | "booking"
+        | "lead"
+        | "directions"
+        | "website"
+        | "promotion"
+        | "loyalty"
+        | "custom"
+      member_role: "owner" | "admin" | "manager" | "viewer"
+      plaque_status:
+        | "inventory"
+        | "packed"
+        | "sold"
+        | "claimed"
+        | "active"
+        | "paused"
+        | "faulty"
+        | "replaced"
+        | "retired"
+      recommendation_status:
+        | "new"
+        | "viewed"
+        | "accepted"
+        | "rejected"
+        | "expired"
+      source_type: "nfc" | "qr"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +1124,68 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      attribution_type: ["direct", "correlated", "unknown"],
+      destination_type: [
+        "google_review",
+        "instagram",
+        "facebook",
+        "website",
+        "menu",
+        "booking",
+        "directions",
+        "call",
+        "quote",
+        "coupon",
+        "loyalty",
+        "custom",
+      ],
+      event_type: [
+        "interaction",
+        "redirect_success",
+        "redirect_failure",
+        "lead_started",
+        "lead_submitted",
+        "coupon_claimed",
+        "coupon_redeemed",
+        "booking_started",
+        "booking_completed",
+        "custom_conversion",
+      ],
+      initiated_by: ["owner", "copilot", "admin", "automation"],
+      intent_type: [
+        "review",
+        "social",
+        "menu",
+        "booking",
+        "lead",
+        "directions",
+        "website",
+        "promotion",
+        "loyalty",
+        "custom",
+      ],
+      member_role: ["owner", "admin", "manager", "viewer"],
+      plaque_status: [
+        "inventory",
+        "packed",
+        "sold",
+        "claimed",
+        "active",
+        "paused",
+        "faulty",
+        "replaced",
+        "retired",
+      ],
+      recommendation_status: [
+        "new",
+        "viewed",
+        "accepted",
+        "rejected",
+        "expired",
+      ],
+      source_type: ["nfc", "qr"],
+    },
   },
 } as const
