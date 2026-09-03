@@ -10,10 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as ActivateTokenRouteImport } from './routes/activate.$token'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppResultsRouteImport } from './routes/app.results'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as NSlugRouteImport } from './routes/n.$slug'
+import { Route as QSlugRouteImport } from './routes/q.$slug'
 import { Route as AppPlaquesIndexRouteImport } from './routes/app.plaques.index'
 import { Route as AppPlaquesIdRouteImport } from './routes/app.plaques.$id'
 
@@ -22,9 +27,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivateTokenRoute = ActivateTokenRouteImport.update({
+  id: '/activate/$token',
+  path: '/activate/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -42,6 +57,21 @@ const AppResultsRoute = AppResultsRouteImport.update({
   path: '/results',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const NSlugRoute = NSlugRouteImport.update({
+  id: '/n/$slug',
+  path: '/n/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QSlugRoute = QSlugRouteImport.update({
+  id: '/q/$slug',
+  path: '/q/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppPlaquesIndexRoute = AppPlaquesIndexRouteImport.update({
   id: '/plaques/',
   path: '/plaques/',
@@ -55,17 +85,27 @@ const AppPlaquesIdRoute = AppPlaquesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/app': typeof AppRouteWithChildren
+  '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/n/$slug': typeof NSlugRoute
+  '/q/$slug': typeof QSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/n/$slug': typeof NSlugRoute
+  '/q/$slug': typeof QSlugRoute
   '/app': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques': typeof AppPlaquesIndexRoute
@@ -73,9 +113,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/app': typeof AppRouteWithChildren
+  '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/n/$slug': typeof NSlugRoute
+  '/q/$slug': typeof QSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
@@ -84,26 +129,41 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/app'
+    | '/activate/$token'
     | '/app/activity'
     | '/app/results'
+    | '/app/settings'
+    | '/n/$slug'
+    | '/q/$slug'
     | '/app/'
     | '/app/plaques/$id'
     | '/app/plaques/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
+    | '/activate/$token'
     | '/app/activity'
     | '/app/results'
+    | '/app/settings'
+    | '/n/$slug'
+    | '/q/$slug'
     | '/app'
     | '/app/plaques/$id'
     | '/app/plaques'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/app'
+    | '/activate/$token'
     | '/app/activity'
     | '/app/results'
+    | '/app/settings'
+    | '/n/$slug'
+    | '/q/$slug'
     | '/app/'
     | '/app/plaques/$id'
     | '/app/plaques/'
@@ -111,7 +171,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AppRoute: typeof AppRouteWithChildren
+  ActivateTokenRoute: typeof ActivateTokenRoute
+  NSlugRoute: typeof NSlugRoute
+  QSlugRoute: typeof QSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -123,11 +187,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activate/$token': {
+      id: '/activate/$token'
+      path: '/activate/$token'
+      fullPath: '/activate/$token'
+      preLoaderRoute: typeof ActivateTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -151,6 +229,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppResultsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/n/$slug': {
+      id: '/n/$slug'
+      path: '/n/$slug'
+      fullPath: '/n/$slug'
+      preLoaderRoute: typeof NSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/q/$slug': {
+      id: '/q/$slug'
+      path: '/q/$slug'
+      fullPath: '/q/$slug'
+      preLoaderRoute: typeof QSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/plaques/': {
       id: '/app/plaques/'
       path: '/plaques'
@@ -171,6 +270,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppResultsRoute: typeof AppResultsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppPlaquesIdRoute: typeof AppPlaquesIdRoute
   AppPlaquesIndexRoute: typeof AppPlaquesIndexRoute
@@ -179,6 +279,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppActivityRoute: AppActivityRoute,
   AppResultsRoute: AppResultsRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppPlaquesIdRoute: AppPlaquesIdRoute,
   AppPlaquesIndexRoute: AppPlaquesIndexRoute,
@@ -188,7 +289,11 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AppRoute: AppRouteWithChildren,
+  ActivateTokenRoute: ActivateTokenRoute,
+  NSlugRoute: NSlugRoute,
+  QSlugRoute: QSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
