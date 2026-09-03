@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppPlaquesIndexRouteImport } from './routes/app.plaques.index'
+import { Route as AppPlaquesIdRouteImport } from './routes/app.plaques.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,16 +35,23 @@ const AppPlaquesIndexRoute = AppPlaquesIndexRouteImport.update({
   path: '/plaques/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPlaquesIdRoute = AppPlaquesIdRouteImport.update({
+  id: '/plaques/$id',
+  path: '/plaques/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppIndexRoute
+  '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques': typeof AppPlaquesIndexRoute
 }
 export interface FileRoutesById {
@@ -51,14 +59,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/app/' | '/app/plaques/'
+  fullPaths: '/' | '/app' | '/app/' | '/app/plaques/$id' | '/app/plaques/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/app/plaques'
-  id: '__root__' | '/' | '/app' | '/app/' | '/app/plaques/'
+  to: '/' | '/app' | '/app/plaques/$id' | '/app/plaques'
+  id: '__root__' | '/' | '/app' | '/app/' | '/app/plaques/$id' | '/app/plaques/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -96,16 +105,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlaquesIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/plaques/$id': {
+      id: '/app/plaques/$id'
+      path: '/plaques/$id'
+      fullPath: '/app/plaques/$id'
+      preLoaderRoute: typeof AppPlaquesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
+  AppPlaquesIdRoute: typeof AppPlaquesIdRoute
   AppPlaquesIndexRoute: typeof AppPlaquesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
+  AppPlaquesIdRoute: AppPlaquesIdRoute,
   AppPlaquesIndexRoute: AppPlaquesIndexRoute,
 }
 
