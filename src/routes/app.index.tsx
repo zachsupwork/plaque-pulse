@@ -21,11 +21,12 @@ function PortalHome() {
   const { business, plaques, destinations, events, recommendations } = usePortal();
   const outcomes = useOutcomes();
 
-  const total = interactions(events, 30);
-  const prev = interactions(events, 30, 30);
-  const changePct = prev === 0 ? null : Math.round(((total - prev) / prev) * 100);
-  const trends = plaqueTrends(events, plaques, 30);
-  const peak = peakWindow(events, 30);
+  const trend = trendFor(events, 30);
+  const total = trend.current;
+  const changePct = trend.changePct;
+  const trends = plaqueTrends(events, 30);
+  const peak = peakWindow(events);
+  const busiestDay = byDayOfWeek(events).reduce((a, b) => (b.count > a.count ? b : a));
   const direct = (outcomes.data ?? []).filter((o) => o.attribution_type === "direct");
   const rec = recommendations[0];
 
