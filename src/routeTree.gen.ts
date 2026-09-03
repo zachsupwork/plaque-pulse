@@ -10,33 +10,108 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppActivityRouteImport } from './routes/app.activity'
+import { Route as AppResultsRouteImport } from './routes/app.results'
+import { Route as AppPlaquesIndexRouteImport } from './routes/app.plaques.index'
+import { Route as AppPlaquesIdRouteImport } from './routes/app.plaques.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppActivityRoute = AppActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppResultsRoute = AppResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlaquesIndexRoute = AppPlaquesIndexRouteImport.update({
+  id: '/plaques/',
+  path: '/plaques/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlaquesIdRoute = AppPlaquesIdRouteImport.update({
+  id: '/plaques/$id',
+  path: '/plaques/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/activity': typeof AppActivityRoute
+  '/app/results': typeof AppResultsRoute
+  '/app/': typeof AppIndexRoute
+  '/app/plaques/$id': typeof AppPlaquesIdRoute
+  '/app/plaques/': typeof AppPlaquesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/activity': typeof AppActivityRoute
+  '/app/results': typeof AppResultsRoute
+  '/app': typeof AppIndexRoute
+  '/app/plaques/$id': typeof AppPlaquesIdRoute
+  '/app/plaques': typeof AppPlaquesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/activity': typeof AppActivityRoute
+  '/app/results': typeof AppResultsRoute
+  '/app/': typeof AppIndexRoute
+  '/app/plaques/$id': typeof AppPlaquesIdRoute
+  '/app/plaques/': typeof AppPlaquesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/activity'
+    | '/app/results'
+    | '/app/'
+    | '/app/plaques/$id'
+    | '/app/plaques/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/app/activity'
+    | '/app/results'
+    | '/app'
+    | '/app/plaques/$id'
+    | '/app/plaques'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/activity'
+    | '/app/results'
+    | '/app/'
+    | '/app/plaques/$id'
+    | '/app/plaques/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +123,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/activity': {
+      id: '/app/activity'
+      path: '/activity'
+      fullPath: '/app/activity'
+      preLoaderRoute: typeof AppActivityRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/results': {
+      id: '/app/results'
+      path: '/results'
+      fullPath: '/app/results'
+      preLoaderRoute: typeof AppResultsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/plaques/': {
+      id: '/app/plaques/'
+      path: '/plaques'
+      fullPath: '/app/plaques/'
+      preLoaderRoute: typeof AppPlaquesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/plaques/$id': {
+      id: '/app/plaques/$id'
+      path: '/plaques/$id'
+      fullPath: '/app/plaques/$id'
+      preLoaderRoute: typeof AppPlaquesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppActivityRoute: typeof AppActivityRoute
+  AppResultsRoute: typeof AppResultsRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppPlaquesIdRoute: typeof AppPlaquesIdRoute
+  AppPlaquesIndexRoute: typeof AppPlaquesIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppActivityRoute: AppActivityRoute,
+  AppResultsRoute: AppResultsRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppPlaquesIdRoute: AppPlaquesIdRoute,
+  AppPlaquesIndexRoute: AppPlaquesIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
