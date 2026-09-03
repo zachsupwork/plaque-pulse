@@ -8,6 +8,9 @@ import { usePortal, activeDestination } from "@/hooks/usePortal";
 import { DESTINATION_LABEL, PLACEMENT_LABEL, fetchPlacementHistory } from "@/lib/taplocal";
 import { plaqueTrends, sourceSplit, byDayOfWeek } from "@/lib/metrics";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type DestinationType = Database["public"]["Enums"]["destination_type"];
 
 export const Route = createFileRoute("/app/plaques/$id")({
   head: () => ({
