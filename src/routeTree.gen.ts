@@ -21,6 +21,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as NSlugRouteImport } from './routes/n.$slug'
 import { Route as QSlugRouteImport } from './routes/q.$slug'
 import { Route as AdminNfcIndexRouteImport } from './routes/admin.nfc.index'
+import { Route as AdminNfcBatchRouteImport } from './routes/admin.nfc.batch'
 import { Route as AdminNfcReadRouteImport } from './routes/admin.nfc.read'
 import { Route as AdminNfcVerifyRouteImport } from './routes/admin.nfc.verify'
 import { Route as AdminNfcWriteRouteImport } from './routes/admin.nfc.write'
@@ -87,6 +88,11 @@ const AdminNfcIndexRoute = AdminNfcIndexRouteImport.update({
   path: '/nfc/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminNfcBatchRoute = AdminNfcBatchRouteImport.update({
+  id: '/nfc/batch',
+  path: '/nfc/batch',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminNfcReadRoute = AdminNfcReadRouteImport.update({
   id: '/nfc/read',
   path: '/nfc/read',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/q/$slug': typeof QSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
+  '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
   '/admin/nfc/write': typeof AdminNfcWriteRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/q/$slug': typeof QSlugRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
+  '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
   '/admin/nfc/write': typeof AdminNfcWriteRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/q/$slug': typeof QSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
+  '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
   '/admin/nfc/write': typeof AdminNfcWriteRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/q/$slug'
     | '/admin/'
     | '/app/'
+    | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
     | '/admin/nfc/write'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/q/$slug'
     | '/admin'
     | '/app'
+    | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
     | '/admin/nfc/write'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/q/$slug'
     | '/admin/'
     | '/app/'
+    | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
     | '/admin/nfc/write'
@@ -322,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminNfcIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/nfc/batch': {
+      id: '/admin/nfc/batch'
+      path: '/nfc/batch'
+      fullPath: '/admin/nfc/batch'
+      preLoaderRoute: typeof AdminNfcBatchRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/nfc/read': {
       id: '/admin/nfc/read'
       path: '/nfc/read'
@@ -362,6 +381,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminNfcBatchRoute: typeof AdminNfcBatchRoute
   AdminNfcReadRoute: typeof AdminNfcReadRoute
   AdminNfcVerifyRoute: typeof AdminNfcVerifyRoute
   AdminNfcWriteRoute: typeof AdminNfcWriteRoute
@@ -370,6 +390,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminNfcBatchRoute: AdminNfcBatchRoute,
   AdminNfcReadRoute: AdminNfcReadRoute,
   AdminNfcVerifyRoute: AdminNfcVerifyRoute,
   AdminNfcWriteRoute: AdminNfcWriteRoute,
