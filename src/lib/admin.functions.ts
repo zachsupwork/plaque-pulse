@@ -63,7 +63,7 @@ export const provisionPlaques = createServerFn({ method: "POST" })
         product_type: data.productType,
         style: data.style,
         base_type: data.baseType,
-        status: "unactivated",
+        status: "inventory",
       });
       if (error) continue;
       created.push({ plaqueCode, publicSlug, activationUrl: `/activate/${token}` });

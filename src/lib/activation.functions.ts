@@ -15,7 +15,7 @@ export const lookupActivation = createServerFn({ method: "POST" })
     if (data.token === DEMO_TOKEN) {
       return {
         demo: true as const,
-        plaque: { id: "demo", plaque_code: "TL-DEMO01", public_slug: "DEMOQR", status: "unactivated" },
+        plaque: { id: "demo", plaque_code: "TL-DEMO01", public_slug: "DEMOQR", status: "inventory" },
       };
     }
 
