@@ -33,7 +33,7 @@ function SettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("integrations")
-        .select("id, provider, status, connected_at")
+        .select("id, integration_type, status, connected_at")
         .eq("business_id", businessId!);
       if (error) throw error;
       return data;
@@ -62,7 +62,7 @@ function SettingsPage() {
       <GlassPanel className="p-4">
         <p className="font-display text-[14px] font-semibold tracking-tight">Your business</p>
         <Row label="Name" value={business?.name ?? "—"} />
-        <Row label="Type" value={pretty(business?.business_type)} />
+        <Row label="Type" value={pretty(business?.industry)} />
         <Row label="Time zone" value={business?.timezone ?? "—"} />
       </GlassPanel>
 
@@ -88,7 +88,7 @@ function SettingsPage() {
         <div className="mt-2.5 space-y-2">
           {(integrations.data ?? []).map((i) => (
             <div key={i.id} className="flex items-center justify-between">
-              <span className="text-[13px]">{pretty(i.provider)}</span>
+              <span className="text-[13px]">{pretty(i.integration_type)}</span>
               <span
                 className={
                   i.status === "connected"
