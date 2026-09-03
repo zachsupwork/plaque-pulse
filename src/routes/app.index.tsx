@@ -48,8 +48,8 @@ function PortalHome() {
           <TrendPill changePct={changePct} />
         </div>
         <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground text-pretty">
-          {peak
-            ? `Busiest stretch: ${peak.day} ${peak.label}.`
+          {total > 0
+            ? `Busiest stretch: ${busiestDay.name} ${peak.toLowerCase()}.`
             : "Not enough activity yet to spot a busy stretch."}
         </p>
       </GlassPanel>
