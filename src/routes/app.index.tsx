@@ -98,7 +98,7 @@ function PortalHome() {
         <GlassPanel className="border-primary/40 bg-primary/10 p-4">
           <p className="text-[12px] font-semibold tracking-wide uppercase">Worth trying</p>
           <p className="mt-1.5 text-[14px] font-semibold">{rec.title}</p>
-          <p className="mt-1 text-[13px] leading-relaxed text-foreground/85 text-pretty">{rec.rationale}</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-foreground/85 text-pretty">{rec.explanation}</p>
         </GlassPanel>
       ) : null}
 
