@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { nfcUrl } from "@/lib/smartlink";
+import type { Json } from "@/integrations/supabase/types";
 
 const PLAQUE_COLUMNS =
   "id, plaque_code, public_slug, product_type, style, base_type, batch_id, plaque_name, status, business_id, activated_at";
@@ -116,7 +117,7 @@ export const logProgrammingEvent = createServerFn({ method: "POST" })
       actual_value: data.actualValue ?? null,
       result: data.result ?? null,
       user_id: caller.userId,
-      device_info: (data.deviceInfo ?? {}) as Record<string, unknown>,
+      device_info: ((data.deviceInfo ?? {}) as unknown as Json),
     });
     return { ok: true as const };
   });
@@ -157,7 +158,7 @@ export const setWriteStatus = createServerFn({ method: "POST" })
         programmed_by_user_id: programmed ? caller.userId : null,
         ...(programmed ? { verification_status: data.manual ? "not_verified" : undefined } : {}),
         ...(data.notes ? { notes: data.notes } : {}),
-        device_info: (data.deviceInfo ?? {}) as Record<string, unknown>,
+        device_info: ((data.deviceInfo ?? {}) as unknown as Json),
       })
       .eq("plaque_id", plaque.id);
 
@@ -168,7 +169,7 @@ export const setWriteStatus = createServerFn({ method: "POST" })
         expected_value: nfcUrl(plaque.public_slug),
         result: "manual",
         user_id: caller.userId,
-        device_info: (data.deviceInfo ?? {}) as Record<string, unknown>,
+        device_info: ((data.deviceInfo ?? {}) as unknown as Json),
       });
     }
 
@@ -218,7 +219,7 @@ export const setVerification = createServerFn({ method: "POST" })
       actual_value: data.actualUrl,
       result: matched ? "match" : "mismatch",
       user_id: caller.userId,
-      device_info: (data.deviceInfo ?? {}) as Record<string, unknown>,
+      device_info: ((data.deviceInfo ?? {}) as unknown as Json),
     });
 
     return { ok: true as const, matched, expected };
