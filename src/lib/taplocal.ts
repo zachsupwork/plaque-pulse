@@ -99,7 +99,7 @@ export async function resolveBusinessId(): Promise<string> {
       .eq("user_id", session.session.user.id)
       .order("created_at", { ascending: true })
       .limit(1);
-    if (data && data.length > 0) return data[0].business_id;
+    if (data && data[0]) return data[0].business_id;
   }
   return DEMO_BUSINESS_ID;
 }
