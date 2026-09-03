@@ -1,14 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { Home, LayoutGrid, PieChart, Activity, Settings } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const items = [
+type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean };
+
+const items: NavItem[] = [
   { to: "/app", label: "Home", icon: Home, exact: true },
   { to: "/app/plaques", label: "Plaques", icon: LayoutGrid },
   { to: "/app/results", label: "Results", icon: PieChart },
   { to: "/app/activity", label: "Activity", icon: Activity },
   { to: "/app/settings", label: "Settings", icon: Settings },
-] as const;
+];
 
 export function PortalNav() {
   return (
@@ -20,7 +23,7 @@ export function PortalNav() {
             to={item.to}
             activeOptions={{ exact: item.exact ?? false }}
             className="group flex flex-col items-center gap-1 py-1.5 text-muted-foreground"
-            activeProps={{ "data-active": "true" }}
+            activeProps={{ "data-active": "true" } as Record<string, string>}
           >
             <span
               className={cn(
