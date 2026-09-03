@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { GlassPanel, TrendPill } from "@/components/taplocal/Field";
 import { usePortal, useOutcomes, activeDestination } from "@/hooks/usePortal";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
-import { interactions, plaqueTrends, peakWindow } from "@/lib/metrics";
+import { trendFor, plaqueTrends, peakWindow, byDayOfWeek } from "@/lib/metrics";
 import { CopilotDock } from "@/components/taplocal/CopilotDock";
 
 export const Route = createFileRoute("/app/")({
