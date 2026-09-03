@@ -156,7 +156,7 @@ export const setWriteStatus = createServerFn({ method: "POST" })
         expected_nfc_url: nfcUrl(plaque.public_slug),
         programmed_at: programmed ? new Date().toISOString() : null,
         programmed_by_user_id: programmed ? caller.userId : null,
-        ...(programmed ? { verification_status: data.manual ? "not_verified" : undefined } : {}),
+        ...(programmed && data.manual ? { verification_status: "not_verified" } : {}),
         ...(data.notes ? { notes: data.notes } : {}),
         device_info: ((data.deviceInfo ?? {}) as unknown as Json),
       })
