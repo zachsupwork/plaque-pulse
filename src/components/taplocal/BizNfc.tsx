@@ -130,10 +130,12 @@ export function TagProgrammer({
   verifyOnly?: boolean;
 }) {
   const support = useNfcSupport();
+  const session = useNfcSession();
   const write = useServerFn(recordTagWrite);
   const verify = useServerFn(recordTagVerification);
 
   const expected = useMemo(() => nfcUrl(tag.plaque.public_slug), [tag.plaque.public_slug]);
+  const health = useSmartlinkHealth(tag.plaque.public_slug);
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [found, setFound] = useState<string | null>(null);
@@ -141,13 +143,20 @@ export function TagProgrammer({
   const [showQr, setShowQr] = useState(false);
 
   useEffect(() => {
+    nfcSession.stop();
     setPhase("idle");
     setMessage(null);
     setFound(null);
     setManualDone(false);
   }, [tag.plaque.id]);
 
+  // Never manufacture a tag carrying a URL that cannot resolve.
+  const blocked = health.data ? !health.data.redirectReady : false;
+
   async function handleWrite() {
+    // Any earlier session is torn down first — no two NFC operations can overlap.
+    if (session.busy) nfcSession.stop();
+    if (blocked) return;
     setMessage(null);
     setFound(null);
     setPhase("waiting");
@@ -156,15 +165,17 @@ export function TagProgrammer({
       setPhase("writing");
       await writeUrl(expected);
       await write({ data: { businessId, plaqueId: tag.plaque.id, status: "programmed", deviceInfo: deviceInfo() } });
+      // The write session is fully closed here; verification starts a brand new one on demand.
       setPhase("written");
     } catch (error) {
       await write({ data: { businessId, plaqueId: tag.plaque.id, status: "failed", deviceInfo: deviceInfo() } });
       setMessage(nfcErrorMessage(error));
-      setPhase("error");
+      setPhase((error as Error)?.name === "AbortError" ? "idle" : "error");
     }
   }
 
   async function handleVerify() {
+    if (session.busy) nfcSession.stop();
     setMessage(null);
     setPhase("verifying");
     try {
@@ -180,8 +191,14 @@ export function TagProgrammer({
       }
     } catch (error) {
       setMessage(nfcErrorMessage(error));
-      setPhase("error");
+      setPhase((error as Error)?.name === "AbortError" ? "idle" : "error");
     }
+  }
+
+  function handleCancel() {
+    nfcSession.cancel();
+    setPhase("idle");
+    setMessage(null);
   }
 
   async function confirmManual() {
@@ -199,10 +216,21 @@ export function TagProgrammer({
     onDone?.();
   }
 
+  const busyLabel =
+    session.status === "requesting_permission"
+      ? "Allow NFC…"
+      : session.operation === "writing"
+        ? "Waiting for tag…"
+        : "Waiting for tag…";
+
   return (
     <div className="space-y-4">
+      <EmbeddedNotice />
       <GlassPanel className="p-5" sheen>
-        <Label>{verifyOnly ? "Checking" : "Setting up"}</Label>
+        <div className="flex items-center justify-between gap-3">
+          <Label>{verifyOnly ? "Checking" : "Setting up"}</Label>
+          <Chip tone={health.data?.production ? "ok" : "warn"}>{smartlinkEnvironmentLabel()}</Chip>
+        </div>
         <p className="font-display mt-1 text-[22px] font-bold tracking-tight">{tagLabel(tag)}</p>
         <p className="mt-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Tag link</p>
         <p className="mt-1 font-mono text-[14px] break-all text-accent">{expected}</p>
@@ -212,21 +240,27 @@ export function TagProgrammer({
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <CopyButton value={expected} label="Copy tag link" />
-          <Button variant="ghost" onClick={() => window.open(testUrl(expected), "_blank", "noopener")}>
-            Test it
-          </Button>
+          <TestSmartlinkButton slug={tag.plaque.public_slug} />
           {support?.usable && !verifyOnly ? (
-            <Button onClick={handleWrite} disabled={phase === "waiting" || phase === "writing" || phase === "verifying"}>
-              Program tag
+            <Button onClick={handleWrite} disabled={session.busy || blocked}>
+              {session.operation === "writing" ? busyLabel : "Program tag"}
             </Button>
           ) : null}
           {support?.usable ? (
-            <Button variant="ghost" onClick={handleVerify} disabled={phase === "verifying"}>
-              Check tag
+            <Button variant="ghost" onClick={handleVerify} disabled={session.busy}>
+              {session.operation === "reading" ? busyLabel : "Check tag"}
+            </Button>
+          ) : null}
+          {session.busy ? (
+            <Button variant="danger" onClick={handleCancel}>
+              Cancel
             </Button>
           ) : null}
         </div>
       </GlassPanel>
+
+      <SmartlinkStatusPanel slug={tag.plaque.public_slug} />
+
 
       {phase !== "idle" ? (
         <GlassPanel className="p-5">
