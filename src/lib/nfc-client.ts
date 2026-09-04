@@ -1,4 +1,10 @@
-/** Browser-side Web NFC helpers. Everything here is client-only. */
+/**
+ * Browser-side Web NFC. Everything here is client-only.
+ *
+ * All hardware access goes through a single module-level session manager, so there can
+ * never be two Web NFC operations in flight at the same time. Overlapping sessions are
+ * what produce "InvalidStateError: another operation is already running".
+ */
 
 export type NdefRecordView = {
   recordType: string;
@@ -36,6 +42,23 @@ export type NfcSupport = {
   usable: boolean;
 };
 
+export type NfcOperation = "idle" | "reading" | "writing";
+
+export type NfcStatus =
+  | "idle"
+  | "requesting_permission"
+  | "waiting_for_tag"
+  | "reading"
+  | "writing"
+  | "success"
+  | "error";
+
+export type NfcSessionState = {
+  operation: NfcOperation;
+  status: NfcStatus;
+  busy: boolean;
+};
+
 export function detectSupport(): NfcSupport {
   if (typeof window === "undefined") {
     return { hasApi: false, secureContext: false, device: "Unknown", usable: false };
@@ -53,9 +76,14 @@ export function detectSupport(): NfcSupport {
   return { hasApi, secureContext, device, usable: hasApi && secureContext };
 }
 
-function reader(): NdefReaderLike {
-  const Ctor = (window as unknown as { NDEFReader: new () => NdefReaderLike }).NDEFReader;
-  return new Ctor();
+/** True when the app is running inside the Lovable preview frame, where NFC permission is blocked. */
+export function isEmbedded(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
 }
 
 export function deviceInfo(): Record<string, unknown> {
@@ -65,27 +93,29 @@ export function deviceInfo(): Record<string, unknown> {
 
 /** Plain-language recovery guidance for the documented Web NFC failure modes. */
 export function nfcErrorMessage(error: unknown): string {
-  const name = error instanceof DOMException || (error as Error)?.name ? (error as Error).name : "";
+  const name = (error as Error)?.name ?? "";
   const message = (error as Error)?.message ?? "";
   switch (name) {
     case "NotAllowedError":
-      return "NFC permission was denied. Allow NFC for this site in your browser settings, then try again.";
+      return "NFC permission was not granted. Allow NFC for this site in your browser settings, then try again.";
     case "NotSupportedError":
-      return "This device or browser can't write NFC tags. Use the manual fallback below.";
+      return "NFC programming is not supported on this device or browser.";
     case "NotReadableError":
-      return "The tag couldn't be read. Move it slightly and hold it flat against the back of the phone.";
+      return "NFC hardware is currently unavailable. Move the tag slightly and hold it flat against the back of the phone.";
     case "NetworkError":
-      return "Tag moved before programming completed. Hold it against your phone until you see the green confirmation.";
+      return "The tag moved before programming completed. Hold it against the phone and try again.";
     case "AbortError":
-      return "Timed out waiting for a tag. Press the button again and hold the tag closer.";
+      return "Operation cancelled.";
+    case "TimeoutError":
+      return "We stopped waiting for a tag. Press the button again and hold the tag closer.";
     case "NotFoundError":
-      return "No NDEF tag detected. Check the tag is an NFC Forum NDEF tag and not damaged.";
+      return "No NFC tag detected. Check the tag is an NDEF tag and not damaged.";
     case "InvalidStateError":
-      return "Another NFC operation is already running. Wait a moment and try again.";
+      return "An NFC session was already active. TapLocal reset it. Please try again.";
     case "DataError":
       return "The tag is read-only or doesn't have enough capacity for this link.";
     default:
-      return message || "Something went wrong talking to the NFC hardware.";
+      return message ? "Something went wrong talking to the NFC hardware." : "Something went wrong talking to the NFC hardware.";
   }
 }
 
@@ -108,55 +138,156 @@ function toView(record: NdefRecordLike): NdefRecordView {
   };
 }
 
-/** Writes the permanent SmartLink to a tag. Rejects with a DOMException on failure. */
-export async function writeUrl(url: string, timeoutMs = 30000): Promise<void> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    await reader().write({ records: [{ recordType: "url", data: url }] }, { signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
+/* ------------------------------------------------------------------ *
+ * Session manager — exactly one active Web NFC operation, ever.
+ * ------------------------------------------------------------------ */
+
+class NfcSessionManager {
+  private reader: NdefReaderLike | null = null;
+  private controller: AbortController | null = null;
+  private operation: NfcOperation = "idle";
+  private status: NfcStatus = "idle";
+  private listeners = new Set<(state: NfcSessionState) => void>();
+
+  getState(): NfcSessionState {
+    return { operation: this.operation, status: this.status, busy: this.operation !== "idle" };
+  }
+
+  subscribe(listener: (state: NfcSessionState) => void) {
+    this.listeners.add(listener);
+    listener(this.getState());
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private emit() {
+    const state = this.getState();
+    for (const listener of this.listeners) listener(state);
+  }
+
+  private setStatus(status: NfcStatus, operation?: NfcOperation) {
+    this.status = status;
+    if (operation !== undefined) this.operation = operation;
+    this.emit();
+  }
+
+  /** Aborts and tears down whatever is running. Safe to call at any time. */
+  stop(status: NfcStatus = "idle") {
+    try {
+      this.controller?.abort();
+    } catch {
+      /* aborting an already-finished controller is fine */
+    }
+    if (this.reader) {
+      this.reader.onreading = null;
+      this.reader.onreadingerror = null;
+    }
+    this.controller = null;
+    this.reader = null;
+    this.operation = "idle";
+    this.status = status;
+    this.emit();
+  }
+
+  /** Cancel triggered by the user. */
+  cancel() {
+    this.stop("idle");
+  }
+
+  private newReader(): NdefReaderLike {
+    const Ctor = (window as unknown as { NDEFReader?: new () => NdefReaderLike }).NDEFReader;
+    if (!Ctor) throw new DOMException("Web NFC is unavailable", "NotSupportedError");
+    return new Ctor();
+  }
+
+  /** Always start from a clean slate, then let the hardware settle for a tick. */
+  private async begin(operation: Exclude<NfcOperation, "idle">) {
+    this.stop("idle");
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    this.controller = new AbortController();
+    this.reader = this.newReader();
+    this.operation = operation;
+    this.setStatus("requesting_permission");
+    return { controller: this.controller, reader: this.reader };
+  }
+
+  /** Writes the permanent SmartLink to a tag. Exclusive. */
+  async write(url: string, timeoutMs = 30000): Promise<void> {
+    const { controller, reader } = await this.begin("writing");
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      this.setStatus("waiting_for_tag");
+      const writing = reader.write(
+        { records: [{ recordType: "url", data: url }] },
+        { signal: controller.signal, overwrite: true },
+      );
+      this.setStatus("writing");
+      await writing;
+      clearTimeout(timer);
+      this.stop("success");
+    } catch (error) {
+      clearTimeout(timer);
+      this.stop("error");
+      throw error;
+    }
+  }
+
+  /** Scans until exactly one tag is read, then stops. Exclusive. */
+  async read(timeoutMs = 30000): Promise<NdefReadResult> {
+    const { controller, reader } = await this.begin("reading");
+    this.setStatus("waiting_for_tag");
+
+    return new Promise<NdefReadResult>((resolve, reject) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        this.stop("error");
+        reject(new DOMException("Timed out waiting for a tag", "TimeoutError"));
+      }, timeoutMs);
+
+      const finish = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        fn();
+      };
+
+      reader.onreading = (event) => {
+        const records = (event.message?.records ?? []).map(toView);
+        const urlRecord = records.find((r) => r.recordType === "url" || r.recordType === "absolute-url");
+        finish(() => {
+          this.stop("success");
+          resolve({ serialNumber: event.serialNumber ?? null, records, url: urlRecord?.value ?? null });
+        });
+      };
+
+      reader.onreadingerror = () => {
+        finish(() => {
+          this.stop("error");
+          reject(new DOMException("Tag could not be read", "NotReadableError"));
+        });
+      };
+
+      this.setStatus("reading");
+      reader.scan({ signal: controller.signal }).catch((error: unknown) => {
+        finish(() => {
+          this.stop("error");
+          reject(error);
+        });
+      });
+    });
   }
 }
 
-/** Scans until one tag is read, then stops. */
+export const nfcSession = new NfcSessionManager();
+
+/** Back-compatible helpers — both route through the exclusive session. */
+export function writeUrl(url: string, timeoutMs = 30000): Promise<void> {
+  return nfcSession.write(url, timeoutMs);
+}
+
 export function readOnce(timeoutMs = 30000): Promise<NdefReadResult> {
-  return new Promise((resolve, reject) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      controller.abort();
-      reject(new DOMException("Timed out waiting for a tag", "AbortError"));
-    }, timeoutMs);
-
-    let ndef: NdefReaderLike;
-    try {
-      ndef = reader();
-    } catch (error) {
-      clearTimeout(timer);
-      reject(error);
-      return;
-    }
-
-    ndef.onreading = (event) => {
-      clearTimeout(timer);
-      const records = (event.message?.records ?? []).map(toView);
-      const urlRecord = records.find((r) => r.recordType === "url" || r.recordType === "absolute-url");
-      controller.abort();
-      resolve({
-        serialNumber: event.serialNumber ?? null,
-        records,
-        url: urlRecord?.value ?? null,
-      });
-    };
-    ndef.onreadingerror = () => {
-      clearTimeout(timer);
-      controller.abort();
-      reject(new DOMException("Tag could not be read", "NotReadableError"));
-    };
-
-    ndef.scan({ signal: controller.signal }).catch((error: unknown) => {
-      clearTimeout(timer);
-      reject(error);
-    });
-  });
+  return nfcSession.read(timeoutMs);
 }
