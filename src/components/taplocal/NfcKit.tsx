@@ -182,11 +182,13 @@ export function ProgramPanel({
   onVerified?: () => void;
 }) {
   const support = useNfcSupport();
+  const session = useNfcSession();
   const write = useServerFn(setWriteStatus);
   const verify = useServerFn(setVerification);
   const log = useServerFn(logProgrammingEvent);
 
   const expected = useMemo(() => nfcUrl(plaque.public_slug), [plaque.public_slug]);
+  const health = useSmartlinkHealth(plaque.public_slug);
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [found, setFound] = useState<string | null>(null);
@@ -196,6 +198,7 @@ export function ProgramPanel({
   const [largeUrl, setLargeUrl] = useState(false);
 
   useEffect(() => {
+    nfcSession.stop();
     setPhase("idle");
     setMessage(null);
     setFound(null);
@@ -203,7 +206,11 @@ export function ProgramPanel({
     setManualDone(false);
   }, [plaque.id]);
 
+  const blocked = health.data ? !health.data.redirectReady : false;
+
   async function handleWrite() {
+    if (session.busy) nfcSession.stop();
+    if (blocked) return;
     setMessage(null);
     setFound(null);
     setPhase("waiting");
@@ -230,6 +237,7 @@ export function ProgramPanel({
   }
 
   async function handleVerify() {
+    if (session.busy) nfcSession.stop();
     setMessage(null);
     setPhase("verifying");
     try {
@@ -252,6 +260,12 @@ export function ProgramPanel({
     }
   }
 
+  function handleCancel() {
+    nfcSession.cancel();
+    setPhase("idle");
+    setMessage(null);
+  }
+
   async function confirmManual() {
     await write({
       data: {
@@ -267,6 +281,7 @@ export function ProgramPanel({
 
   return (
     <div className="space-y-4">
+      <EmbeddedNotice />
       <GlassPanel className="p-5" sheen>
         <Label>Plaque</Label>
         <p className="font-display mt-1 text-[24px] font-bold tracking-tight">{plaque.plaque_code}</p>
@@ -280,16 +295,22 @@ export function ProgramPanel({
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <CopyButton value={expected} />
-          <Button variant="ghost" onClick={() => window.open(testUrl(expected), "_blank", "noopener")}>
-            Test SmartLink
-          </Button>
+          <TestSmartlinkButton slug={plaque.public_slug} />
           {support?.usable ? (
-            <Button onClick={handleWrite} disabled={phase === "waiting" || phase === "writing" || phase === "verifying"}>
-              Write NFC tag
+            <Button onClick={handleWrite} disabled={session.busy || blocked}>
+              {session.operation === "writing" ? "Waiting for tag…" : "Write NFC tag"}
+            </Button>
+          ) : null}
+          {session.busy ? (
+            <Button variant="ghost" onClick={handleCancel}>
+              Cancel
             </Button>
           ) : null}
         </div>
       </GlassPanel>
+
+      <SmartlinkStatusPanel slug={plaque.public_slug} />
+
 
       {phase !== "idle" ? (
         <GlassPanel className="p-5">
