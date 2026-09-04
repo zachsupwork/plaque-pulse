@@ -1,11 +1,24 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import { cn } from "@/lib/utils";
 import { GlassPanel } from "@/components/taplocal/Field";
-import { detectSupport, deviceInfo, nfcErrorMessage, readOnce, writeUrl, type NfcSupport } from "@/lib/nfc-client";
-import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
+import {
+  detectSupport,
+  deviceInfo,
+  isEmbedded,
+  nfcErrorMessage,
+  nfcSession,
+  readOnce,
+  writeUrl,
+  type NfcSupport,
+} from "@/lib/nfc-client";
+import { useNfcSession } from "@/hooks/useNfcSession";
+import { nfcUrl, qrUrl, smartlinkEnvironmentLabel, testUrl } from "@/lib/smartlink";
+import { checkSmartlink } from "@/lib/smartlink.functions";
 import { logProgrammingEvent, setVerification, setWriteStatus } from "@/lib/nfc.functions";
+
 
 export type ProgrammablePlaque = {
   id: string;
