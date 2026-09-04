@@ -34,6 +34,7 @@ import { Route as AppPlaquesIndexRouteImport } from './routes/app.plaques.index'
 import { Route as AppPlaquesIdRouteImport } from './routes/app.plaques.$id'
 import { Route as AdminPlaquesIdProgramRouteImport } from './routes/admin.plaques.$id.program'
 import { Route as AppNfcTagsIndexRouteImport } from './routes/app.nfc.tags.index'
+import { Route as AppNfcTagsIdRouteImport } from './routes/app.nfc.tags.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -160,6 +161,11 @@ const AppNfcTagsIndexRoute = AppNfcTagsIndexRouteImport.update({
   path: '/nfc/tags/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppNfcTagsIdRoute = AppNfcTagsIdRouteImport.update({
+  id: '/nfc/tags/$id',
+  path: '/nfc/tags/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/app/nfc/': typeof AppNfcIndexRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
   '/admin/plaques/$id/program': typeof AdminPlaquesIdProgramRoute
+  '/app/nfc/tags/$id': typeof AppNfcTagsIdRoute
   '/app/nfc/tags/': typeof AppNfcTagsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/app/nfc': typeof AppNfcIndexRoute
   '/app/plaques': typeof AppPlaquesIndexRoute
   '/admin/plaques/$id/program': typeof AdminPlaquesIdProgramRoute
+  '/app/nfc/tags/$id': typeof AppNfcTagsIdRoute
   '/app/nfc/tags': typeof AppNfcTagsIndexRoute
 }
 export interface FileRoutesById {
@@ -239,6 +247,7 @@ export interface FileRoutesById {
   '/app/nfc/': typeof AppNfcIndexRoute
   '/app/plaques/': typeof AppPlaquesIndexRoute
   '/admin/plaques/$id/program': typeof AdminPlaquesIdProgramRoute
+  '/app/nfc/tags/$id': typeof AppNfcTagsIdRoute
   '/app/nfc/tags/': typeof AppNfcTagsIndexRoute
 }
 export interface FileRouteTypes {
@@ -268,6 +277,7 @@ export interface FileRouteTypes {
     | '/app/nfc/'
     | '/app/plaques/'
     | '/admin/plaques/$id/program'
+    | '/app/nfc/tags/$id'
     | '/app/nfc/tags/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/app/nfc'
     | '/app/plaques'
     | '/admin/plaques/$id/program'
+    | '/app/nfc/tags/$id'
     | '/app/nfc/tags'
   id:
     | '__root__'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/app/nfc/'
     | '/app/plaques/'
     | '/admin/plaques/$id/program'
+    | '/app/nfc/tags/$id'
     | '/app/nfc/tags/'
   fileRoutesById: FileRoutesById
 }
@@ -509,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNfcTagsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/nfc/tags/$id': {
+      id: '/app/nfc/tags/$id'
+      path: '/nfc/tags/$id'
+      fullPath: '/app/nfc/tags/$id'
+      preLoaderRoute: typeof AppNfcTagsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -547,6 +566,7 @@ interface AppRouteChildren {
   AppPlaquesIdRoute: typeof AppPlaquesIdRoute
   AppNfcIndexRoute: typeof AppNfcIndexRoute
   AppPlaquesIndexRoute: typeof AppPlaquesIndexRoute
+  AppNfcTagsIdRoute: typeof AppNfcTagsIdRoute
   AppNfcTagsIndexRoute: typeof AppNfcTagsIndexRoute
 }
 
@@ -561,6 +581,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPlaquesIdRoute: AppPlaquesIdRoute,
   AppNfcIndexRoute: AppNfcIndexRoute,
   AppPlaquesIndexRoute: AppPlaquesIndexRoute,
+  AppNfcTagsIdRoute: AppNfcTagsIdRoute,
   AppNfcTagsIndexRoute: AppNfcTagsIndexRoute,
 }
 
