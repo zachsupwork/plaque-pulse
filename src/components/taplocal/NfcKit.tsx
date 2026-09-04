@@ -369,11 +369,13 @@ export function ProgramPanel({
                 <Row label="Found" value={<span className="font-mono">{found}</span>} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button onClick={handleWrite}>Rewrite tag</Button>
-                <Button variant="ghost" onClick={handleVerify}>
+                <Button onClick={handleWrite} disabled={session.busy || blocked}>
+                  Rewrite tag
+                </Button>
+                <Button variant="ghost" onClick={handleVerify} disabled={session.busy}>
                   Read again
                 </Button>
-                <Button variant="ghost" onClick={() => setPhase("idle")}>
+                <Button variant="ghost" onClick={handleCancel}>
                   Cancel
                 </Button>
               </div>
@@ -385,13 +387,16 @@ export function ProgramPanel({
               <p className="text-[15px] font-bold text-destructive">✕ Failed</p>
               <p className="mt-1 text-[13px] text-muted-foreground">{message}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button onClick={handleWrite}>Try again</Button>
-                <Button variant="ghost" onClick={() => setPhase("idle")}>
+                <Button onClick={handleWrite} disabled={session.busy || blocked}>
+                  Try again
+                </Button>
+                <Button variant="ghost" onClick={handleCancel}>
                   Cancel
                 </Button>
               </div>
             </div>
           ) : null}
+
         </GlassPanel>
       ) : null}
 
