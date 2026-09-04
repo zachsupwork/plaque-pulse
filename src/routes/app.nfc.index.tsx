@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GlassPanel } from "@/components/taplocal/Field";
 import { DeviceStatus, useBusinessTags } from "@/components/taplocal/BizNfc";
-import { Label } from "@/components/taplocal/NfcKit";
+import { EmbeddedNotice, Label } from "@/components/taplocal/NfcKit";
 
 export const Route = createFileRoute("/app/nfc/")({
   head: () => ({
@@ -32,6 +32,7 @@ function NfcHome() {
 
   return (
     <div className="space-y-5">
+      <EmbeddedNotice />
       <header>
         <h1 className="font-display text-[30px] leading-tight font-bold tracking-tight">NFC Manager</h1>
         <p className="mt-1 text-[14px] text-muted-foreground">

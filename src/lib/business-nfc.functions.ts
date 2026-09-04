@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { nfcUrl } from "@/lib/smartlink";
+import { nfcUrl, sameSmartLink } from "@/lib/smartlink";
 import type { Json } from "@/integrations/supabase/types";
 
 /** Owner-facing NFC management. Everything is scoped to one business the caller can manage. */
@@ -241,7 +241,8 @@ export const recordTagVerification = createServerFn({ method: "POST" })
     if (!plaque) return { ok: false as const, error: "not_found" as const, matched: false, expected: "" };
 
     const expected = nfcUrl(plaque.public_slug);
-    const matched = data.actualUrl.trim().replace(/\/$/, "") === expected;
+    // Host-agnostic: a tag written before the short domain went live is still correct.
+    const matched = sameSmartLink(data.actualUrl.trim(), expected);
     await ensureRow(client, plaque.id, plaque.public_slug, plaque.batch_id);
 
     await client

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel } from "@/components/taplocal/Field";
 import { Button, Chip, Label, ProgramPanel, type ProgrammablePlaque } from "@/components/taplocal/NfcKit";
+import { SmartlinkInfraPanel, useSmartlinkInfrastructure } from "@/components/taplocal/SmartlinkInfra";
 import { batchQueue, listBatches } from "@/lib/nfc.functions";
 
 export const Route = createFileRoute("/admin/nfc/batch")({
@@ -26,6 +27,9 @@ function BatchPage() {
   const queue = useServerFn(batchQueue);
   const [batchId, setBatchId] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
+
+  const infra = useSmartlinkInfrastructure();
+  const smartlinkResolved = Boolean(infra.data?.activeBaseReachable);
 
   const batchList = useQuery({ queryKey: ["batches"], queryFn: () => batches({ data: undefined }) });
   const items = useQuery({
@@ -82,6 +86,28 @@ function BatchPage() {
           All batches
         </Button>
       </div>
+
+      <SmartlinkInfraPanel />
+
+      <GlassPanel className="p-4">
+        <Label>Production readiness</Label>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <span className="text-[13px] text-muted-foreground">
+            {smartlinkResolved
+              ? "SmartLink host resolves — this batch can be marked ready for production."
+              : "SmartLink host is unresolved. Programming and production sign-off are blocked."}
+          </span>
+          <Chip tone={infra.isLoading ? "idle" : smartlinkResolved && done === list.length && list.length > 0 ? "ok" : "warn"}>
+            {infra.isLoading
+              ? "Checking…"
+              : !smartlinkResolved
+                ? "Blocked"
+                : done === list.length && list.length > 0
+                  ? "Ready for Production"
+                  : "In progress"}
+          </Chip>
+        </div>
+      </GlassPanel>
 
       <GlassPanel className="p-4">
         <Label>Queue</Label>

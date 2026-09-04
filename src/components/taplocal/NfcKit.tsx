@@ -1,11 +1,24 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import { cn } from "@/lib/utils";
 import { GlassPanel } from "@/components/taplocal/Field";
-import { detectSupport, deviceInfo, nfcErrorMessage, readOnce, writeUrl, type NfcSupport } from "@/lib/nfc-client";
-import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
+import {
+  detectSupport,
+  deviceInfo,
+  isEmbedded,
+  nfcErrorMessage,
+  nfcSession,
+  readOnce,
+  writeUrl,
+  type NfcSupport,
+} from "@/lib/nfc-client";
+import { useNfcSession } from "@/hooks/useNfcSession";
+import { nfcUrl, qrUrl, smartlinkEnvironmentLabel, testUrl } from "@/lib/smartlink";
+import { checkSmartlink } from "@/lib/smartlink.functions";
 import { logProgrammingEvent, setVerification, setWriteStatus } from "@/lib/nfc.functions";
+
 
 export type ProgrammablePlaque = {
   id: string;
@@ -169,11 +182,13 @@ export function ProgramPanel({
   onVerified?: () => void;
 }) {
   const support = useNfcSupport();
+  const session = useNfcSession();
   const write = useServerFn(setWriteStatus);
   const verify = useServerFn(setVerification);
   const log = useServerFn(logProgrammingEvent);
 
   const expected = useMemo(() => nfcUrl(plaque.public_slug), [plaque.public_slug]);
+  const health = useSmartlinkHealth(plaque.public_slug);
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [found, setFound] = useState<string | null>(null);
@@ -183,6 +198,7 @@ export function ProgramPanel({
   const [largeUrl, setLargeUrl] = useState(false);
 
   useEffect(() => {
+    nfcSession.stop();
     setPhase("idle");
     setMessage(null);
     setFound(null);
@@ -190,7 +206,11 @@ export function ProgramPanel({
     setManualDone(false);
   }, [plaque.id]);
 
+  const blocked = health.data ? !health.data.redirectReady : false;
+
   async function handleWrite() {
+    if (session.busy) nfcSession.stop();
+    if (blocked) return;
     setMessage(null);
     setFound(null);
     setPhase("waiting");
@@ -217,6 +237,7 @@ export function ProgramPanel({
   }
 
   async function handleVerify() {
+    if (session.busy) nfcSession.stop();
     setMessage(null);
     setPhase("verifying");
     try {
@@ -239,6 +260,12 @@ export function ProgramPanel({
     }
   }
 
+  function handleCancel() {
+    nfcSession.cancel();
+    setPhase("idle");
+    setMessage(null);
+  }
+
   async function confirmManual() {
     await write({
       data: {
@@ -254,6 +281,7 @@ export function ProgramPanel({
 
   return (
     <div className="space-y-4">
+      <EmbeddedNotice />
       <GlassPanel className="p-5" sheen>
         <Label>Plaque</Label>
         <p className="font-display mt-1 text-[24px] font-bold tracking-tight">{plaque.plaque_code}</p>
@@ -267,16 +295,22 @@ export function ProgramPanel({
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <CopyButton value={expected} />
-          <Button variant="ghost" onClick={() => window.open(testUrl(expected), "_blank", "noopener")}>
-            Test SmartLink
-          </Button>
+          <TestSmartlinkButton slug={plaque.public_slug} />
           {support?.usable ? (
-            <Button onClick={handleWrite} disabled={phase === "waiting" || phase === "writing" || phase === "verifying"}>
-              Write NFC tag
+            <Button onClick={handleWrite} disabled={session.busy || blocked}>
+              {session.operation === "writing" ? "Waiting for tag…" : "Write NFC tag"}
+            </Button>
+          ) : null}
+          {session.busy ? (
+            <Button variant="ghost" onClick={handleCancel}>
+              Cancel
             </Button>
           ) : null}
         </div>
       </GlassPanel>
+
+      <SmartlinkStatusPanel slug={plaque.public_slug} />
+
 
       {phase !== "idle" ? (
         <GlassPanel className="p-5">
@@ -335,11 +369,13 @@ export function ProgramPanel({
                 <Row label="Found" value={<span className="font-mono">{found}</span>} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button onClick={handleWrite}>Rewrite tag</Button>
-                <Button variant="ghost" onClick={handleVerify}>
+                <Button onClick={handleWrite} disabled={session.busy || blocked}>
+                  Rewrite tag
+                </Button>
+                <Button variant="ghost" onClick={handleVerify} disabled={session.busy}>
                   Read again
                 </Button>
-                <Button variant="ghost" onClick={() => setPhase("idle")}>
+                <Button variant="ghost" onClick={handleCancel}>
                   Cancel
                 </Button>
               </div>
@@ -351,13 +387,16 @@ export function ProgramPanel({
               <p className="text-[15px] font-bold text-destructive">✕ Failed</p>
               <p className="mt-1 text-[13px] text-muted-foreground">{message}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button onClick={handleWrite}>Try again</Button>
-                <Button variant="ghost" onClick={() => setPhase("idle")}>
+                <Button onClick={handleWrite} disabled={session.busy || blocked}>
+                  Try again
+                </Button>
+                <Button variant="ghost" onClick={handleCancel}>
                   Cancel
                 </Button>
               </div>
             </div>
           ) : null}
+
         </GlassPanel>
       ) : null}
 
@@ -419,5 +458,118 @@ export function NfcWaves() {
       <span className="absolute h-10 w-10 rounded-full bg-primary/25" />
       <span className="relative text-[18px]">📶</span>
     </div>
+  );
+}
+
+/* ---------------- SmartLink readiness ---------------- */
+
+/** Live health of one plaque's SmartLink: host, plaque, destination, redirect. */
+export function useSmartlinkHealth(slug: string) {
+  const check = useServerFn(checkSmartlink);
+  return useQuery({
+    queryKey: ["smartlink-health", slug],
+    queryFn: () => check({ data: { slug } }),
+    staleTime: 30_000,
+  });
+}
+
+function CheckLine({ label, ok, pending }: { label: string; ok: boolean; pending: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0">
+      <span className="text-[13px] text-muted-foreground">{label}</span>
+      <span className={cn("text-[13px] font-bold", pending ? "text-muted-foreground" : ok ? "text-accent" : "text-destructive")}>
+        {pending ? "Checking…" : ok ? "✓" : "✕"}
+      </span>
+    </div>
+  );
+}
+
+export function SmartlinkStatusPanel({ slug }: { slug: string }) {
+  const { data, isLoading, refetch, isFetching } = useSmartlinkHealth(slug);
+  const pending = isLoading || !data;
+
+  return (
+    <GlassPanel className="p-4">
+      <div className="flex items-center justify-between gap-3">
+        <Label>SmartLink status</Label>
+        <Chip tone={data?.production ? "ok" : "warn"}>{smartlinkEnvironmentLabel()}</Chip>
+      </div>
+      <div className="mt-2">
+        <CheckLine label="Host reachable" ok={Boolean(data?.hostReachable)} pending={pending} />
+        <CheckLine label="Tag exists" ok={Boolean(data?.plaqueExists)} pending={pending} />
+        <CheckLine label="Destination configured" ok={Boolean(data?.destinationConfigured)} pending={pending} />
+        <CheckLine label="Redirect ready" ok={Boolean(data?.redirectReady)} pending={pending} />
+      </div>
+      {data && !data.redirectReady ? (
+        <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3.5">
+          <p className="text-[13px] font-bold text-destructive">SMARTLINK NOT READY</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+            TapLocal has not finished configuring this SmartLink. Fix the SmartLink before programming this NFC tag.
+          </p>
+          {data.problem ? <p className="mt-1 text-[12px] text-muted-foreground">{data.problem}</p> : null}
+        </div>
+      ) : null}
+      <Button className="mt-3" variant="ghost" onClick={() => void refetch()} disabled={isFetching}>
+        {isFetching ? "Checking…" : "Re-check SmartLink"}
+      </Button>
+    </GlassPanel>
+  );
+}
+
+/** Validates the SmartLink before ever opening it, so nobody meets a dead URL. */
+export function TestSmartlinkButton({ slug, label = "Test it" }: { slug: string; label?: string }) {
+  const check = useServerFn(checkSmartlink);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setProblem(null);
+          try {
+            const result = await check({ data: { slug } });
+            if (!result.redirectReady) {
+              setProblem(result.problem ?? "This SmartLink isn't ready yet.");
+              return;
+            }
+            window.open(testUrl(result.url), "_blank", "noopener");
+          } catch {
+            setProblem("We couldn't reach the SmartLink just now.");
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Checking…" : label}
+      </Button>
+      {problem ? <p className="basis-full text-[13px] font-semibold text-destructive">{problem}</p> : null}
+    </>
+  );
+}
+
+/** Web NFC permission cannot be granted inside the embedded preview frame. */
+export function EmbeddedNotice() {
+  const [embedded, setEmbedded] = useState(false);
+  useEffect(() => setEmbedded(isEmbedded()), []);
+  if (!embedded) return null;
+  return (
+    <GlassPanel className="p-4">
+      <p className="text-[14px] font-bold">For NFC programming, open TapLocal directly in your browser.</p>
+      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+        NFC hardware isn&apos;t available inside an embedded preview window. Open the app in Chrome on Android over
+        HTTPS.
+      </p>
+      <Button
+        className="mt-3"
+        variant="ghost"
+        onClick={() => window.open(window.location.href, "_blank", "noopener")}
+      >
+        Open Directly
+      </Button>
+    </GlassPanel>
   );
 }
