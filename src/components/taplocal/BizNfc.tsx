@@ -2,12 +2,27 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel } from "@/components/taplocal/Field";
-import { Button, Chip, CopyButton, Label, NfcWaves, QrImage, Row, useNfcSupport } from "@/components/taplocal/NfcKit";
+import {
+  Button,
+  Chip,
+  CopyButton,
+  EmbeddedNotice,
+  Label,
+  NfcWaves,
+  QrImage,
+  Row,
+  SmartlinkStatusPanel,
+  TestSmartlinkButton,
+  useNfcSupport,
+  useSmartlinkHealth,
+} from "@/components/taplocal/NfcKit";
 import { useBusinessId } from "@/hooks/usePortal";
-import { deviceInfo, nfcErrorMessage, readOnce, writeUrl } from "@/lib/nfc-client";
-import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
+import { useNfcSession } from "@/hooks/useNfcSession";
+import { deviceInfo, nfcErrorMessage, nfcSession, readOnce, writeUrl } from "@/lib/nfc-client";
+import { nfcUrl, qrUrl, smartlinkEnvironmentLabel } from "@/lib/smartlink";
 import { listBusinessTags, recordTagVerification, recordTagWrite } from "@/lib/business-nfc.functions";
 import { cn } from "@/lib/utils";
+
 
 export type BusinessTag = {
   plaque: {
