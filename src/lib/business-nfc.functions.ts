@@ -306,10 +306,10 @@ export const setUpTag = createServerFn({ method: "POST" })
     const plaque = await ownedPlaque(client, data.businessId, data.plaqueId);
     if (!plaque) return { ok: false as const, error: "not_found" as const };
 
-    const patch: Record<string, unknown> = {};
-    if (data.plaqueName !== undefined) patch["plaque_name"] = data.plaqueName;
-    if (data.placementType !== undefined) patch["placement_type"] = data.placementType;
-    if (data.locationId !== undefined) patch["location_id"] = data.locationId;
+    const patch: { plaque_name?: string; placement_type?: string; location_id?: string | null } = {};
+    if (data.plaqueName !== undefined) patch.plaque_name = data.plaqueName;
+    if (data.placementType !== undefined) patch.placement_type = data.placementType;
+    if (data.locationId !== undefined) patch.location_id = data.locationId;
     if (Object.keys(patch).length) await client.from("plaques").update(patch).eq("id", plaque.id);
 
     if (data.locationId !== undefined && data.locationId !== plaque.location_id) {
