@@ -344,11 +344,21 @@ export function TagProgrammer({
               <p className="text-[15px] font-bold text-destructive">That didn&apos;t work</p>
               <p className="mt-1 text-[13px] text-muted-foreground">{message}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {support?.usable && !verifyOnly ? <Button onClick={handleWrite}>Try again</Button> : null}
-                <Button variant="ghost" onClick={() => setPhase("idle")}>
+                {support?.usable && !verifyOnly ? (
+                  <Button onClick={handleWrite} disabled={session.busy || blocked}>
+                    Try again
+                  </Button>
+                ) : null}
+                {support?.usable ? (
+                  <Button variant="ghost" onClick={handleVerify} disabled={session.busy}>
+                    Check tag
+                  </Button>
+                ) : null}
+                <Button variant="ghost" onClick={handleCancel}>
                   Cancel
                 </Button>
               </div>
+
             </div>
           ) : null}
         </GlassPanel>
