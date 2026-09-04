@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { GlassPanel } from "@/components/taplocal/Field";
+import { SmartlinkInfraPanel } from "@/components/taplocal/SmartlinkInfra";
 import { usePortal } from "@/hooks/usePortal";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -106,6 +107,8 @@ function SettingsPage() {
           post on your behalf.
         </p>
       </GlassPanel>
+
+      <SmartlinkInfraPanel />
     </div>
   );
 }
