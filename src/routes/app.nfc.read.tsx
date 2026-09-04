@@ -2,9 +2,10 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel } from "@/components/taplocal/Field";
-import { Button, Chip, Label, NfcWaves, Row, useNfcSupport } from "@/components/taplocal/NfcKit";
+import { Button, Chip, EmbeddedNotice, Label, NfcWaves, Row, useNfcSupport } from "@/components/taplocal/NfcKit";
+import { useNfcSession } from "@/hooks/useNfcSession";
 import { useBusinessTags } from "@/components/taplocal/BizNfc";
-import { nfcErrorMessage, readOnce } from "@/lib/nfc-client";
+import { nfcErrorMessage, nfcSession, readOnce } from "@/lib/nfc-client";
 import { parseSmartLink } from "@/lib/smartlink";
 import { lookupBySlug } from "@/lib/business-nfc.functions";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
@@ -37,6 +38,7 @@ type Found = {
 
 function ReadPage() {
   const support = useNfcSupport();
+  const session = useNfcSession();
   const { tags, businessId } = useBusinessTags();
   const lookup = useServerFn(lookupBySlug);
 
@@ -46,6 +48,7 @@ function ReadPage() {
 
   async function handleRead() {
     if (!businessId) return;
+    if (session.busy) nfcSession.stop();
     setError(null);
     setFound(null);
     setReading(true);
@@ -79,6 +82,7 @@ function ReadPage() {
 
   return (
     <div className="space-y-5">
+      <EmbeddedNotice />
       <header>
         <Link to="/app/nfc" className="text-[13px] font-semibold text-muted-foreground">
           ← NFC Manager
@@ -94,13 +98,28 @@ function ReadPage() {
           <p className="text-[13px] text-muted-foreground">
             Reading tags needs an Android phone with Chrome. You can still see all your tags under My NFC Tags.
           </p>
-        ) : reading ? (
+        ) : reading || session.busy ? (
           <div className="flex items-center gap-4">
             <NfcWaves />
-            <p className="text-[15px] font-bold">Hold the tag to your phone…</p>
+            <div className="flex-1">
+              <p className="text-[15px] font-bold">Waiting for tag…</p>
+              <p className="mt-1 text-[13px] text-muted-foreground">Hold the tag to your phone.</p>
+              <Button
+                className="mt-3"
+                variant="ghost"
+                onClick={() => {
+                  nfcSession.cancel();
+                  setReading(false);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         ) : (
-          <Button onClick={handleRead}>Read a tag</Button>
+          <Button onClick={handleRead} disabled={session.busy}>
+            Read a tag
+          </Button>
         )}
         {error ? <p className="mt-3 text-[13px] font-semibold text-destructive">{error}</p> : null}
       </GlassPanel>
