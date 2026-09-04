@@ -43,11 +43,17 @@ export const provisionPlaques = createServerFn({ method: "POST" })
       { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: authHeader } } },
     );
 
-    const { data: isAdmin } = await caller.rpc("has_role", {
-      _user_id: (await caller.auth.getUser()).data.user?.id ?? "",
-      _role: "admin",
-    });
-    if (!isAdmin) return { ok: false as const, error: "forbidden", plaques: [] };
+    const userId = (await caller.auth.getUser()).data.user?.id;
+    if (!userId) return { ok: false as const, error: "unauthorized", plaques: [] };
+
+    // Role check runs as the caller: RLS on user_roles only exposes their own rows.
+    const { data: roleRow } = await caller
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleRow) return { ok: false as const, error: "forbidden", plaques: [] };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
