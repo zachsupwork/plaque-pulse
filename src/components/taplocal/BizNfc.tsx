@@ -267,23 +267,27 @@ export function TagProgrammer({
           {phase === "waiting" || phase === "writing" ? (
             <div className="flex items-center gap-4">
               <NfcWaves />
-              <div>
-                <p className="text-[15px] font-bold">{phase === "waiting" ? "Hold the tag to your phone…" : "Programming…"}</p>
+              <div className="flex-1">
+                <p className="text-[15px] font-bold">Ready to program</p>
                 <p className="mt-1 text-[13px] text-muted-foreground">
-                  Keep it flat against the back or top of the phone until you see the green confirmation.
+                  Hold the NFC tag against your phone and keep it flat until you see the green confirmation.
                 </p>
+                <Button className="mt-3" variant="ghost" onClick={handleCancel}>
+                  Cancel
+                </Button>
               </div>
             </div>
           ) : null}
 
           {phase === "written" ? (
             <div>
-              <Chip tone="warn">Programmed — not checked yet</Chip>
+              <p className="text-[18px] font-bold text-accent">NFC PROGRAMMED ✓</p>
+              <Chip tone="warn">Not checked yet</Chip>
               <p className="mt-2 text-[13px] text-muted-foreground">
                 Now hold the same tag to your phone once more so we can confirm it really works.
               </p>
-              <Button className="mt-3" onClick={handleVerify}>
-                Check the tag
+              <Button className="mt-3" onClick={handleVerify} disabled={session.busy}>
+                Verify tag
               </Button>
             </div>
           ) : null}
@@ -291,13 +295,19 @@ export function TagProgrammer({
           {phase === "verifying" ? (
             <div className="flex items-center gap-4">
               <NfcWaves />
-              <p className="text-[15px] font-bold">Checking… hold the tag to your phone</p>
+              <div className="flex-1">
+                <p className="text-[15px] font-bold">Waiting for tag…</p>
+                <p className="mt-1 text-[13px] text-muted-foreground">Hold the tag to your phone.</p>
+                <Button className="mt-3" variant="ghost" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              </div>
             </div>
           ) : null}
 
           {phase === "verified" ? (
             <div>
-              <p className="text-[20px] font-bold text-accent">✓ This tag works</p>
+              <p className="text-[20px] font-bold text-accent">Verified ✓</p>
               <div className="mt-3">
                 <Row label="Should say" value={<span className="font-mono">{expected}</span>} />
                 <Row label="Tag says" value={<span className="font-mono">{found}</span>} />
@@ -316,13 +326,18 @@ export function TagProgrammer({
                 <Row label="Tag says" value={<span className="font-mono">{found}</span>} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {support?.usable ? <Button onClick={handleWrite}>Program again</Button> : null}
-                <Button variant="ghost" onClick={handleVerify}>
+                {support?.usable ? (
+                  <Button onClick={handleWrite} disabled={session.busy || blocked}>
+                    Program again
+                  </Button>
+                ) : null}
+                <Button variant="ghost" onClick={handleVerify} disabled={session.busy}>
                   Check again
                 </Button>
               </div>
             </div>
           ) : null}
+
 
           {phase === "error" ? (
             <div>
