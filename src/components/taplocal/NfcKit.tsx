@@ -460,3 +460,116 @@ export function NfcWaves() {
     </div>
   );
 }
+
+/* ---------------- SmartLink readiness ---------------- */
+
+/** Live health of one plaque's SmartLink: host, plaque, destination, redirect. */
+export function useSmartlinkHealth(slug: string) {
+  const check = useServerFn(checkSmartlink);
+  return useQuery({
+    queryKey: ["smartlink-health", slug],
+    queryFn: () => check({ data: { slug } }),
+    staleTime: 30_000,
+  });
+}
+
+function CheckLine({ label, ok, pending }: { label: string; ok: boolean; pending: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0">
+      <span className="text-[13px] text-muted-foreground">{label}</span>
+      <span className={cn("text-[13px] font-bold", pending ? "text-muted-foreground" : ok ? "text-accent" : "text-destructive")}>
+        {pending ? "Checking…" : ok ? "✓" : "✕"}
+      </span>
+    </div>
+  );
+}
+
+export function SmartlinkStatusPanel({ slug }: { slug: string }) {
+  const { data, isLoading, refetch, isFetching } = useSmartlinkHealth(slug);
+  const pending = isLoading || !data;
+
+  return (
+    <GlassPanel className="p-4">
+      <div className="flex items-center justify-between gap-3">
+        <Label>SmartLink status</Label>
+        <Chip tone={data?.production ? "ok" : "warn"}>{smartlinkEnvironmentLabel()}</Chip>
+      </div>
+      <div className="mt-2">
+        <CheckLine label="Host reachable" ok={Boolean(data?.hostReachable)} pending={pending} />
+        <CheckLine label="Tag exists" ok={Boolean(data?.plaqueExists)} pending={pending} />
+        <CheckLine label="Destination configured" ok={Boolean(data?.destinationConfigured)} pending={pending} />
+        <CheckLine label="Redirect ready" ok={Boolean(data?.redirectReady)} pending={pending} />
+      </div>
+      {data && !data.redirectReady ? (
+        <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3.5">
+          <p className="text-[13px] font-bold text-destructive">SMARTLINK NOT READY</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+            TapLocal has not finished configuring this SmartLink. Fix the SmartLink before programming this NFC tag.
+          </p>
+          {data.problem ? <p className="mt-1 text-[12px] text-muted-foreground">{data.problem}</p> : null}
+        </div>
+      ) : null}
+      <Button className="mt-3" variant="ghost" onClick={() => void refetch()} disabled={isFetching}>
+        {isFetching ? "Checking…" : "Re-check SmartLink"}
+      </Button>
+    </GlassPanel>
+  );
+}
+
+/** Validates the SmartLink before ever opening it, so nobody meets a dead URL. */
+export function TestSmartlinkButton({ slug, label = "Test it" }: { slug: string; label?: string }) {
+  const check = useServerFn(checkSmartlink);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setProblem(null);
+          try {
+            const result = await check({ data: { slug } });
+            if (!result.redirectReady) {
+              setProblem(result.problem ?? "This SmartLink isn't ready yet.");
+              return;
+            }
+            window.open(testUrl(result.url), "_blank", "noopener");
+          } catch {
+            setProblem("We couldn't reach the SmartLink just now.");
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Checking…" : label}
+      </Button>
+      {problem ? <p className="basis-full text-[13px] font-semibold text-destructive">{problem}</p> : null}
+    </>
+  );
+}
+
+/** Web NFC permission cannot be granted inside the embedded preview frame. */
+export function EmbeddedNotice() {
+  const [embedded, setEmbedded] = useState(false);
+  useEffect(() => setEmbedded(isEmbedded()), []);
+  if (!embedded) return null;
+  return (
+    <GlassPanel className="p-4">
+      <p className="text-[14px] font-bold">For NFC programming, open TapLocal directly in your browser.</p>
+      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+        NFC hardware isn&apos;t available inside an embedded preview window. Open the app in Chrome on Android over
+        HTTPS.
+      </p>
+      <Button
+        className="mt-3"
+        variant="ghost"
+        onClick={() => window.open(window.location.href, "_blank", "noopener")}
+      >
+        Open Directly
+      </Button>
+    </GlassPanel>
+  );
+}
