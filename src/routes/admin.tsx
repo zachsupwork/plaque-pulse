@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
-import { adminIdentity } from "@/lib/admin-data.functions";
-import { signOutEverything } from "@/lib/admin-session";
+import { useIdentity, useSignOut } from "@/hooks/useAuthSession";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -26,24 +23,8 @@ const SECONDARY = [
 ] as const;
 
 /** Live view of who is signed in and whether they hold the admin role. */
-export function useAdminIdentity() {
-  const check = useServerFn(adminIdentity);
-  return useQuery({
-    queryKey: ["admin-identity"],
-    queryFn: () => check({ data: undefined }),
-    staleTime: 60_000,
-  });
-}
+export const useAdminIdentity = useIdentity;
 
-/** Sign out everywhere, then land on the admin sign-in screen. */
-export function useAdminSignOut() {
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  return async () => {
-    await signOutEverything(qc);
-    await navigate({ to: "/admin", replace: true });
-  };
-}
 
 function initials(email: string | null) {
   if (!email) return "TL";
