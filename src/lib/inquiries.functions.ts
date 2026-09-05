@@ -219,8 +219,8 @@ export const saveOffering = createServerFn({ method: "POST" })
       else delete metadata[key];
     };
     if (data.tagline !== undefined) {
-      if (data.tagline) metadata.tagline = data.tagline;
-      else delete metadata.tagline;
+      if (data.tagline) metadata['tagline'] = data.tagline;
+      else delete metadata['tagline'];
     }
     applyList("features", data.features);
     applyList("finishes", data.finishes);
@@ -228,8 +228,8 @@ export const saveOffering = createServerFn({ method: "POST" })
     applyList("quantities", data.quantities);
     if (data.gallery) {
       const clean = data.gallery.map((v) => v.trim()).filter(Boolean).map((url) => ({ url }));
-      if (clean.length) metadata.gallery = clean;
-      else delete metadata.gallery;
+      if (clean.length) metadata['gallery'] = clean;
+      else delete metadata['gallery'];
     }
     const row = {
       name: data.name,
@@ -243,7 +243,7 @@ export const saveOffering = createServerFn({ method: "POST" })
       sort_order: data.sort_order,
       active: data.active,
       featured: data.featured,
-      metadata,
+      metadata: metadata as never,
     };
     const { error } = data.id
       ? await client.from("offerings").update(row).eq("id", data.id)

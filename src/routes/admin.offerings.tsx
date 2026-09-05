@@ -331,12 +331,12 @@ function CatalogAdmin() {
                       sort_order: o.sort_order,
                       active: o.active,
                       featured: o.featured,
-                      tagline: typeof meta.tagline === "string" ? meta.tagline : "",
-                      features: lines(meta.features),
-                      finishes: lines(meta.finishes ?? meta.styles),
-                      bases: lines(meta.bases),
-                      quantities: lines(meta.quantities),
-                      gallery: lines(meta.gallery),
+                      tagline: typeof meta['tagline'] === "string" ? meta['tagline'] : "",
+                      features: lines(meta['features']),
+                      finishes: lines(meta['finishes'] ?? meta['styles']),
+                      bases: lines(meta['bases']),
+                      quantities: lines(meta['quantities']),
+                      gallery: lines(meta['gallery']),
                     })
                   }
                   className="rounded-xl border border-border px-3.5 py-2 text-[12px] font-bold tracking-wide uppercase"
