@@ -115,7 +115,7 @@ function BusinessDirectory() {
     setAdding(false);
     setSessionToken(newSessionToken());
     if (res.ok && res.businessId) {
-      navigate({ to: "/admin/businesses/$id", params: { id: res.businessId } });
+      navigate({ to: "/admin/setup", search: { businessId: res.businessId } });
       return;
     }
     setAddError(
