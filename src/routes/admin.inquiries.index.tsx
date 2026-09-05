@@ -98,7 +98,7 @@ function InquiriesPage() {
                     {when(i.created_at)} · {i.source}
                   </p>
                 </div>
-                <StatusChip tone={i.status === "new" ? "warn" : "ok"}>{i.status.toUpperCase()}</StatusChip>
+                <StatusChip tone={i.status === "new" ? "attention" : "ok"}>{i.status.toUpperCase()}</StatusChip>
               </div>
             </Link>
           ))}
