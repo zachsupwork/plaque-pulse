@@ -53,12 +53,55 @@ function BusinessRecord() {
         </div>
       </div>
 
+      <div>
+        <SectionTitle>Quick actions</SectionTitle>
+        <GlassPanel className="grid grid-cols-1 gap-2 p-3.5 sm:grid-cols-2">
+          <Link
+            to="/admin/provisioning"
+            className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+          >
+            Add plaque
+          </Link>
+          <Link
+            to="/admin/plaques"
+            className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+          >
+            Assign existing plaque
+          </Link>
+          {plaques.length ? (
+            <>
+              <Link
+                to="/admin/plaques/$id"
+                params={{ id: plaques[0]!.id }}
+                className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+              >
+                Set up Google Reviews
+              </Link>
+              <Link
+                to="/admin/plaques/$id"
+                params={{ id: plaques[0]!.id }}
+                className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+              >
+                Change destination
+              </Link>
+            </>
+          ) : null}
+          <Link
+            to="/admin/customers"
+            className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+          >
+            Give owner access
+          </Link>
+        </GlassPanel>
+      </div>
+
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Stat label="Today" value={performance.today} />
         <Stat label="7 days" value={performance.days7} />
         <Stat label="30 days" value={performance.days30} />
         <Stat label="All time" value={performance.allTime} hint={`${performance.nfc} NFC · ${performance.qr} QR`} />
       </div>
+
 
       <div>
         <SectionTitle>Locations</SectionTitle>
