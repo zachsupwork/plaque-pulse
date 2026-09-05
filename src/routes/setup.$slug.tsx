@@ -40,7 +40,11 @@ function SetupPage() {
   return (
     <Field>
       <div className="mx-auto max-w-md px-5 pt-10 pb-16">
+        <Link to="/" aria-label="TapLocal home" className="mb-5 inline-block">
+          <BrandLockup />
+        </Link>
         <div className="flex items-center gap-2 text-[12px] font-semibold tracking-wide text-accent uppercase">
+
           <Check className="h-4 w-4" />
           {source === "qr" ? "QR detected" : "NFC detected"}
         </div>
