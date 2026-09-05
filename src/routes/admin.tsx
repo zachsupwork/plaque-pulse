@@ -205,8 +205,9 @@ function AdminLayout() {
         <main className="min-w-0 flex-1">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="md:hidden">
-              <BrandLockup suffix="Admin" />
+              <Link to="/" aria-label="Main TapLocal site"><BrandLockup suffix="Admin" /></Link>
             </div>
+
             <div className="ml-auto">
               <AccountButton email={identity.data.email} />
             </div>
