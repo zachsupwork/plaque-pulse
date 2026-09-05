@@ -65,6 +65,27 @@ export type Database = {
           },
         ]
       }
+      activation_attempts: {
+        Row: {
+          attempt_key: string
+          created_at: string
+          id: string
+          succeeded: boolean
+        }
+        Insert: {
+          attempt_key: string
+          created_at?: string
+          id?: string
+          succeeded?: boolean
+        }
+        Update: {
+          attempt_key?: string
+          created_at?: string
+          id?: string
+          succeeded?: boolean
+        }
+        Relationships: []
+      }
       business_members: {
         Row: {
           business_id: string
@@ -519,10 +540,21 @@ export type Database = {
           city: string | null
           country: string | null
           created_at: string
+          google_business_status: string | null
+          google_maps_uri: string | null
+          google_place_id: string | null
+          google_primary_type: string | null
+          google_rating: number | null
+          google_review_count: number | null
           id: string
+          latitude: number | null
+          longitude: number | null
           name: string
+          phone: string | null
           province_state: string | null
+          public_data_last_synced_at: string | null
           timezone: string | null
+          website_url: string | null
         }
         Insert: {
           active?: boolean
@@ -531,10 +563,21 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          google_business_status?: string | null
+          google_maps_uri?: string | null
+          google_place_id?: string | null
+          google_primary_type?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name: string
+          phone?: string | null
           province_state?: string | null
+          public_data_last_synced_at?: string | null
           timezone?: string | null
+          website_url?: string | null
         }
         Update: {
           active?: boolean
@@ -543,10 +586,21 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          google_business_status?: string | null
+          google_maps_uri?: string | null
+          google_place_id?: string | null
+          google_primary_type?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name?: string
+          phone?: string | null
           province_state?: string | null
+          public_data_last_synced_at?: string | null
           timezone?: string | null
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -674,6 +728,83 @@ export type Database = {
           },
         ]
       }
+      pack_plaques: {
+        Row: {
+          created_at: string
+          id: string
+          pack_id: string
+          plaque_id: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pack_id: string
+          plaque_id: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pack_id?: string
+          plaque_id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pack_plaques_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "plaque_packs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pack_plaques_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plaque_packs: {
+        Row: {
+          activation_token_hash: string | null
+          business_id: string | null
+          claimed_at: string | null
+          created_at: string
+          id: string
+          pack_code: string
+          status: string
+        }
+        Insert: {
+          activation_token_hash?: string | null
+          business_id?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          pack_code: string
+          status?: string
+        }
+        Update: {
+          activation_token_hash?: string | null
+          business_id?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          pack_code?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plaque_packs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plaque_placement_history: {
         Row: {
           changed_by_user_id: string | null
@@ -791,6 +922,9 @@ export type Database = {
           base_type: string | null
           batch_id: string | null
           business_id: string | null
+          claimed_at: string | null
+          claimed_by_user_id: string | null
+          configured_at: string | null
           created_at: string
           id: string
           location_id: string | null
@@ -809,6 +943,9 @@ export type Database = {
           base_type?: string | null
           batch_id?: string | null
           business_id?: string | null
+          claimed_at?: string | null
+          claimed_by_user_id?: string | null
+          configured_at?: string | null
           created_at?: string
           id?: string
           location_id?: string | null
@@ -827,6 +964,9 @@ export type Database = {
           base_type?: string | null
           batch_id?: string | null
           business_id?: string | null
+          claimed_at?: string | null
+          claimed_by_user_id?: string | null
+          configured_at?: string | null
           created_at?: string
           id?: string
           location_id?: string | null
@@ -1091,6 +1231,7 @@ export type Database = {
         | "faulty"
         | "replaced"
         | "retired"
+        | "configured_unclaimed"
       recommendation_status:
         | "new"
         | "viewed"
@@ -1278,6 +1419,7 @@ export const Constants = {
         "faulty",
         "replaced",
         "retired",
+        "configured_unclaimed",
       ],
       recommendation_status: [
         "new",
