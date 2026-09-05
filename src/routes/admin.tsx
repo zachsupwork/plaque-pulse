@@ -10,19 +10,21 @@ export const Route = createFileRoute("/admin")({
 
 const PRIMARY = [
   { to: "/admin", label: "Dashboard", exact: true },
+  { to: "/admin/setup", label: "Set Up", exact: false },
   { to: "/admin/businesses", label: "Businesses", exact: false },
   { to: "/admin/plaques", label: "Plaques", exact: false },
-  { to: "/admin/provisioning", label: "Manufacturing", exact: false },
-  { to: "/admin/inquiries", label: "Inquiries", exact: false },
 ] as const;
 
 const SECONDARY = [
+  { to: "/admin/provisioning", label: "Manufacturing" },
+  { to: "/admin/inquiries", label: "Inquiries" },
   { to: "/admin/offerings", label: "Catalog" },
   { to: "/admin/customers", label: "Customers" },
   { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/nfc", label: "NFC Tools" },
   { to: "/admin/settings", label: "Settings" },
 ] as const;
+
 
 /** Live view of who is signed in and whether they hold the admin role. */
 export const useAdminIdentity = useIdentity;
@@ -65,12 +67,20 @@ function AccountButton({ email }: { email: string | null }) {
             <p className="mt-0.5 text-[12px] text-muted-foreground">Platform Administrator</p>
             <div className="mt-3 space-y-1.5">
               <Link
+                to="/admin"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Admin dashboard
+              </Link>
+              <Link
                 to="/"
                 onClick={() => setOpen(false)}
                 className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
               >
                 Main TapLocal site
               </Link>
+
               <Link
                 to="/app"
                 onClick={() => setOpen(false)}
@@ -188,7 +198,7 @@ function AdminLayout() {
     <Field>
       <div className="mx-auto flex max-w-6xl gap-6 px-4 pt-5 pb-28 md:px-6 md:pb-10">
         <aside className="hidden w-52 shrink-0 md:block">
-          <Link to="/" aria-label="Main TapLocal site"><BrandLockup suffix="Admin" /></Link>
+          <Link to="/admin" aria-label="Admin dashboard"><BrandLockup suffix="Admin" /></Link>
 
           <nav className="mt-5 space-y-1">
             {[...PRIMARY.map((t) => ({ ...t })), ...SECONDARY.map((t) => ({ ...t, exact: false }))].map((tab) => (
@@ -207,7 +217,7 @@ function AdminLayout() {
         <main className="min-w-0 flex-1">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="md:hidden">
-              <Link to="/" aria-label="Main TapLocal site"><BrandLockup suffix="Admin" /></Link>
+              <Link to="/admin" aria-label="Admin dashboard"><BrandLockup suffix="Admin" /></Link>
             </div>
 
             <div className="ml-auto">
@@ -218,7 +228,7 @@ function AdminLayout() {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-border bg-card/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur md:hidden">
         {[...PRIMARY, { to: "/admin/more", label: "More", exact: false } as const].map((tab) => (
           <Link
             key={tab.to}

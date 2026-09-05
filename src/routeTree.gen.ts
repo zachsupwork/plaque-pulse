@@ -24,6 +24,7 @@ import { Route as AdminMoreRouteImport } from './routes/admin.more'
 import { Route as AdminOfferingsRouteImport } from './routes/admin.offerings'
 import { Route as AdminProvisioningRouteImport } from './routes/admin.provisioning'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSetupRouteImport } from './routes/admin.setup'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppResultsRouteImport } from './routes/app.results'
@@ -127,6 +128,11 @@ const AdminProvisioningRoute = AdminProvisioningRouteImport.update({
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSetupRoute = AdminSetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
   getParentRoute: () => AdminRoute,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/setup': typeof AdminSetupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -333,6 +340,7 @@ export interface FileRoutesByTo {
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/setup': typeof AdminSetupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/setup': typeof AdminSetupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/admin/offerings'
     | '/admin/provisioning'
     | '/admin/settings'
+    | '/admin/setup'
     | '/app/activity'
     | '/app/results'
     | '/app/settings'
@@ -472,6 +482,7 @@ export interface FileRouteTypes {
     | '/admin/offerings'
     | '/admin/provisioning'
     | '/admin/settings'
+    | '/admin/setup'
     | '/app/activity'
     | '/app/results'
     | '/app/settings'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/admin/offerings'
     | '/admin/provisioning'
     | '/admin/settings'
+    | '/admin/setup'
     | '/app/activity'
     | '/app/results'
     | '/app/settings'
@@ -672,6 +684,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/admin/settings'
       preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/setup': {
+      id: '/admin/setup'
+      path: '/setup'
+      fullPath: '/admin/setup'
+      preLoaderRoute: typeof AdminSetupRouteImport
       parentRoute: typeof AdminRoute
     }
     '/app/': {
@@ -887,6 +906,7 @@ interface AdminRouteChildren {
   AdminOfferingsRoute: typeof AdminOfferingsRoute
   AdminProvisioningRoute: typeof AdminProvisioningRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSetupRoute: typeof AdminSetupRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminBusinessesIdRoute: typeof AdminBusinessesIdRoute
   AdminInquiriesIdRoute: typeof AdminInquiriesIdRoute
@@ -909,6 +929,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminOfferingsRoute: AdminOfferingsRoute,
   AdminProvisioningRoute: AdminProvisioningRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminSetupRoute: AdminSetupRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminBusinessesIdRoute: AdminBusinessesIdRoute,
   AdminInquiriesIdRoute: AdminInquiriesIdRoute,
