@@ -3,11 +3,12 @@ import { Link } from "@tanstack/react-router";
 import { Check, ChevronDown, Plus } from "lucide-react";
 import { useIsDemo, useMyBusinesses, useBusinessId, useLocations } from "@/hooks/usePortal";
 import { useIdentity, useSignOut } from "@/hooks/useAuthSession";
+import { exitDemo } from "@/lib/demo";
 
 function AccountMenu() {
   const [open, setOpen] = useState(false);
   const identity = useIdentity();
-  const { signOut, pending, error } = useSignOut("/");
+  const { signOut, pending, error } = useSignOut();
 
   if (!identity.data?.signedIn) {
     return (
@@ -44,11 +45,18 @@ function AccountMenu() {
             <p className="truncate text-[13px] font-bold">{identity.data.email ?? "Your account"}</p>
             <div className="mt-3 space-y-1.5">
               <Link
+                to="/"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Main TapLocal site
+              </Link>
+              <Link
                 to="/app"
                 onClick={() => setOpen(false)}
                 className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
               >
-                Business portal
+                My business portal
               </Link>
               {identity.data.isAdmin ? (
                 <Link
@@ -59,6 +67,13 @@ function AccountMenu() {
                   Open TapLocal Admin
                 </Link>
               ) : null}
+              <Link
+                to="/app/settings"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Account settings
+              </Link>
               <button
                 type="button"
                 onClick={signOut}
@@ -113,7 +128,7 @@ export function PortalHeader() {
         <div className="flex shrink-0 items-center gap-3">
           {isDemo ? (
             <span className="rounded-full border border-warning/40 bg-warning/15 px-2.5 py-1 text-[11px] font-bold tracking-wide text-warning uppercase">
-              Demo business
+              Demo
             </span>
           ) : null}
           <AccountMenu />
@@ -145,9 +160,21 @@ export function PortalHeader() {
       ) : null}
 
       {isDemo ? (
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          Example data — this is not connected to a real business.
-        </p>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <p className="text-[11px] text-muted-foreground">
+            Example data — this is not connected to a real business.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              exitDemo();
+              window.location.replace("/");
+            }}
+            className="shrink-0 rounded-full border border-border px-2.5 py-1 text-[11px] font-bold"
+          >
+            Exit demo
+          </button>
+        </div>
       ) : null}
     </header>
   );
