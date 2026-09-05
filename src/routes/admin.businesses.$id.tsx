@@ -55,7 +55,15 @@ function BusinessRecord() {
 
       <div>
         <SectionTitle>Quick actions</SectionTitle>
+        <Link
+          to="/admin/setup"
+          search={{ businessId: business.id }}
+          className="mb-2.5 flex min-h-[60px] items-center justify-center rounded-2xl bg-primary px-4 py-4 text-center text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-soft)]"
+        >
+          Set up / program plaque
+        </Link>
         <GlassPanel className="grid grid-cols-1 gap-2 p-3.5 sm:grid-cols-2">
+
           <Link
             to="/admin/provisioning"
             className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
