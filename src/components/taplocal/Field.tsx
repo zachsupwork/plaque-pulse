@@ -1,41 +1,60 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** The ambient signal field: dark gradient, drifting orbs and tilted glass planes. */
+/**
+ * The ambient field: a calm dark graphite gradient with one soft signal glow.
+ * Decorative tilted planes and drifting orbs were removed — body copy must
+ * never sit on a moving background.
+ */
 export function Field({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("relative min-h-screen w-full overflow-hidden field", className)}>
-      <div className="pointer-events-none absolute -top-16 -left-10 h-64 w-64 rounded-full bg-primary/30 blur-3xl" />
-      <div className="floaty pointer-events-none absolute top-40 -right-14 h-56 w-56 rounded-full bg-accent/25 blur-3xl" />
-      <div className="pointer-events-none absolute top-24 left-[-10%] h-40 w-[150%] -rotate-12 rounded-3xl border border-border bg-foreground/[0.04] backdrop-blur-md" />
-      <div className="pointer-events-none absolute top-40 right-[-15%] h-28 w-[150%] rotate-[9deg] rounded-3xl border border-border bg-accent/[0.06] backdrop-blur-md" />
+    <div className={cn("field relative min-h-screen w-full overflow-hidden", className)}>
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[140%] -translate-x-1/2 rounded-full bg-primary/12 blur-3xl" />
       <div className="relative z-10">{children}</div>
     </div>
   );
 }
 
+/** Primary content surface: readable, elevated, barely transparent. */
 export function GlassPanel({
   children,
   className,
-  sheen,
+  tone = "default",
+  sheen: _sheen,
 }: {
   children: ReactNode;
   className?: string;
+  tone?: "default" | "quiet" | "brand" | "signal" | "frost";
+  /** @deprecated animated sheen was removed from reading surfaces */
   sheen?: boolean;
 }) {
+  const tones: Record<string, string> = {
+    default: "surface",
+    quiet: "surface-quiet",
+    brand: "surface-brand",
+    signal: "surface-signal",
+    frost: "surface-frost",
+  };
+  return <div className={cn("relative rounded-2xl", tones[tone], className)}>{children}</div>;
+}
+
+export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className={cn("glass relative overflow-hidden rounded-2xl", className)}>
-      {sheen ? <div className="sheen" /> : null}
-      <div className="relative">{children}</div>
+    <div className="mb-2.5 flex items-end justify-between gap-3">
+      <h2 className="font-display text-[13px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+        {children}
+      </h2>
+      {action}
     </div>
   );
 }
 
-export function TrendPill({ changePct }: { changePct: number | null }) {
+export function TrendPill({ changePct, size = "md" }: { changePct: number | null; size?: "sm" | "md" }) {
+  const pad = size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-[12px]";
   if (changePct === null) {
     return (
-      <span className="rounded-full border border-border bg-foreground/5 px-2.5 py-1 text-[12px] font-semibold text-muted-foreground">
-        New
+      <span className={cn("rounded-full border border-border bg-foreground/5 font-semibold text-muted-foreground", pad)}>
+        No comparison yet
       </span>
     );
   }
@@ -43,12 +62,59 @@ export function TrendPill({ changePct }: { changePct: number | null }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[13px] font-bold",
-        up ? "border-accent/30 bg-accent/15 text-accent" : "border-destructive/30 bg-destructive/15 text-destructive",
+        "inline-flex items-center gap-1 rounded-full border font-bold",
+        pad,
+        up
+          ? "border-accent/35 bg-accent/15 text-accent"
+          : "border-destructive/35 bg-destructive/15 text-destructive",
       )}
     >
-      <span className="text-[12px]">{up ? "▲" : "▼"}</span>
+      {up ? "↑" : "↓"}
       {Math.abs(changePct)}%
     </span>
+  );
+}
+
+export type StatusTone = "ok" | "attention" | "problem" | "idle" | "brand";
+
+export function StatusChip({ tone, children }: { tone: StatusTone; children: ReactNode }) {
+  const map: Record<StatusTone, string> = {
+    ok: "border-accent/35 bg-accent/15 text-accent",
+    brand: "border-primary/40 bg-primary/15 text-primary",
+    attention: "border-warning/40 bg-warning/15 text-warning",
+    problem: "border-destructive/40 bg-destructive/15 text-destructive",
+    idle: "border-border bg-foreground/5 text-muted-foreground",
+  };
+  return (
+    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-semibold", map[tone])}>
+      {children}
+    </span>
+  );
+}
+
+export function Stat({
+  label,
+  value,
+  hint,
+  tone = "default",
+}: {
+  label: string;
+  value: ReactNode;
+  hint?: ReactNode;
+  tone?: "default" | "muted";
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-foreground/[0.06] px-3 py-3">
+      <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
+      <p
+        className={cn(
+          "mt-1 font-display font-bold tracking-tight",
+          tone === "muted" ? "text-[13px] leading-snug text-muted-foreground" : "text-[22px] leading-none",
+        )}
+      >
+        {value}
+      </p>
+      {hint ? <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p> : null}
+    </div>
   );
 }
