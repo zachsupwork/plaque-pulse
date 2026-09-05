@@ -198,7 +198,7 @@ function AdminLayout() {
     <Field>
       <div className="mx-auto flex max-w-6xl gap-6 px-4 pt-5 pb-28 md:px-6 md:pb-10">
         <aside className="hidden w-52 shrink-0 md:block">
-          <Link to="/" aria-label="Main TapLocal site"><BrandLockup suffix="Admin" /></Link>
+          <Link to="/admin" aria-label="Admin dashboard"><BrandLockup suffix="Admin" /></Link>
 
           <nav className="mt-5 space-y-1">
             {[...PRIMARY.map((t) => ({ ...t })), ...SECONDARY.map((t) => ({ ...t, exact: false }))].map((tab) => (
@@ -217,7 +217,7 @@ function AdminLayout() {
         <main className="min-w-0 flex-1">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="md:hidden">
-              <Link to="/" aria-label="Main TapLocal site"><BrandLockup suffix="Admin" /></Link>
+              <Link to="/admin" aria-label="Admin dashboard"><BrandLockup suffix="Admin" /></Link>
             </div>
 
             <div className="ml-auto">
