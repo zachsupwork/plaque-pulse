@@ -110,12 +110,16 @@ export function PortalHeader() {
           {multiple ? <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" /> : null}
         </button>
 
-        {isDemo ? (
-          <span className="shrink-0 rounded-full border border-warning/40 bg-warning/15 px-2.5 py-1 text-[11px] font-bold tracking-wide text-warning uppercase">
-            Demo business
-          </span>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-3">
+          {isDemo ? (
+            <span className="rounded-full border border-warning/40 bg-warning/15 px-2.5 py-1 text-[11px] font-bold tracking-wide text-warning uppercase">
+              Demo business
+            </span>
+          ) : null}
+          <AccountMenu />
+        </div>
       </div>
+
 
       {open && multiple ? (
         <div className="mt-2 rounded-xl border border-border bg-popover p-1.5">
