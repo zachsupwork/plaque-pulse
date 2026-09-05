@@ -18,6 +18,8 @@ export const Route = createFileRoute("/admin/more")({
 });
 
 const TOOLS = [
+  { to: "/admin/setup", label: "Set up a plaque", hint: "Business, action, plaque, live" },
+  { to: "/admin/provisioning", label: "Manufacturing", hint: "Create and program batches" },
   { to: "/admin/inquiries", label: "Inquiries", hint: "People who asked about TapLocal" },
   { to: "/admin/offerings", label: "Catalog", hint: "What the public site shows" },
   { to: "/admin/customers", label: "Customers", hint: "Accounts and who they belong to" },
@@ -26,6 +28,7 @@ const TOOLS = [
   { to: "/demo", label: "Sales mode", hint: "Labelled example walkthrough for prospects" },
   { to: "/admin/settings", label: "Settings", hint: "Your session and SmartLink domain" },
 ] as const;
+
 
 const NAVIGATION = [
   { to: "/", label: "Main TapLocal site", hint: "The public homepage" },
