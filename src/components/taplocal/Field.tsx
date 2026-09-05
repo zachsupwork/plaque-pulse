@@ -2,20 +2,18 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The ambient field: a calm dark graphite gradient with one soft signal glow.
- * Decorative tilted planes and drifting orbs were removed — body copy must
- * never sit on a moving background.
+ * The ambient field: a bright cloud-white page wash inspired by the plaque
+ * face. Static — no drifting orbs, no tilted planes behind body copy.
  */
 export function Field({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={cn("field relative min-h-screen w-full overflow-hidden", className)}>
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[140%] -translate-x-1/2 rounded-full bg-primary/12 blur-3xl" />
       <div className="relative z-10">{children}</div>
     </div>
   );
 }
 
-/** Primary content surface: readable, elevated, barely transparent. */
+/** Primary content surface: clean acrylic-white, soft shadow, thin border. */
 export function GlassPanel({
   children,
   className,
@@ -37,6 +35,16 @@ export function GlassPanel({
   };
   return <div className={cn("relative rounded-2xl", tones[tone], className)}>{children}</div>;
 }
+
+/** White card wrapped in the thin multicolour plaque edge. */
+export function EdgePanel({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className="gradient-edge shadow-[var(--shadow-soft)]">
+      <div className={cn("rounded-[1.3rem] bg-card", className)}>{children}</div>
+    </div>
+  );
+}
+
 
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
@@ -104,7 +112,7 @@ export function Stat({
   tone?: "default" | "muted";
 }) {
   return (
-    <div className="rounded-xl border border-border bg-foreground/[0.06] px-3 py-3">
+    <div className="rounded-xl border border-border bg-card px-3 py-3 shadow-[var(--shadow-soft)]">
       <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
       <p
         className={cn(
