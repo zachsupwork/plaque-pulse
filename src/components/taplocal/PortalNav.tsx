@@ -15,9 +15,8 @@ const items: NavItem[] = [
 
 export function PortalNav() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto grid max-w-2xl grid-cols-5 px-1.5 py-2">
-
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/90 shadow-[0_-8px_30px_oklch(0.22_0.035_268_/_6%)] backdrop-blur-xl">
+      <div className="mx-auto grid max-w-2xl grid-cols-5 px-1.5 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {items.map((item) => (
           <Link
             key={item.to}
@@ -26,15 +25,15 @@ export function PortalNav() {
             className="group flex flex-col items-center gap-1 py-1.5 text-muted-foreground"
             activeProps={{ "data-active": "true" } as Record<string, string>}
           >
+            <span className="grid h-8 w-8 place-items-center rounded-full transition-colors group-data-[active=true]:bg-primary/10 group-data-[active=true]:text-primary">
+              <item.icon className="h-[19px] w-[19px]" strokeWidth={2} />
+            </span>
             <span
               className={cn(
-                "grid h-9 w-9 place-items-center rounded-xl transition-colors",
-                "group-data-[active=true]:bg-primary group-data-[active=true]:text-primary-foreground",
+                "text-[10px] font-medium",
+                "group-data-[active=true]:font-bold group-data-[active=true]:text-primary",
               )}
             >
-              <item.icon className="h-[18px] w-[18px]" strokeWidth={2} />
-            </span>
-            <span className="text-[10px] font-medium group-data-[active=true]:font-semibold group-data-[active=true]:text-primary">
               {item.label}
             </span>
           </Link>
