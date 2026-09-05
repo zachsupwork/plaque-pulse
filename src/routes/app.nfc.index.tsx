@@ -34,9 +34,10 @@ function NfcHome() {
     <div className="space-y-5">
       <EmbeddedNotice />
       <header>
-        <h1 className="font-display text-[30px] leading-tight font-bold tracking-tight">NFC Manager</h1>
+        <h1 className="font-display text-[30px] leading-tight font-bold tracking-tight">Tag tools</h1>
         <p className="mt-1 text-[14px] text-muted-foreground">
-          Set up and manage TapLocal NFC tags at your business.
+          Advanced tools for the tags at your business. Most owners never need these — setup happens
+          when you first tap a plaque.
         </p>
       </header>
 

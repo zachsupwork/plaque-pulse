@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, LayoutGrid, Nfc, PieChart, Activity, Settings } from "lucide-react";
+import { Home, LayoutGrid, PieChart, Activity, Settings } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +8,6 @@ type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean };
 const items: NavItem[] = [
   { to: "/app", label: "Home", icon: Home, exact: true },
   { to: "/app/plaques", label: "Plaques", icon: LayoutGrid },
-  { to: "/app/nfc", label: "NFC", icon: Nfc },
   { to: "/app/results", label: "Results", icon: PieChart },
   { to: "/app/activity", label: "Activity", icon: Activity },
   { to: "/app/settings", label: "Settings", icon: Settings },
@@ -17,7 +16,7 @@ const items: NavItem[] = [
 export function PortalNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto grid max-w-2xl grid-cols-6 px-1.5 py-2">
+      <div className="mx-auto grid max-w-2xl grid-cols-5 px-1.5 py-2">
 
         {items.map((item) => (
           <Link

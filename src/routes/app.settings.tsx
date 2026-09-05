@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { GlassPanel } from "@/components/taplocal/Field";
 import { SmartlinkInfraPanel } from "@/components/taplocal/SmartlinkInfra";
@@ -106,6 +106,16 @@ function SettingsPage() {
           Connected accounts let us line up your reviews and followers with plaque activity. They never let us
           post on your behalf.
         </p>
+      </GlassPanel>
+
+      <GlassPanel className="p-4">
+        <p className="font-display text-[14px] font-semibold tracking-tight">Advanced</p>
+        <Link to="/app/nfc" className="mt-2.5 block">
+          <span className="block text-[13px] font-semibold text-primary">Tag tools</span>
+          <span className="mt-0.5 block text-[13px] leading-relaxed text-muted-foreground text-pretty">
+            Program a replacement tag, check one that's already out there, or see every tag at your business.
+          </span>
+        </Link>
       </GlassPanel>
 
       <SmartlinkInfraPanel />
