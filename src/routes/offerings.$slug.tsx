@@ -6,7 +6,14 @@ import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
 import { InterestForm } from "@/components/taplocal/InterestForm";
 import { CATEGORY_LABELS } from "@/components/taplocal/OfferingCard";
-import { getOffering } from "@/lib/offerings.functions";
+import {
+  FeatureList,
+  OptionSwatches,
+  ProductGallery,
+  VariantPicker,
+  type Selections,
+} from "@/components/taplocal/Product";
+import { getOffering, optionList } from "@/lib/offerings.functions";
 
 export const Route = createFileRoute("/offerings/$slug")({
   loader: ({ params }) => getOffering({ data: { slug: params.slug } }),
@@ -55,18 +62,19 @@ function OfferingDetail() {
     queryFn: () => fetchOne({ data: { slug } }),
     initialData: initial,
   });
-  const [open, setOpen] = useState(false);
+  const [selections, setSelections] = useState<Selections | null>(null);
 
   const o = data?.offering;
   if (!o) return <Missing />;
 
-  const styles = o.metadata?.styles ?? [];
-  const bases = o.metadata?.bases ?? [];
-  const physical = o.metadata?.physical !== false;
+  const meta = o.metadata ?? {};
+  const physical = meta.physical !== false;
+  const finishes = optionList(meta.finishes ?? meta.styles);
+  const bases = optionList(meta.bases);
 
   return (
     <Field>
-      <div className="mx-auto max-w-2xl px-5 pt-8 pb-24">
+      <div className="mx-auto max-w-5xl px-5 pt-8 pb-24">
         <Link to="/" aria-label="TapLocal home" className="inline-block">
           <BrandLockup suffix="Digital" />
         </Link>
@@ -75,77 +83,77 @@ function OfferingDetail() {
           ← All offerings
         </Link>
 
-        <p className="mt-4 text-[11px] font-bold tracking-[0.12em] text-primary uppercase">
-          {CATEGORY_LABELS[o.category] ?? o.category}
-        </p>
-        <h1 className="mt-1 font-display text-[28px] leading-tight font-bold tracking-tight text-balance">
-          {o.name}
-        </h1>
-        <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground text-pretty">
-          {o.short_description}
-        </p>
+        <div className="mt-4 grid gap-8 md:grid-cols-2 md:gap-12">
+          <ProductGallery offering={o} />
 
-        {o.image_url ? (
-          <img src={o.image_url} alt={o.name} className="mt-5 w-full rounded-2xl object-cover" />
-        ) : (
-          <div className="mt-5 h-2 w-full rounded-full bg-gradient-to-r from-primary/70 via-accent/60 to-primary/30" />
-        )}
+          <div>
+            <p className="text-[11px] font-bold tracking-[0.12em] text-primary uppercase">
+              {CATEGORY_LABELS[o.category] ?? o.category}
+            </p>
+            <h1 className="mt-1 font-display text-[28px] leading-tight font-bold tracking-tight text-balance md:text-[34px]">
+              {o.name}
+            </h1>
+            {meta.tagline ? (
+              <p className="mt-2 text-[12px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
+                {meta.tagline}
+              </p>
+            ) : null}
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground text-pretty">
+              {o.short_description}
+            </p>
+            <FeatureList features={meta.features} />
+            <p className="mt-4 text-[15px] font-bold">
+              {o.starting_price_text || (
+                <span className="font-semibold text-muted-foreground">Contact for pricing</span>
+              )}
+            </p>
+
+            <div className="mt-6">
+              <VariantPicker offering={o} onInterested={(s) => setSelections(s)} />
+            </div>
+          </div>
+        </div>
 
         {o.full_description ? (
-          <GlassPanel className="mt-5 p-5">
-            <h2 className="font-display text-[16px] font-bold tracking-tight">What it is</h2>
-            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground text-pretty">
+          <GlassPanel className="mt-10 p-5 md:p-7">
+            <h2 className="font-display text-[18px] font-bold tracking-tight">What it is</h2>
+            <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-muted-foreground text-pretty">
               {o.full_description}
             </p>
           </GlassPanel>
         ) : null}
 
-        {styles.length || bases.length ? (
-          <GlassPanel className="mt-4 p-5">
-            <h2 className="font-display text-[16px] font-bold tracking-tight">Options</h2>
-            {styles.length ? (
-              <div className="mt-3">
-                <p className="text-[12px] font-semibold tracking-wide text-muted-foreground uppercase">Styles</p>
-                <p className="mt-1 text-[14px]">{styles.join(" · ")}</p>
-              </div>
-            ) : null}
-            {bases.length ? (
-              <div className="mt-3">
-                <p className="text-[12px] font-semibold tracking-wide text-muted-foreground uppercase">Bases</p>
-                <p className="mt-1 text-[14px]">{bases.join(" · ")}</p>
-              </div>
-            ) : null}
-          </GlassPanel>
+        {finishes.length || bases.length ? (
+          <section className="mt-8 grid gap-6 md:grid-cols-2">
+            <OptionSwatches title="Finishes" options={finishes} />
+            <OptionSwatches
+              title="Bases"
+              note="Not every base is available for every design — we confirm before production."
+              options={bases}
+            />
+          </section>
         ) : null}
 
-        {o.starting_price_text ? (
-          <p className="mt-4 text-[15px] font-bold">{o.starting_price_text}</p>
+        {physical ? (
+          <p className="mt-10 text-[12px] text-muted-foreground">
+            Product images are high-quality visual mockups while the designs are being finalised, not
+            photographs of a delivered unit.
+          </p>
         ) : null}
 
-        <div className="sticky bottom-4 mt-6 space-y-2">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="w-full rounded-xl bg-primary px-5 py-3.5 text-[14px] font-bold tracking-wide text-primary-foreground uppercase shadow-[var(--shadow-brand)]"
-          >
-            {o.cta_label}
-          </button>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-[13px] font-bold tracking-wide uppercase"
-          >
-            Get pricing
-          </button>
-        </div>
+        <Link to="/smartplaques" className="mt-6 inline-block text-[14px] font-semibold text-primary">
+          See all SmartPlaques →
+        </Link>
       </div>
 
-      {open ? (
+      {selections ? (
         <InterestForm
           offeringId={o.id}
           offeringName={o.name}
           physical={physical}
-          onClose={() => setOpen(false)}
+          selections={selections}
+          source="offering_detail"
+          onClose={() => setSelections(null)}
         />
       ) : null}
     </Field>
