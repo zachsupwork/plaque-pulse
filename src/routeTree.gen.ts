@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as SmartplaquesRouteImport } from './routes/smartplaques'
 import { Route as ActivateTokenRouteImport } from './routes/activate.$token'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
@@ -26,6 +27,8 @@ import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppResultsRouteImport } from './routes/app.results'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as NSlugRouteImport } from './routes/n.$slug'
+import { Route as OfferingsIndexRouteImport } from './routes/offerings.index'
+import { Route as OfferingsSlugRouteImport } from './routes/offerings.$slug'
 import { Route as QSlugRouteImport } from './routes/q.$slug'
 import { Route as SetupSlugRouteImport } from './routes/setup.$slug'
 import { Route as AdminBusinessesIndexRouteImport } from './routes/admin.businesses.index'
@@ -70,6 +73,11 @@ const AuthRoute = AuthRouteImport.update({
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SmartplaquesRoute = SmartplaquesRouteImport.update({
+  id: '/smartplaques',
+  path: '/smartplaques',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivateTokenRoute = ActivateTokenRouteImport.update({
@@ -130,6 +138,16 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const NSlugRoute = NSlugRouteImport.update({
   id: '/n/$slug',
   path: '/n/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfferingsIndexRoute = OfferingsIndexRouteImport.update({
+  id: '/offerings/',
+  path: '/offerings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfferingsSlugRoute = OfferingsSlugRouteImport.update({
+  id: '/offerings/$slug',
+  path: '/offerings/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QSlugRoute = QSlugRouteImport.update({
@@ -239,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
+  '/smartplaques': typeof SmartplaquesRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -249,10 +268,12 @@ export interface FileRoutesByFullPath {
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
+  '/offerings/$slug': typeof OfferingsSlugRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
+  '/offerings/': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
@@ -276,6 +297,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
+  '/smartplaques': typeof SmartplaquesRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -286,10 +308,12 @@ export interface FileRoutesByTo {
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
+  '/offerings/$slug': typeof OfferingsSlugRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
+  '/offerings': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
@@ -316,6 +340,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
+  '/smartplaques': typeof SmartplaquesRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -326,10 +351,12 @@ export interface FileRoutesById {
   '/app/results': typeof AppResultsRoute
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
+  '/offerings/$slug': typeof OfferingsSlugRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
+  '/offerings/': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
@@ -357,6 +384,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/demo'
+    | '/smartplaques'
     | '/activate/$token'
     | '/admin/analytics'
     | '/admin/customers'
@@ -367,10 +395,12 @@ export interface FileRouteTypes {
     | '/app/results'
     | '/app/settings'
     | '/n/$slug'
+    | '/offerings/$slug'
     | '/q/$slug'
     | '/setup/$slug'
     | '/admin/'
     | '/app/'
+    | '/offerings/'
     | '/admin/businesses/$id'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
@@ -394,6 +424,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/demo'
+    | '/smartplaques'
     | '/activate/$token'
     | '/admin/analytics'
     | '/admin/customers'
@@ -404,10 +435,12 @@ export interface FileRouteTypes {
     | '/app/results'
     | '/app/settings'
     | '/n/$slug'
+    | '/offerings/$slug'
     | '/q/$slug'
     | '/setup/$slug'
     | '/admin'
     | '/app'
+    | '/offerings'
     | '/admin/businesses/$id'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
@@ -433,6 +466,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/demo'
+    | '/smartplaques'
     | '/activate/$token'
     | '/admin/analytics'
     | '/admin/customers'
@@ -443,10 +477,12 @@ export interface FileRouteTypes {
     | '/app/results'
     | '/app/settings'
     | '/n/$slug'
+    | '/offerings/$slug'
     | '/q/$slug'
     | '/setup/$slug'
     | '/admin/'
     | '/app/'
+    | '/offerings/'
     | '/admin/businesses/$id'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
@@ -473,10 +509,13 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   DemoRoute: typeof DemoRoute
+  SmartplaquesRoute: typeof SmartplaquesRoute
   ActivateTokenRoute: typeof ActivateTokenRoute
   NSlugRoute: typeof NSlugRoute
+  OfferingsSlugRoute: typeof OfferingsSlugRoute
   QSlugRoute: typeof QSlugRoute
   SetupSlugRoute: typeof SetupSlugRoute
+  OfferingsIndexRoute: typeof OfferingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -514,6 +553,13 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/smartplaques': {
+      id: '/smartplaques'
+      path: '/smartplaques'
+      fullPath: '/smartplaques'
+      preLoaderRoute: typeof SmartplaquesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activate/$token': {
@@ -598,6 +644,20 @@ declare module '@tanstack/react-router' {
       path: '/n/$slug'
       fullPath: '/n/$slug'
       preLoaderRoute: typeof NSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offerings/': {
+      id: '/offerings/'
+      path: '/offerings'
+      fullPath: '/offerings/'
+      preLoaderRoute: typeof OfferingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offerings/$slug': {
+      id: '/offerings/$slug'
+      path: '/offerings/$slug'
+      fullPath: '/offerings/$slug'
+      preLoaderRoute: typeof OfferingsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/q/$slug': {
@@ -821,10 +881,13 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   DemoRoute: DemoRoute,
+  SmartplaquesRoute: SmartplaquesRoute,
   ActivateTokenRoute: ActivateTokenRoute,
   NSlugRoute: NSlugRoute,
+  OfferingsSlugRoute: OfferingsSlugRoute,
   QSlugRoute: QSlugRoute,
   SetupSlugRoute: SetupSlugRoute,
+  OfferingsIndexRoute: OfferingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
