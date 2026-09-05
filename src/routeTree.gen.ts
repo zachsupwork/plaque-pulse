@@ -20,6 +20,7 @@ import { Route as AppResultsRouteImport } from './routes/app.results'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as NSlugRouteImport } from './routes/n.$slug'
 import { Route as QSlugRouteImport } from './routes/q.$slug'
+import { Route as SetupSlugRouteImport } from './routes/setup.$slug'
 import { Route as AdminNfcIndexRouteImport } from './routes/admin.nfc.index'
 import { Route as AdminNfcBatchRouteImport } from './routes/admin.nfc.batch'
 import { Route as AdminNfcReadRouteImport } from './routes/admin.nfc.read'
@@ -89,6 +90,11 @@ const NSlugRoute = NSlugRouteImport.update({
 const QSlugRoute = QSlugRouteImport.update({
   id: '/q/$slug',
   path: '/q/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupSlugRoute = SetupSlugRouteImport.update({
+  id: '/setup/$slug',
+  path: '/setup/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminNfcIndexRoute = AdminNfcIndexRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/q/$slug': typeof QSlugRoute
+  '/setup/$slug': typeof SetupSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/q/$slug': typeof QSlugRoute
+  '/setup/$slug': typeof SetupSlugRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/q/$slug': typeof QSlugRoute
+  '/setup/$slug': typeof SetupSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/q/$slug'
+    | '/setup/$slug'
     | '/admin/'
     | '/app/'
     | '/admin/nfc/batch'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/q/$slug'
+    | '/setup/$slug'
     | '/admin'
     | '/app'
     | '/admin/nfc/batch'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/q/$slug'
+    | '/setup/$slug'
     | '/admin/'
     | '/app/'
     | '/admin/nfc/batch'
@@ -342,6 +354,7 @@ export interface RootRouteChildren {
   ActivateTokenRoute: typeof ActivateTokenRoute
   NSlugRoute: typeof NSlugRoute
   QSlugRoute: typeof QSlugRoute
+  SetupSlugRoute: typeof SetupSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       path: '/q/$slug'
       fullPath: '/q/$slug'
       preLoaderRoute: typeof QSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup/$slug': {
+      id: '/setup/$slug'
+      path: '/setup/$slug'
+      fullPath: '/setup/$slug'
+      preLoaderRoute: typeof SetupSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/nfc/': {
@@ -594,6 +614,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivateTokenRoute: ActivateTokenRoute,
   NSlugRoute: NSlugRoute,
   QSlugRoute: QSlugRoute,
+  SetupSlugRoute: SetupSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
