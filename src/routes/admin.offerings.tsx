@@ -225,7 +225,7 @@ function CatalogAdmin() {
                     /{o.slug} · {o.category} · order {o.sort_order}
                   </p>
                 </div>
-                <StatusChip tone={o.active ? "ok" : "warn"}>{o.active ? "PUBLIC" : "HIDDEN"}</StatusChip>
+                <StatusChip tone={o.active ? "ok" : "idle"}>{o.active ? "PUBLIC" : "HIDDEN"}</StatusChip>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button

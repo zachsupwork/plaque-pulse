@@ -18,6 +18,8 @@ export const Route = createFileRoute("/admin/more")({
 });
 
 const TOOLS = [
+  { to: "/admin/inquiries", label: "Inquiries", hint: "People who asked about TapLocal" },
+  { to: "/admin/offerings", label: "Catalog", hint: "What the public site shows" },
   { to: "/admin/customers", label: "Customers", hint: "Accounts and who they belong to" },
   { to: "/admin/analytics", label: "Analytics", hint: "Real placements, destinations, top performers" },
   { to: "/admin/nfc", label: "NFC tools", hint: "Write, verify and batch programming" },

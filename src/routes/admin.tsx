@@ -13,9 +13,11 @@ const PRIMARY = [
   { to: "/admin/businesses", label: "Businesses", exact: false },
   { to: "/admin/plaques", label: "Plaques", exact: false },
   { to: "/admin/provisioning", label: "Manufacturing", exact: false },
+  { to: "/admin/inquiries", label: "Inquiries", exact: false },
 ] as const;
 
 const SECONDARY = [
+  { to: "/admin/offerings", label: "Catalog" },
   { to: "/admin/customers", label: "Customers" },
   { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/nfc", label: "NFC Tools" },
@@ -216,7 +218,7 @@ function AdminLayout() {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-border bg-card/95 backdrop-blur md:hidden">
         {[...PRIMARY, { to: "/admin/more", label: "More", exact: false } as const].map((tab) => (
           <Link
             key={tab.to}

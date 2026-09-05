@@ -85,7 +85,7 @@ function InquiryDetail() {
             Received {new Date(q.created_at).toLocaleString()} · {q.source}
           </p>
         </div>
-        <StatusChip tone={q.status === "new" ? "warn" : "ok"}>{q.status.toUpperCase()}</StatusChip>
+        <StatusChip tone={q.status === "new" ? "attention" : "ok"}>{q.status.toUpperCase()}</StatusChip>
       </div>
 
       <GlassPanel className="p-4">

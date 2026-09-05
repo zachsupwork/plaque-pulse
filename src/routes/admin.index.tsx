@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taplocal/Field";
 import { networkActivity, networkOverview } from "@/lib/admin-data.functions";
+import { inquiryCounts } from "@/lib/inquiries.functions";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -34,6 +35,7 @@ const QUICK_ACTIONS = [
   { to: "/admin/nfc/verify", label: "Verify plaque", tone: "plain" as const },
   { to: "/admin/businesses", label: "Find / add business", tone: "plain" as const },
   { to: "/admin/plaques", label: "Set up customer", tone: "plain" as const },
+  { to: "/admin/inquiries", label: "Inquiries", tone: "plain" as const },
   { to: "/demo", label: "Sales mode", tone: "outline" as const },
 ];
 
@@ -47,6 +49,13 @@ function AdminDashboard() {
   const o = overview.data?.ok ? overview.data : null;
   const items = activity.data?.ok ? activity.data.items : [];
 
+  const countsFn = useServerFn(inquiryCounts);
+  const counts = useQuery({ queryKey: ["admin-inquiry-counts"], queryFn: () => countsFn({ data: undefined }) });
+  const newInquiries = counts.data?.ok ? (counts.data.counts["new"] ?? 0) : 0;
+  const followUps = counts.data?.ok
+    ? (counts.data.counts["contacted"] ?? 0) + (counts.data.counts["follow_up"] ?? 0)
+    : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
@@ -56,6 +65,24 @@ function AdminDashboard() {
         </div>
         <StatusChip tone="ok">REAL</StatusChip>
       </div>
+
+      <Link
+        to="/admin/inquiries"
+        className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)]"
+      >
+        <div>
+          <p className="text-[12px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+            New inquiries
+          </p>
+          <p className="mt-1 font-display text-[22px] font-bold tracking-tight">
+            {newInquiries} new
+            {followUps ? <span className="text-[14px] text-muted-foreground"> · {followUps} to follow up</span> : null}
+          </p>
+        </div>
+        <span className="rounded-xl bg-primary px-3.5 py-2.5 text-[12px] font-bold tracking-wide text-primary-foreground uppercase">
+          Review
+        </span>
+      </Link>
 
       <div>
         <SectionTitle>Today</SectionTitle>
