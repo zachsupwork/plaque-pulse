@@ -196,8 +196,10 @@ export const listAllBusinesses = createServerFn({ method: "POST" })
     const { data: businesses } = await client
       .from("businesses")
       .select("id, name, industry, status, is_demo, created_at, updated_at")
+      .eq("is_demo", false)
       .order("created_at", { ascending: false })
       .limit(500);
+
 
     const ids = (businesses ?? []).map((b) => b.id);
     if (!ids.length) return { ok: true as const, businesses: [] };
