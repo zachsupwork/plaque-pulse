@@ -97,19 +97,27 @@ function AdminDashboard() {
 
       <div>
         <SectionTitle>Quick actions</SectionTitle>
+        <Link
+          to="/admin/setup"
+          className="mb-2.5 flex min-h-[64px] items-center justify-center rounded-2xl bg-primary px-4 py-4 text-center text-[16px] font-bold text-primary-foreground shadow-[var(--shadow-soft)]"
+        >
+          Set up / program a plaque
+        </Link>
         <div className="grid grid-cols-2 gap-2.5">
           {QUICK_ACTIONS.map((a) => (
             <Link
               key={a.label}
               to={a.to}
               className={`flex min-h-[56px] items-center justify-center rounded-2xl px-3 py-3 text-center text-[14px] font-bold ${
-                a.tone === "primary"
-                  ? "bg-primary text-primary-foreground"
-                  : a.tone === "outline"
-                    ? "border border-primary/40 bg-primary/10 text-primary"
-                    : "border border-border bg-card shadow-[var(--shadow-soft)]"
+                a.tone === "outline"
+                  ? "border border-primary/40 bg-primary/10 text-primary"
+                  : "border border-border bg-card shadow-[var(--shadow-soft)]"
               }`}
             >
+              {a.label}
+            </Link>
+          ))}
+
               {a.label}
             </Link>
           ))}
