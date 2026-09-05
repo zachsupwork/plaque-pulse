@@ -11,6 +11,8 @@ type Props = {
   offeringName: string;
   physical: boolean;
   source?: string;
+  /** Finish, base, quantity etc. chosen on the product page before opening this. */
+  selections?: Record<string, string>;
   onClose: () => void;
 };
 
@@ -25,7 +27,15 @@ const inputClass =
   "w-full rounded-xl border border-border bg-foreground/[0.04] px-3.5 py-3 text-[15px] outline-none placeholder:text-muted-foreground focus:border-primary/60";
 
 /** The 20-second "I'm interested" flow: ask little, never block on Google. */
-export function InterestForm({ offeringId, offeringName, physical, source = "website", onClose }: Props) {
+export function InterestForm({
+  offeringId,
+  offeringName,
+  physical,
+  source = "website",
+  selections,
+  onClose,
+}: Props) {
+  const chosen = Object.entries(selections ?? {}).filter(([, v]) => v);
   const identity = useIdentity();
   const send = useServerFn(submitInquiry);
   const search = useServerFn(searchBusinesses);
@@ -37,7 +47,9 @@ export function InterestForm({ offeringId, offeringName, physical, source = "web
   const [businessName, setBusinessName] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
   const [placeId, setPlaceId] = useState("");
-  const [quantity, setQuantity] = useState<string>(physical ? "Not sure" : "");
+  const [quantity, setQuantity] = useState<string>(
+    selections?.["Quantity"] || (physical ? "Not sure" : ""),
+  );
   const [message, setMessage] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -85,7 +97,9 @@ export function InterestForm({ offeringId, offeringName, physical, source = "web
         businessAddress,
         googlePlaceId: placeId,
         quantityInterest: physical ? quantity : "",
-        message,
+        message: chosen.length
+          ? `${chosen.map(([k, v]) => `${k}: ${v}`).join("\n")}${message ? `\n\n${message}` : ""}`
+          : message,
         source,
       },
     });
@@ -149,6 +163,20 @@ export function InterestForm({ offeringId, offeringName, physical, source = "web
             <p className="mt-1.5 text-[14px] text-muted-foreground">
               We'll help you figure out the best setup.
             </p>
+
+            {chosen.length ? (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {chosen.map(([k, v]) => (
+                  <span
+                    key={k}
+                    className="rounded-xl border border-border bg-foreground/[0.04] px-2.5 py-1.5 text-[12px] font-semibold"
+                  >
+                    <span className="text-muted-foreground">{k}: </span>
+                    {v}
+                  </span>
+                ))}
+              </div>
+            ) : null}
 
             <form onSubmit={onSubmit} className="mt-4 space-y-3">
               <input

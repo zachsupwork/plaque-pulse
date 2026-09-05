@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Field, GlassPanel, EdgePanel } from "@/components/taplocal/Field";
+import { ProductImage } from "@/components/taplocal/Product";
 import { BrandLockup, NfcMark } from "@/components/taplocal/Brand";
 import { useIdentity } from "@/hooks/useAuthSession";
 import plaqueTrio from "@/assets/plaque-trio.jpg";
@@ -32,45 +33,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Marketing,
 });
-
-const variants = [
-  {
-    name: "Google Reviews",
-    body: "White cloud face, five gold stars, Google-coloured edge.",
-    surface: "cloud-surface",
-    dot: "from-[#4285F4] via-[#EA4335] to-[#FBBC05]",
-  },
-  {
-    name: "Instagram",
-    body: "Soft pink face with a violet-to-orange edge for follows.",
-    surface: "soft-marble",
-    dot: "from-[#F58529] via-[#DD2A7B] to-[#8134AF]",
-  },
-  {
-    name: "Website",
-    body: "Light smoke face that sends people to your own page.",
-    surface: "smoke-surface",
-    dot: "from-primary to-primary",
-  },
-  {
-    name: "Menu",
-    body: "Table-top plaque that opens today's menu instantly.",
-    surface: "smoke-surface",
-    dot: "from-primary via-accent to-primary",
-  },
-  {
-    name: "Booking",
-    body: "Reception plaque that opens your booking page.",
-    surface: "cloud-surface",
-    dot: "from-accent to-primary",
-  },
-  {
-    name: "Custom",
-    body: "Anything else — a form, a WhatsApp chat, a loyalty page.",
-    surface: "soft-marble",
-    dot: "from-primary via-[#DD2A7B] to-[#F5A524]",
-  },
-];
 
 const steps = [
   { n: "1", title: "We prepare your plaque", body: "A unique SmartLink, NFC preprogrammed, QR paired." },
@@ -235,43 +197,101 @@ function SiteFooter() {
   );
 }
 
-/** Live catalog highlights, driven by whatever staff have marked featured. */
-function FeaturedOfferings() {
+/** Live catalog highlights: the plaques themselves, straight from the catalog. */
+function ProductShowroom() {
   const listFn = useServerFn(listOfferings);
   const { data } = useQuery({ queryKey: ["offerings"], queryFn: () => listFn() });
   const [interest, setInterest] = useState<Offering | null>(null);
 
   const all = data?.offerings ?? [];
-  const featured = (all.filter((o) => o.featured).length ? all.filter((o) => o.featured) : all).slice(0, 3);
-  if (!featured.length) return null;
+  const plaques = all.filter((o) => o.category === "smartplaques").slice(0, 3);
+  const packs = all.filter((o) => o.category === "packages").slice(0, 3);
+  const hero = plaques.length ? plaques : all.filter((o) => o.featured).slice(0, 3);
+  if (!hero.length) return null;
 
   return (
     <section id="offerings" className="mt-20">
       <p className="text-[12px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
-        What TapLocal can do for your business
+        Choose what you want customers to do
       </p>
       <h2 className="mt-2 max-w-xl text-[26px] leading-tight font-bold tracking-tight md:text-[34px]">
-        Plaques, packs and the setup behind them.
+        One plaque, one clear action.
       </h2>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {featured.map((o) => (
-          <OfferingCard key={o.id} offering={o} onInterested={() => setInterest(o)} />
+        {hero.map((o) => (
+          <article
+            key={o.id}
+            className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-soft)]"
+          >
+            <div className="cloud-surface p-3">
+              <ProductImage src={o.image_url} alt={o.name} className="h-60 w-full" />
+            </div>
+            <div className="flex flex-1 flex-col p-5">
+              <h3 className="font-display text-[18px] leading-tight font-bold tracking-tight">{o.name}</h3>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-muted-foreground text-pretty">
+                {o.short_description}
+              </p>
+              {o.metadata?.tagline ? (
+                <p className="mt-2 text-[11px] font-bold tracking-wide text-primary">{o.metadata.tagline}</p>
+              ) : null}
+              <div className="flex-1" />
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInterest(o)}
+                  className="flex-1 rounded-xl bg-primary px-3 py-2.5 text-[12px] font-bold tracking-wide text-primary-foreground uppercase"
+                >
+                  {o.cta_label}
+                </button>
+                <Link
+                  to="/offerings/$slug"
+                  params={{ slug: o.slug }}
+                  className="rounded-xl border border-border px-3 py-2.5 text-[12px] font-bold tracking-wide uppercase"
+                >
+                  See details
+                </Link>
+              </div>
+            </div>
+          </article>
         ))}
       </div>
 
       <Link
-        to="/offerings"
+        to="/smartplaques"
         className="mt-6 inline-block rounded-xl border border-border bg-card px-5 py-3 text-[13px] font-bold tracking-wide uppercase"
       >
-        View all offerings
+        View all SmartPlaques
       </Link>
+
+      {packs.length ? (
+        <div className="mt-14">
+          <p className="text-[12px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
+            Business packs
+          </p>
+          <h2 className="mt-2 max-w-xl text-[26px] leading-tight font-bold tracking-tight md:text-[34px]">
+            One business. More than one place to tap.
+          </h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {packs.map((o) => (
+              <OfferingCard key={o.id} offering={o} onInterested={() => setInterest(o)} />
+            ))}
+          </div>
+          <Link
+            to="/offerings"
+            className="mt-6 inline-block rounded-xl border border-border bg-card px-5 py-3 text-[13px] font-bold tracking-wide uppercase"
+          >
+            View the full catalog
+          </Link>
+        </div>
+      ) : null}
 
       {interest ? (
         <InterestForm
           offeringId={interest.id}
           offeringName={interest.name}
           physical={interest.metadata?.physical !== false}
+          source="homepage"
           onClose={() => setInterest(null)}
         />
       ) : null}
@@ -358,40 +378,7 @@ function Marketing() {
           </div>
         </section>
 
-        <FeaturedOfferings />
-
-        <section id="plaques" className="mt-20">
-          <p className="text-[12px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
-            Choose what you want customers to do
-          </p>
-          <h2 className="mt-2 max-w-xl text-[26px] leading-tight font-bold tracking-tight md:text-[34px]">
-            One plaque, one clear action.
-          </h2>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {variants.map((v) => (
-              <EdgePanel key={v.name}>
-                <div className={`${v.surface} rounded-[1.3rem] p-5`}>
-                  <div className="flex items-start justify-between">
-                    <span className={`h-2.5 w-16 rounded-full bg-gradient-to-r ${v.dot}`} />
-                    <NfcMark className="h-9 w-9 text-foreground/70" />
-                  </div>
-                  <p className="mt-8 font-display text-[17px] font-bold tracking-tight">{v.name}</p>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground text-pretty">{v.body}</p>
-                </div>
-              </EdgePanel>
-            ))}
-          </div>
-
-          <div className="premium-marble-dark mt-4 rounded-3xl p-6 md:p-9">
-            <p className="text-[12px] font-bold tracking-[0.12em] uppercase opacity-70">Premium edition</p>
-            <h3 className="mt-2 max-w-md text-[24px] leading-tight font-bold tracking-tight text-inherit md:text-[30px]">
-              Black marble, gold type, white contactless mark.
-            </h3>
-            <p className="mt-3 max-w-md text-[14px] leading-relaxed opacity-80">
-              For dining rooms and reception desks where the plaque should look like part of the room.
-            </p>
-          </div>
-        </section>
+        <ProductShowroom />
 
         <section id="how" className="mt-20">
           <p className="text-[12px] font-bold tracking-[0.12em] text-muted-foreground uppercase">How it works</p>

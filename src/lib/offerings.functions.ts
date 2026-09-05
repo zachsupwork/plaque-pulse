@@ -24,12 +24,31 @@ export type Offering = {
   metadata: OfferingMeta;
 };
 
+export type OptionImage = { name: string; image?: string | null };
+export type GalleryImage = { url: string; caption?: string | null };
+
 export type OfferingMeta = {
+  /** Legacy plain-text options, still honoured when present. */
   styles?: string[];
-  bases?: string[];
   physical?: boolean;
   quantity?: number;
+  tagline?: string;
+  features?: string[];
+  finishes?: (OptionImage | string)[];
+  bases?: (OptionImage | string)[];
+  quantities?: string[];
+  designs?: string[];
+  locations?: string[];
+  gallery?: GalleryImage[];
+  /** Shows the simple pack builder instead of a plain variant picker. */
+  builder?: boolean;
 };
+
+/** Options may be stored as plain strings or as {name, image} pairs. */
+export function optionList(list: (OptionImage | string)[] | undefined): OptionImage[] {
+  return (list ?? []).map((o) => (typeof o === "string" ? { name: o } : o)).filter((o) => o?.name);
+}
+
 
 const COLUMNS =
   "id, name, slug, category, short_description, full_description, image_url, icon, featured, sort_order, cta_label, starting_price_text, metadata";

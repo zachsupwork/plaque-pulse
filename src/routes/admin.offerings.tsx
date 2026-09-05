@@ -33,7 +33,26 @@ type Draft = {
   sort_order: number;
   active: boolean;
   featured: boolean;
+  tagline: string;
+  features: string;
+  finishes: string;
+  bases: string;
+  quantities: string;
+  gallery: string;
 };
+
+const lines = (v: unknown) =>
+  Array.isArray(v)
+    ? v
+        .map((x) => (typeof x === "string" ? x : ((x as { name?: string; url?: string })?.name ?? (x as { url?: string })?.url ?? "")))
+        .filter(Boolean)
+        .join("\n")
+    : "";
+const toList = (v: string) =>
+  v
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean);
 
 const EMPTY: Draft = {
   name: "",
@@ -47,6 +66,12 @@ const EMPTY: Draft = {
   sort_order: 100,
   active: true,
   featured: false,
+  tagline: "",
+  features: "",
+  finishes: "",
+  bases: "",
+  quantities: "",
+  gallery: "",
 };
 
 const input =
@@ -86,6 +111,12 @@ function CatalogAdmin() {
         sort_order: draft.sort_order,
         active: draft.active,
         featured: draft.featured,
+        tagline: draft.tagline,
+        features: toList(draft.features),
+        finishes: toList(draft.finishes),
+        bases: toList(draft.bases),
+        quantities: toList(draft.quantities),
+        gallery: toList(draft.gallery),
       },
     }).catch(() => ({ ok: false as const }));
     if (!res.ok) {
@@ -152,7 +183,54 @@ function CatalogAdmin() {
           <input
             value={draft.image_url}
             onChange={(e) => setDraft({ ...draft, image_url: e.target.value })}
-            placeholder="Image address (optional)"
+            placeholder="Main image address"
+            className={input}
+          />
+          {draft.image_url ? (
+            <img
+              src={draft.image_url}
+              alt="Main product image preview"
+              className="h-40 w-full rounded-xl border border-border object-cover"
+            />
+          ) : null}
+          <textarea
+            value={draft.gallery}
+            onChange={(e) => setDraft({ ...draft, gallery: e.target.value })}
+            rows={3}
+            placeholder="Extra image addresses — one per line"
+            className={input}
+          />
+          <input
+            value={draft.tagline}
+            onChange={(e) => setDraft({ ...draft, tagline: e.target.value })}
+            placeholder="Tagline (optional)"
+            className={input}
+          />
+          <textarea
+            value={draft.features}
+            onChange={(e) => setDraft({ ...draft, features: e.target.value })}
+            rows={4}
+            placeholder="What they get — one point per line"
+            className={input}
+          />
+          <textarea
+            value={draft.finishes}
+            onChange={(e) => setDraft({ ...draft, finishes: e.target.value })}
+            rows={3}
+            placeholder="Finishes — one per line (Cloud White, Light Smoke…)"
+            className={input}
+          />
+          <textarea
+            value={draft.bases}
+            onChange={(e) => setDraft({ ...draft, bases: e.target.value })}
+            rows={2}
+            placeholder="Bases — one per line (Clear Acrylic, Weighted Metal…)"
+            className={input}
+          />
+          <input
+            value={draft.quantities}
+            onChange={(e) => setDraft({ ...draft, quantities: e.target.value })}
+            placeholder="Quantity choices — one per line (1, 2, 4, Not sure)"
             className={input}
           />
           <input
@@ -216,10 +294,19 @@ function CatalogAdmin() {
         <div className="h-24 animate-pulse rounded-2xl bg-foreground/[0.06]" />
       ) : (
         <div className="space-y-2.5">
-          {offerings.map((o) => (
+          {offerings.map((o) => {
+            const meta = (o.metadata ?? {}) as Record<string, unknown>;
+            return (
             <div key={o.id} className="rounded-2xl border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                {o.image_url ? (
+                  <img
+                    src={o.image_url}
+                    alt={o.name}
+                    className="h-14 w-14 shrink-0 rounded-xl border border-border object-cover"
+                  />
+                ) : null}
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-display text-[15px] font-bold tracking-tight">{o.name}</p>
                   <p className="truncate text-[12px] text-muted-foreground">
                     /{o.slug} · {o.category} · order {o.sort_order}
@@ -244,6 +331,12 @@ function CatalogAdmin() {
                       sort_order: o.sort_order,
                       active: o.active,
                       featured: o.featured,
+                      tagline: typeof meta['tagline'] === "string" ? meta['tagline'] : "",
+                      features: lines(meta['features']),
+                      finishes: lines(meta['finishes'] ?? meta['styles']),
+                      bases: lines(meta['bases']),
+                      quantities: lines(meta['quantities']),
+                      gallery: lines(meta['gallery']),
                     })
                   }
                   className="rounded-xl border border-border px-3.5 py-2 text-[12px] font-bold tracking-wide uppercase"
@@ -262,7 +355,8 @@ function CatalogAdmin() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -192,6 +192,12 @@ const offeringInput = z.object({
   sort_order: z.number().int().min(0).max(9999).default(100),
   active: z.boolean().default(true),
   featured: z.boolean().default(false),
+  tagline: z.string().trim().max(120).optional(),
+  features: z.array(z.string().trim().max(200)).max(20).optional(),
+  finishes: z.array(z.string().trim().max(80)).max(12).optional(),
+  bases: z.array(z.string().trim().max(80)).max(12).optional(),
+  quantities: z.array(z.string().trim().max(40)).max(12).optional(),
+  gallery: z.array(z.string().trim().max(600)).max(12).optional(),
 });
 
 export const saveOffering = createServerFn({ method: "POST" })
@@ -201,6 +207,30 @@ export const saveOffering = createServerFn({ method: "POST" })
     if (!caller.ok) return { ok: false as const, error: caller.error };
 
     const client = await db();
+    const existing = data.id
+      ? ((await client.from("offerings").select("metadata").eq("id", data.id).maybeSingle()).data
+          ?.metadata as Record<string, unknown> | null)
+      : null;
+    const metadata: Record<string, unknown> = { ...(existing ?? {}) };
+    const applyList = (key: string, list?: string[]) => {
+      if (!list) return;
+      const clean = list.map((v) => v.trim()).filter(Boolean);
+      if (clean.length) metadata[key] = clean;
+      else delete metadata[key];
+    };
+    if (data.tagline !== undefined) {
+      if (data.tagline) metadata['tagline'] = data.tagline;
+      else delete metadata['tagline'];
+    }
+    applyList("features", data.features);
+    applyList("finishes", data.finishes);
+    applyList("bases", data.bases);
+    applyList("quantities", data.quantities);
+    if (data.gallery) {
+      const clean = data.gallery.map((v) => v.trim()).filter(Boolean).map((url) => ({ url }));
+      if (clean.length) metadata['gallery'] = clean;
+      else delete metadata['gallery'];
+    }
     const row = {
       name: data.name,
       slug: data.slug,
@@ -213,6 +243,7 @@ export const saveOffering = createServerFn({ method: "POST" })
       sort_order: data.sort_order,
       active: data.active,
       featured: data.featured,
+      metadata: metadata as never,
     };
     const { error } = data.id
       ? await client.from("offerings").update(row).eq("id", data.id)
