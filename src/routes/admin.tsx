@@ -172,8 +172,11 @@ function AdminLayout() {
               {pending ? "Signing out…" : "Sign out"}
             </button>
             {error ? <p className="mt-2 text-[12px] text-destructive">{error}</p> : null}
-
+            <div className="mt-4 text-center">
+              <Link to="/" className="text-[12px] font-semibold text-muted-foreground">← TapLocal homepage</Link>
+            </div>
           </GlassPanel>
+
         </div>
       </Field>
     );
@@ -183,7 +186,8 @@ function AdminLayout() {
     <Field>
       <div className="mx-auto flex max-w-6xl gap-6 px-4 pt-5 pb-28 md:px-6 md:pb-10">
         <aside className="hidden w-52 shrink-0 md:block">
-          <BrandLockup suffix="Admin" />
+          <Link to="/" aria-label="Main TapLocal site"><BrandLockup suffix="Admin" /></Link>
+
           <nav className="mt-5 space-y-1">
             {[...PRIMARY.map((t) => ({ ...t })), ...SECONDARY.map((t) => ({ ...t, exact: false }))].map((tab) => (
               <Link
