@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, ChevronDown, Plus } from "lucide-react";
-import { useIsDemo, useMyBusinesses, useBusinessId } from "@/hooks/usePortal";
+import { useIsDemo, useMyBusinesses, useBusinessId, useLocations } from "@/hooks/usePortal";
 
 export function PortalHeader() {
   const isDemo = useIsDemo();
   const { data: businessId } = useBusinessId();
   const { data: businesses } = useMyBusinesses();
+  const { data: locations } = useLocations();
   const [open, setOpen] = useState(false);
+  const place = locations?.[0];
+  const subtitle = place ? (place.city ? `${place.name} · ${place.city}` : place.name) : null;
 
   const list = businesses ?? [];
   const current = list.find((b) => b.id === businessId) ?? list[0];
@@ -26,8 +29,8 @@ export function PortalHeader() {
             <span className="block truncate font-display text-[15px] font-bold tracking-tight">
               {current?.name ?? "TapLocal"}
             </span>
-            {current?.city ? (
-              <span className="block truncate text-[12px] text-muted-foreground">{current.city}</span>
+            {subtitle ? (
+              <span className="block truncate text-[12px] text-muted-foreground">{subtitle}</span>
             ) : null}
           </span>
           {multiple ? <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" /> : null}
@@ -49,7 +52,6 @@ export function PortalHeader() {
             >
               <span className="min-w-0 truncate">
                 {b.name}
-                {b.city ? <span className="text-muted-foreground"> · {b.city}</span> : null}
               </span>
               {b.id === businessId ? <Check className="h-4 w-4 text-accent" /> : null}
             </div>

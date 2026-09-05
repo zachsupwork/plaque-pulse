@@ -6,6 +6,7 @@ import {
   fetchDestinations,
   fetchEvents,
   fetchMyBusinesses,
+  fetchLocations,
   fetchOutcomes,
   fetchPlaques,
   fetchRecommendations,
@@ -106,4 +107,13 @@ export function activeDestination<T extends { plaque_id: string | null; active: 
   plaqueId: string,
 ): T | undefined {
   return destinations.find((d) => d.plaque_id === plaqueId && d.active && d.effective_to === null);
+}
+
+export function useLocations() {
+  const { data: businessId } = useBusinessId();
+  return useQuery({
+    queryKey: ["locations", businessId],
+    queryFn: () => fetchLocations(businessId!),
+    enabled: Boolean(businessId),
+  });
 }

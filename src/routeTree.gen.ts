@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ActivateTokenRouteImport } from './routes/activate.$token'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -50,6 +52,16 @@ const AdminRoute = AdminRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivateTokenRoute = ActivateTokenRouteImport.update({
@@ -177,6 +189,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
@@ -204,6 +218,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
@@ -234,6 +250,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/app/activity': typeof AppActivityRoute
   '/app/results': typeof AppResultsRoute
@@ -265,6 +283,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
+    | '/auth'
+    | '/demo'
     | '/activate/$token'
     | '/app/activity'
     | '/app/results'
@@ -292,6 +312,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
+    | '/demo'
     | '/activate/$token'
     | '/app/activity'
     | '/app/results'
@@ -321,6 +343,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
+    | '/auth'
+    | '/demo'
     | '/activate/$token'
     | '/app/activity'
     | '/app/results'
@@ -351,6 +375,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  DemoRoute: typeof DemoRoute
   ActivateTokenRoute: typeof ActivateTokenRoute
   NSlugRoute: typeof NSlugRoute
   QSlugRoute: typeof QSlugRoute
@@ -378,6 +404,20 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activate/$token': {
@@ -611,6 +651,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
+  DemoRoute: DemoRoute,
   ActivateTokenRoute: ActivateTokenRoute,
   NSlugRoute: NSlugRoute,
   QSlugRoute: QSlugRoute,
