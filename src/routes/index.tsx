@@ -313,9 +313,10 @@ function Marketing() {
         </div>
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-5 pb-6 text-[12px] text-muted-foreground">
           <span>© TapLocal Digital</span>
-          <a href="#anatomy" className="hover:text-foreground">Privacy</a>
-          <a href="#anatomy" className="hover:text-foreground">Terms</a>
-          <a href="#anatomy" className="hover:text-foreground">Support</a>
+          <span>Privacy</span>
+          <span>Terms</span>
+          <span>Support</span>
+
           <Link to="/admin" className="hover:text-foreground">Admin</Link>
         </div>
       </footer>
