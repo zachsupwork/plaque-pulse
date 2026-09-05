@@ -35,7 +35,7 @@ function initials(email: string | null) {
 
 function AccountButton({ email }: { email: string | null }) {
   const [open, setOpen] = useState(false);
-  const { signOut, pending, error } = useSignOut("/admin");
+  const { signOut, pending, error } = useSignOut();
 
 
   return (
@@ -62,6 +62,13 @@ function AccountButton({ email }: { email: string | null }) {
             <p className="truncate text-[13px] font-bold">{email ?? "Unknown account"}</p>
             <p className="mt-0.5 text-[12px] text-muted-foreground">Platform Administrator</p>
             <div className="mt-3 space-y-1.5">
+              <Link
+                to="/"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Main TapLocal site
+              </Link>
               <Link
                 to="/app"
                 onClick={() => setOpen(false)}
@@ -94,9 +101,10 @@ function AccountButton({ email }: { email: string | null }) {
   );
 }
 
+
 function AdminLayout() {
   const identity = useAdminIdentity();
-  const { signOut, pending, error } = useSignOut("/admin");
+  const { signOut, pending, error } = useSignOut();
 
   if (identity.isLoading) {
     return (
@@ -123,7 +131,12 @@ function AdminLayout() {
             >
               Sign in as admin
             </Link>
+            <div className="mt-4 flex items-center justify-center gap-4 text-[12px] text-muted-foreground">
+              <Link to="/" className="font-semibold">← TapLocal homepage</Link>
+              <Link to="/auth" search={{ returnTo: "/app" }} className="font-semibold">Business sign in</Link>
+            </div>
           </GlassPanel>
+
         </div>
       </Field>
     );
@@ -159,8 +172,11 @@ function AdminLayout() {
               {pending ? "Signing out…" : "Sign out"}
             </button>
             {error ? <p className="mt-2 text-[12px] text-destructive">{error}</p> : null}
-
+            <div className="mt-4 text-center">
+              <Link to="/" className="text-[12px] font-semibold text-muted-foreground">← TapLocal homepage</Link>
+            </div>
           </GlassPanel>
+
         </div>
       </Field>
     );
@@ -170,7 +186,8 @@ function AdminLayout() {
     <Field>
       <div className="mx-auto flex max-w-6xl gap-6 px-4 pt-5 pb-28 md:px-6 md:pb-10">
         <aside className="hidden w-52 shrink-0 md:block">
-          <BrandLockup suffix="Admin" />
+          <Link to="/" aria-label="Main TapLocal site"><BrandLockup suffix="Admin" /></Link>
+
           <nav className="mt-5 space-y-1">
             {[...PRIMARY.map((t) => ({ ...t })), ...SECONDARY.map((t) => ({ ...t, exact: false }))].map((tab) => (
               <Link
@@ -188,8 +205,9 @@ function AdminLayout() {
         <main className="min-w-0 flex-1">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="md:hidden">
-              <BrandLockup suffix="Admin" />
+              <Link to="/" aria-label="Main TapLocal site"><BrandLockup suffix="Admin" /></Link>
             </div>
+
             <div className="ml-auto">
               <AccountButton email={identity.data.email} />
             </div>

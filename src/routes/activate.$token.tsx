@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Loader2, MapPin, Mic, Search, Sparkles, Star } from "lucide-react";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
+import { BrandLockup } from "@/components/taplocal/Brand";
 import { NfcReadyCheck } from "@/components/taplocal/NfcReadyCheck";
 import { completeActivation, lookupActivation } from "@/lib/activation.functions";
 import { parseActivationCommand } from "@/lib/activation-command.functions";
@@ -234,6 +235,10 @@ function ActivatePage() {
   return (
     <Field>
       <div className="mx-auto max-w-md px-5 pt-8 pb-20">
+        <Link to="/" aria-label="TapLocal home" className="mb-5 inline-block">
+          <BrandLockup />
+        </Link>
+
         <p className="text-[12px] font-semibold tracking-wide text-muted-foreground uppercase">
           Plaque {activePlaque.plaque_code}
         </p>

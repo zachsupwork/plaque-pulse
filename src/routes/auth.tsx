@@ -60,7 +60,7 @@ function AuthPage() {
     <Field>
       <div className="mx-auto max-w-md px-5 py-12">
         <Link to="/" className="text-[13px] text-muted-foreground">
-          ← TapLocal
+          ← Back to TapLocal
         </Link>
 
         {expired ? (
@@ -74,9 +74,16 @@ function AuthPage() {
               onClick={dismiss}
               className="mt-4 w-full rounded-xl bg-primary px-4 py-3 text-[13px] font-bold tracking-wide text-primary-foreground uppercase"
             >
-              Send me a new link
+              Send a new link
             </button>
+            <Link
+              to="/"
+              className="mt-2 block rounded-xl border border-border px-4 py-3 text-center text-[13px] font-bold tracking-wide uppercase"
+            >
+              Back to TapLocal
+            </Link>
           </GlassPanel>
+
         ) : (
           <>
             {isAdminContext ? (

@@ -9,7 +9,11 @@ export function WelcomeGate() {
 
   return (
     <div className="space-y-5 pt-6">
+      <Link to="/" className="text-[13px] font-semibold text-muted-foreground">
+        ← Back to TapLocal
+      </Link>
       <div>
+
         <p className="text-[12px] font-semibold tracking-[0.12em] text-accent uppercase">Welcome to TapLocal</p>
         <h1 className="mt-2 font-display text-[24px] leading-tight font-bold tracking-tight text-balance">
           Let's get you into the right place

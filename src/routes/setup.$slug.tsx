@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check } from "lucide-react";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
+import { BrandLockup } from "@/components/taplocal/Brand";
 import { lookupPlaqueBySlug } from "@/lib/activation.functions";
 
 export const Route = createFileRoute("/setup/$slug")({
@@ -40,7 +41,11 @@ function SetupPage() {
   return (
     <Field>
       <div className="mx-auto max-w-md px-5 pt-10 pb-16">
+        <Link to="/" aria-label="TapLocal home" className="mb-5 inline-block">
+          <BrandLockup />
+        </Link>
         <div className="flex items-center gap-2 text-[12px] font-semibold tracking-wide text-accent uppercase">
+
           <Check className="h-4 w-4" />
           {source === "qr" ? "QR detected" : "NFC detected"}
         </div>
