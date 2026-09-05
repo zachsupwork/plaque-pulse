@@ -96,7 +96,7 @@ function AccountButton({ email }: { email: string | null }) {
 
 function AdminLayout() {
   const identity = useAdminIdentity();
-  const signOut = useAdminSignOut();
+  const { signOut, pending, error } = useSignOut("/admin");
 
   if (identity.isLoading) {
     return (
@@ -153,10 +153,13 @@ function AdminLayout() {
             <button
               type="button"
               onClick={signOut}
-              className="mt-2 w-full rounded-xl border border-border px-4 py-3 text-[13px] font-bold"
+              disabled={pending}
+              className="mt-2 w-full rounded-xl border border-border px-4 py-3 text-[13px] font-bold disabled:opacity-60"
             >
-              Sign out
+              {pending ? "Signing out…" : "Sign out"}
             </button>
+            {error ? <p className="mt-2 text-[12px] text-destructive">{error}</p> : null}
+
           </GlassPanel>
         </div>
       </Field>
