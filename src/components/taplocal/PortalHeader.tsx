@@ -2,6 +2,80 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, ChevronDown, Plus } from "lucide-react";
 import { useIsDemo, useMyBusinesses, useBusinessId, useLocations } from "@/hooks/usePortal";
+import { useIdentity, useSignOut } from "@/hooks/useAuthSession";
+
+function AccountMenu() {
+  const [open, setOpen] = useState(false);
+  const identity = useIdentity();
+  const { signOut, pending, error } = useSignOut("/");
+
+  if (!identity.data?.signedIn) {
+    return (
+      <Link
+        to="/auth"
+        search={{ returnTo: "/app" }}
+        className="shrink-0 text-[12px] font-semibold text-primary"
+      >
+        Sign in
+      </Link>
+    );
+  }
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-[12px] font-semibold text-muted-foreground"
+        aria-expanded={open}
+      >
+        Account
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close account menu"
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 z-50 mt-2 w-60 rounded-2xl border border-border bg-popover p-3 shadow-[var(--shadow-soft)]">
+            <p className="text-[11px] text-muted-foreground">Signed in as</p>
+            <p className="truncate text-[13px] font-bold">{identity.data.email ?? "Your account"}</p>
+            <div className="mt-3 space-y-1.5">
+              <Link
+                to="/app"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Business portal
+              </Link>
+              {identity.data.isAdmin ? (
+                <Link
+                  to="/admin"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+                >
+                  Open TapLocal Admin
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                onClick={signOut}
+                disabled={pending}
+                className="w-full rounded-xl bg-primary px-3 py-2 text-[13px] font-bold text-primary-foreground disabled:opacity-60"
+              >
+                {pending ? "Signing out…" : "Sign out"}
+              </button>
+              {error ? <p className="text-[12px] text-destructive">{error}</p> : null}
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 
 export function PortalHeader() {
   const isDemo = useIsDemo();
