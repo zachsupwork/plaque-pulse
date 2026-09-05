@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check } from "lucide-react";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
+import { BrandLockup } from "@/components/taplocal/Brand";
 import { lookupPlaqueBySlug } from "@/lib/activation.functions";
 
 export const Route = createFileRoute("/setup/$slug")({

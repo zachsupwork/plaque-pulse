@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Loader2, MapPin, Mic, Search, Sparkles, Star } from "lucide-react";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
+import { BrandLockup } from "@/components/taplocal/Brand";
 import { NfcReadyCheck } from "@/components/taplocal/NfcReadyCheck";
 import { completeActivation, lookupActivation } from "@/lib/activation.functions";
 import { parseActivationCommand } from "@/lib/activation-command.functions";
