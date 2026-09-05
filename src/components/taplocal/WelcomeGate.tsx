@@ -30,7 +30,7 @@ export function WelcomeGate() {
         </GlassPanel>
       </Link>
 
-      <Link to="/auth" className="block">
+      <Link to="/auth" search={{ returnTo: "/app" }} className="block">
         <GlassPanel className="flex items-center gap-3 p-4">
           <User className="h-5 w-5 shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1">

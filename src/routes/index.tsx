@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Field, GlassPanel, EdgePanel } from "@/components/taplocal/Field";
 import { BrandLockup, NfcMark } from "@/components/taplocal/Brand";
+import { useIdentity } from "@/hooks/useAuthSession";
 import plaqueTrio from "@/assets/plaque-trio.jpg";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -79,21 +82,81 @@ const anatomy = [
   { label: "Outer back", body: "A “Tap here” cover sticker." },
 ];
 
+function AccountArea() {
+  const identity = useIdentity();
+  const [open, setOpen] = useState(false);
+  const signedIn = Boolean(identity.data?.signedIn);
+  const isAdmin = Boolean(identity.data?.isAdmin);
+
+  if (!signedIn) {
+    return (
+      <Link to="/auth" search={{ returnTo: "/app" }} className="text-[13px] font-semibold text-muted-foreground">
+        Sign in
+      </Link>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-[13px] font-semibold text-foreground"
+        aria-expanded={open}
+      >
+        My account
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close account menu"
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 z-50 mt-2 w-60 rounded-2xl border border-border bg-card p-3 text-left shadow-[var(--shadow-soft)]">
+            <p className="text-[11px] text-muted-foreground">Signed in as</p>
+            <p className="truncate text-[13px] font-bold">{identity.data?.email ?? "Your account"}</p>
+            <div className="mt-3 space-y-1.5">
+              <Link
+                to="/app"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Business portal
+              </Link>
+              {isAdmin ? (
+                <Link
+                  to="/admin"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+                >
+                  TapLocal Admin
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 function Marketing() {
   return (
     <Field>
       <header className="sticky top-0 z-20 border-b border-border bg-card/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+
           <BrandLockup suffix="Digital" />
           <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted-foreground md:flex">
             <a href="#how" className="hover:text-foreground">How it works</a>
             <a href="#plaques" className="hover:text-foreground">SmartPlaques</a>
             <a href="#anatomy" className="hover:text-foreground">For businesses</a>
           </nav>
-          <div className="flex items-center gap-2">
-            <Link to="/auth" className="text-[13px] font-semibold text-muted-foreground">
-              Sign in
-            </Link>
+          <div className="flex items-center gap-3">
+            <AccountArea />
+
             <Link
               to="/activate/$token"
               params={{ token: "demo-activation-token" }}
@@ -248,7 +311,16 @@ function Marketing() {
           <BrandLockup suffix="Digital" />
           <p className="text-[12px] text-muted-foreground">Physical to digital, for local business.</p>
         </div>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-5 pb-6 text-[12px] text-muted-foreground">
+          <span>© TapLocal Digital</span>
+          <span>Privacy</span>
+          <span>Terms</span>
+          <span>Support</span>
+
+          <Link to="/admin" className="hover:text-foreground">Admin</Link>
+        </div>
       </footer>
+
     </Field>
   );
 }

@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
-import { adminIdentity } from "@/lib/admin-data.functions";
-import { signOutEverything } from "@/lib/admin-session";
+import { useIdentity, useSignOut } from "@/hooks/useAuthSession";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -26,24 +23,8 @@ const SECONDARY = [
 ] as const;
 
 /** Live view of who is signed in and whether they hold the admin role. */
-export function useAdminIdentity() {
-  const check = useServerFn(adminIdentity);
-  return useQuery({
-    queryKey: ["admin-identity"],
-    queryFn: () => check({ data: undefined }),
-    staleTime: 60_000,
-  });
-}
+export const useAdminIdentity = useIdentity;
 
-/** Sign out everywhere, then land on the admin sign-in screen. */
-export function useAdminSignOut() {
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  return async () => {
-    await signOutEverything(qc);
-    await navigate({ to: "/admin", replace: true });
-  };
-}
 
 function initials(email: string | null) {
   if (!email) return "TL";
@@ -54,7 +35,8 @@ function initials(email: string | null) {
 
 function AccountButton({ email }: { email: string | null }) {
   const [open, setOpen] = useState(false);
-  const signOut = useAdminSignOut();
+  const { signOut, pending, error } = useSignOut("/admin");
+
 
   return (
     <div className="relative">
@@ -97,11 +79,14 @@ function AccountButton({ email }: { email: string | null }) {
               <button
                 type="button"
                 onClick={signOut}
-                className="w-full rounded-xl bg-primary px-3 py-2 text-[13px] font-bold text-primary-foreground"
+                disabled={pending}
+                className="w-full rounded-xl bg-primary px-3 py-2 text-[13px] font-bold text-primary-foreground disabled:opacity-60"
               >
-                Sign out
+                {pending ? "Signing out…" : "Sign out"}
               </button>
+              {error ? <p className="text-[12px] text-destructive">{error}</p> : null}
             </div>
+
           </div>
         </>
       ) : null}
@@ -111,7 +96,7 @@ function AccountButton({ email }: { email: string | null }) {
 
 function AdminLayout() {
   const identity = useAdminIdentity();
-  const signOut = useAdminSignOut();
+  const { signOut, pending, error } = useSignOut("/admin");
 
   if (identity.isLoading) {
     return (
@@ -168,10 +153,13 @@ function AdminLayout() {
             <button
               type="button"
               onClick={signOut}
-              className="mt-2 w-full rounded-xl border border-border px-4 py-3 text-[13px] font-bold"
+              disabled={pending}
+              className="mt-2 w-full rounded-xl border border-border px-4 py-3 text-[13px] font-bold disabled:opacity-60"
             >
-              Sign out
+              {pending ? "Signing out…" : "Sign out"}
             </button>
+            {error ? <p className="mt-2 text-[12px] text-destructive">{error}</p> : null}
+
           </GlassPanel>
         </div>
       </Field>
