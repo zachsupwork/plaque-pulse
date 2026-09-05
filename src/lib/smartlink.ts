@@ -10,7 +10,7 @@
 export const SMARTLINK_PRODUCTION_ORIGIN = "https://go.taplocaldigital.com";
 
 /** Where the app is published today. Always resolvable, used until the short domain is live. */
-export const SMARTLINK_FALLBACK_ORIGIN = "https://plaque-pulse.lovable.app";
+export const SMARTLINK_FALLBACK_ORIGIN = "https://taplocaldigital.lovable.app";
 
 function clean(value: string) {
   return value.trim().replace(/\/+$/, "");

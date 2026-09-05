@@ -2400,7 +2400,7 @@ Never claim that an individual Google review, Instagram follower or other extern
 
 This project was built with [Lovable](https://lovable.dev).
 
-**Live app**: https://plaque-pulse.lovable.app
+**Live app**: https://taplocaldigital.lovable.app
 
 ## Build with Lovable
 

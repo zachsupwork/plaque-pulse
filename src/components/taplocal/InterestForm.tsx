@@ -135,8 +135,7 @@ export function InterestForm({ offeringId, offeringName, physical, source = "web
               </Link>
               {physical ? (
                 <Link
-                  to="/activate/$token"
-                  params={{ token: "demo-activation-token" }}
+                  to="/activate"
                   onClick={onClose}
                   className="block py-2 text-center text-[13px] font-semibold text-primary"
                 >

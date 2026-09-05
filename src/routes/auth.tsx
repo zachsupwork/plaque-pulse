@@ -134,8 +134,7 @@ function AuthPage() {
         <p className="mt-5 text-[13px] text-muted-foreground">
           Just received a plaque?{" "}
           <Link
-            to="/activate/$token"
-            params={{ token: "demo-activation-token" }}
+            to="/activate"
             className="font-semibold text-primary"
           >
             Activate it here
