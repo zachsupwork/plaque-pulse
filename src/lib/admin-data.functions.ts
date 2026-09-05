@@ -43,6 +43,10 @@ export const adminIdentity = createServerFn({ method: "POST" }).handler(async ()
   const user = (await caller.auth.getUser()).data.user;
   if (!user) return { signedIn: false, isAdmin: false, email: null as string | null };
 
+  // Verified-session identity only: never an email or id supplied by the browser.
+  const { ensureBootstrapAdmin } = await import("@/lib/admin-bootstrap.server");
+  await ensureBootstrapAdmin(user.id, user.email);
+
   const { data: roleRow } = await caller
     .from("user_roles")
     .select("role")
