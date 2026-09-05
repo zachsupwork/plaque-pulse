@@ -1,22 +1,38 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchActionHistory,
   fetchBusiness,
   fetchDestinations,
   fetchEvents,
+  fetchMyBusinesses,
   fetchOutcomes,
   fetchPlaques,
   fetchRecommendations,
   fetchSnapshots,
   resolveBusinessId,
+  DEMO_BUSINESS_ID,
 } from "@/lib/taplocal";
+import { isDemoMode } from "@/lib/demo";
 
 export function useBusinessId() {
   return useQuery({ queryKey: ["business-id"], queryFn: resolveBusinessId, staleTime: 5 * 60_000 });
 }
 
-export function usePortal() {
+/** Hydration-safe read of demo mode. */
+export function useIsDemo() {
+  const [demo, setDemo] = useState(false);
+  useEffect(() => setDemo(isDemoMode()), []);
   const { data: businessId } = useBusinessId();
+  return demo || businessId === DEMO_BUSINESS_ID;
+}
+
+export function useMyBusinesses() {
+  return useQuery({ queryKey: ["my-businesses"], queryFn: fetchMyBusinesses, staleTime: 5 * 60_000 });
+}
+
+export function usePortal() {
+  const { data: businessId, isPending: resolving } = useBusinessId();
   const enabled = Boolean(businessId);
 
   const business = useQuery({
@@ -46,13 +62,14 @@ export function usePortal() {
   });
 
   return {
-    businessId,
+    businessId: businessId ?? null,
+    resolving,
     business: business.data ?? null,
     plaques: plaques.data ?? [],
     destinations: destinations.data ?? [],
     events: events.data ?? [],
     recommendations: recommendations.data ?? [],
-    isLoading: business.isLoading || plaques.isLoading || events.isLoading,
+    isLoading: resolving || business.isLoading || plaques.isLoading || events.isLoading,
   };
 }
 
