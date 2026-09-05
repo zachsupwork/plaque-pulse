@@ -89,8 +89,11 @@ export type EventRow = {
   occurred_at: string;
 };
 
-/** Resolves the business the signed-in user manages, falling back to the demo tour business. */
-export async function resolveBusinessId(): Promise<string> {
+/**
+ * Resolves the business the signed-in user manages. Returns null when nobody is
+ * signed in — the sample business is only used in explicit demo mode.
+ */
+export async function resolveBusinessId(): Promise<string | null> {
   const { data: session } = await supabase.auth.getSession();
   if (session.session) {
     const { data } = await supabase
@@ -101,7 +104,26 @@ export async function resolveBusinessId(): Promise<string> {
       .limit(1);
     if (data && data[0]) return data[0].business_id;
   }
-  return DEMO_BUSINESS_ID;
+  if (isDemoMode()) return DEMO_BUSINESS_ID;
+  return null;
+}
+
+/** Every business the signed-in user belongs to (for the header switcher). */
+export async function fetchMyBusinesses() {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) {
+    if (!isDemoMode()) return [];
+    const demo = await fetchBusiness(DEMO_BUSINESS_ID);
+    return demo ? [demo] : [];
+  }
+  const { data: members } = await supabase
+    .from("business_members")
+    .select("business_id")
+    .eq("user_id", session.session.user.id);
+  const ids = (members ?? []).map((m) => m.business_id);
+  if (!ids.length) return [];
+  const { data } = await supabase.from("businesses").select("*").in("id", ids);
+  return data ?? [];
 }
 
 export async function fetchBusiness(businessId: string) {
