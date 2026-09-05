@@ -4,6 +4,11 @@ import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { returnTo?: string } => {
+    const raw = typeof search["returnTo"] === "string" ? (search["returnTo"] as string) : "";
+    // Only same-site paths are ever honoured.
+    return { returnTo: /^\/[A-Za-z0-9/_-]*$/.test(raw) ? raw : "/app" };
+  },
   head: () => ({
     meta: [
       { title: "Sign in — TapLocal" },
@@ -18,6 +23,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const returnTo = Route.useSearch().returnTo ?? "/app";
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
@@ -26,7 +32,7 @@ function AuthPage() {
     setState("sending");
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/app` },
+      options: { emailRedirectTo: `${window.location.origin}${returnTo}` },
     });
     setState(error ? "error" : "sent");
   }
@@ -34,7 +40,7 @@ function AuthPage() {
   async function google() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/app` },
+      options: { redirectTo: `${window.location.origin}${returnTo}` },
     });
   }
 
