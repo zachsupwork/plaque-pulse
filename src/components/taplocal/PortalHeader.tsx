@@ -17,7 +17,7 @@ export function PortalHeader() {
   const multiple = list.length > 1;
 
   return (
-    <header className="sticky top-0 z-20 -mx-5 mb-4 border-b border-border bg-background/85 px-5 py-3 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 -mx-5 mb-4 border-b border-border bg-card/90 px-5 py-3 backdrop-blur-xl">
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
