@@ -277,6 +277,13 @@ function Marketing() {
               >
                 Activate my plaque
               </Link>
+              <Link
+                to="/auth"
+                search={{ returnTo: "/app" }}
+                className="rounded-xl border border-border bg-card px-5 py-3.5 text-[13px] font-bold tracking-wide uppercase"
+              >
+                Sign in
+              </Link>
               <a
                 href="#how"
                 className="rounded-xl border border-border bg-card px-5 py-3.5 text-[13px] font-bold tracking-wide uppercase"
@@ -286,6 +293,7 @@ function Marketing() {
               <Link to="/demo" className="px-2 py-3.5 text-[13px] font-semibold text-primary">
                 View live demo
               </Link>
+
             </div>
           </div>
 
@@ -394,20 +402,8 @@ function Marketing() {
         </section>
       </main>
 
-      <footer className="border-t border-border bg-card">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-6">
-          <BrandLockup suffix="Digital" />
-          <p className="text-[12px] text-muted-foreground">Physical to digital, for local business.</p>
-        </div>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-5 pb-6 text-[12px] text-muted-foreground">
-          <span>© TapLocal Digital</span>
-          <span>Privacy</span>
-          <span>Terms</span>
-          <span>Support</span>
+      <SiteFooter />
 
-          <Link to="/admin" className="hover:text-foreground">Admin</Link>
-        </div>
-      </footer>
 
     </Field>
   );
