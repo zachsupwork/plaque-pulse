@@ -35,7 +35,8 @@ function initials(email: string | null) {
 
 function AccountButton({ email }: { email: string | null }) {
   const [open, setOpen] = useState(false);
-  const signOut = useAdminSignOut();
+  const { signOut, pending, error } = useSignOut("/admin");
+
 
   return (
     <div className="relative">
@@ -78,11 +79,14 @@ function AccountButton({ email }: { email: string | null }) {
               <button
                 type="button"
                 onClick={signOut}
-                className="w-full rounded-xl bg-primary px-3 py-2 text-[13px] font-bold text-primary-foreground"
+                disabled={pending}
+                className="w-full rounded-xl bg-primary px-3 py-2 text-[13px] font-bold text-primary-foreground disabled:opacity-60"
               >
-                Sign out
+                {pending ? "Signing out…" : "Sign out"}
               </button>
+              {error ? <p className="text-[12px] text-destructive">{error}</p> : null}
             </div>
+
           </div>
         </>
       ) : null}
