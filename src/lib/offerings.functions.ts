@@ -105,9 +105,12 @@ export const submitInquiry = createServerFn({ method: "POST" })
     }
 
     const client = await publicClient();
-    const { data: row, error } = await client
+    // anon may write but never read, so the id is minted here rather than returned.
+    const id = crypto.randomUUID();
+    const { error } = await client
       .from("offering_inquiries")
       .insert({
+        id,
         offering_id: data.offeringId ?? null,
         name: data.name,
         email: data.email,
@@ -119,18 +122,16 @@ export const submitInquiry = createServerFn({ method: "POST" })
         quantity_interest: blankToNull(data.quantityInterest),
         message: blankToNull(data.message),
         source: data.source,
-      })
-      .select("id")
-      .single();
+      });
 
-    if (error || !row) return { ok: false as const, error: "failed" as const, id: null };
+    if (error) return { ok: false as const, error: "failed" as const, id: null };
 
     try {
       const { notifyAdminsOfInquiry } = await import("./inquiry-notify.server");
-      await notifyAdminsOfInquiry(row.id as string);
+      await notifyAdminsOfInquiry(id);
     } catch {
       /* email is secondary — the lead already exists */
     }
 
-    return { ok: true as const, error: null, id: row.id as string };
+    return { ok: true as const, error: null, id };
   });
