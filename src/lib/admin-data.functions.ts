@@ -321,7 +321,9 @@ export const getBusinessDetail = createServerFn({ method: "POST" })
           .limit(30),
       ]);
 
-    if (!business) return { ok: true as const, detail: null };
+    // Demo businesses are never part of real operations.
+    if (!business || business.is_demo) return { ok: true as const, detail: null };
+
 
     const { data: programming } = plaques?.length
       ? await client
@@ -401,12 +403,15 @@ export const listCustomers = createServerFn({ method: "POST" })
 
     const list = await client.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const { data: profiles } = await client.from("profiles").select("user_id, first_name, last_name, phone, created_at");
-    const { data: members } = await client.from("business_members").select("user_id, business_id, role");
-    const bizIds = [...new Set((members ?? []).map((m) => m.business_id))];
+    const scope = await scopeFor(client);
+    const { data: allMembers } = await client.from("business_members").select("user_id, business_id, role");
+    const members = (allMembers ?? []).filter((m) => !scope.demoBusinessIds.has(m.business_id));
+    const bizIds = [...new Set(members.map((m) => m.business_id))];
     const { data: businesses } = bizIds.length
       ? await client.from("businesses").select("id, name").in("id", bizIds)
       : { data: [] };
     const bizName = new Map((businesses ?? []).map((x) => [x.id, x.name]));
+
 
     const rows = list.data.users.map((u) => {
       const profile = (profiles ?? []).find((p) => p.user_id === u.id);
@@ -452,9 +457,12 @@ export const listAllPlaques = createServerFn({ method: "POST" })
     if (q) request = request.or(`plaque_code.ilike.%${q}%,public_slug.ilike.%${q}%,batch_id.ilike.%${q}%,plaque_name.ilike.%${q}%`);
     if (data.status !== "all") request = request.eq("status", data.status as never);
 
-    const { data: plaques } = await request;
-    const ids = (plaques ?? []).map((p) => p.id);
+    const scope = await scopeFor(client);
+    const { data: allRows } = await request;
+    const plaques = (allRows ?? []).filter((p) => !p.business_id || !scope.demoBusinessIds.has(p.business_id));
+    const ids = plaques.map((p) => p.id);
     if (!ids.length) return { ok: true as const, plaques: [] };
+
 
     const [{ data: programming }, { data: events }, { data: destinations }, { data: businesses }, { data: locations }] =
       await Promise.all([
