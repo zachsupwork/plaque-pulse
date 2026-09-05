@@ -154,10 +154,9 @@ function Marketing() {
             <a href="#plaques" className="hover:text-foreground">SmartPlaques</a>
             <a href="#anatomy" className="hover:text-foreground">For businesses</a>
           </nav>
-          <div className="flex items-center gap-2">
-            <Link to="/auth" className="text-[13px] font-semibold text-muted-foreground">
-              Sign in
-            </Link>
+          <div className="flex items-center gap-3">
+            <AccountArea />
+
             <Link
               to="/activate/$token"
               params={{ token: "demo-activation-token" }}
