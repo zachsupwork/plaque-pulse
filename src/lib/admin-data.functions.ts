@@ -57,38 +57,49 @@ export const adminIdentity = createServerFn({ method: "POST" }).handler(async ()
   return { signedIn: true, isAdmin: Boolean(roleRow), email: user.email ?? null };
 });
 
-/** Network-wide counters for the admin dashboard. Never estimates. */
+/** Demo isolation helper, loaded lazily so it stays server-only. */
+async function scopeFor(client: Awaited<ReturnType<typeof db>>) {
+  const { getDemoScope } = await import("@/lib/admin-scope.server");
+  return getDemoScope(client as never);
+}
+
+/** Network-wide counters for the admin dashboard. Real data only — never demo. */
 export const networkOverview = createServerFn({ method: "POST" }).handler(async () => {
   const caller = await gate();
   if (!caller.ok) return { ok: false as const, error: caller.error };
   const client = await db();
+  const scope = await scopeFor(client);
 
-  const { data: businesses } = await client.from("businesses").select("id, status, created_at");
-  const { data: plaques } = await client.from("plaques").select("id, status, activated_at");
-  const { data: events } = await client
+  const { data: allBusinesses } = await client.from("businesses").select("id, status, created_at, is_demo");
+  const businesses = (allBusinesses ?? []).filter((b) => !b.is_demo);
+  const { data: allPlaques } = await client.from("plaques").select("id, status, activated_at, business_id");
+  const plaques = (allPlaques ?? []).filter((p) => !p.business_id || !scope.demoBusinessIds.has(p.business_id));
+  const { data: rawEvents } = await client
     .from("events")
-    .select("event_type, source_type, occurred_at")
+    .select("business_id, plaque_id, event_type, source_type, occurred_at")
     .gte("occurred_at", since(30))
     .limit(50000);
+  const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
 
-  const interactions = (events ?? []).filter((e) => e.event_type === "interaction");
+  const interactions = events.filter((e) => e.event_type === "interaction");
   const today = startOfToday();
   const in7 = since(7);
   const monthStart = new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1).toISOString();
 
-  const countStatus = (s: string) => (plaques ?? []).filter((p) => p.status === s).length;
+  const countStatus = (s: string) => plaques.filter((p) => p.status === s).length;
 
   return {
     ok: true as const,
-    businessesTotal: (businesses ?? []).length,
-    businessesActive: (businesses ?? []).filter((b) => b.status === "active").length,
-    businessesThisMonth: (businesses ?? []).filter((b) => b.created_at >= monthStart).length,
-    plaquesTotal: (plaques ?? []).length,
+    businessesTotal: businesses.length,
+    businessesActive: businesses.filter((b) => b.status === "active").length,
+    businessesThisMonth: businesses.filter((b) => b.created_at >= monthStart).length,
+    plaquesTotal: plaques.length,
     plaquesInventory: countStatus("inventory"),
     plaquesConfigured: countStatus("configured_unclaimed"),
     plaquesActive: countStatus("active"),
     plaquesPacked: countStatus("packed"),
-    plaquesActivatedThisMonth: (plaques ?? []).filter((p) => (p.activated_at ?? "") >= monthStart).length,
+    plaquesFaulty: countStatus("faulty"),
+    plaquesActivatedThisMonth: plaques.filter((p) => (p.activated_at ?? "") >= monthStart).length,
     interactionsToday: interactions.filter((e) => e.occurred_at >= today).length,
     nfcToday: interactions.filter((e) => e.occurred_at >= today && e.source_type === "nfc").length,
     qrToday: interactions.filter((e) => e.occurred_at >= today && e.source_type === "qr").length,
@@ -97,30 +108,36 @@ export const networkOverview = createServerFn({ method: "POST" }).handler(async 
   };
 });
 
-/** Newest taps, scans and account changes across the whole network. */
+
+/** Newest real taps, scans and account changes. Demo activity is excluded. */
 export const networkActivity = createServerFn({ method: "POST" }).handler(async () => {
   const caller = await gate();
   if (!caller.ok) return { ok: false as const, error: caller.error, items: [] };
   const client = await db();
+  const scope = await scopeFor(client);
 
-  const { data: events } = await client
+  const { data: rawEvents } = await client
     .from("events")
     .select("business_id, plaque_id, event_type, source_type, occurred_at")
     .order("occurred_at", { ascending: false })
-    .limit(25);
-  const { data: actions } = await client
+    .limit(200);
+  const { data: rawActions } = await client
     .from("action_history")
     .select("business_id, plaque_id, action_type, initiated_by, created_at")
     .order("created_at", { ascending: false })
-    .limit(25);
+    .limit(200);
+
+  const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e)).slice(0, 25);
+  const actions = (rawActions ?? []).filter((a) => !scope.isDemoRow(a)).slice(0, 25);
 
   const businessIds = new Set<string>();
   const plaqueIds = new Set<string>();
-  for (const e of events ?? []) {
+  for (const e of events) {
     if (e.business_id) businessIds.add(e.business_id);
     if (e.plaque_id) plaqueIds.add(e.plaque_id);
   }
-  for (const a of actions ?? []) {
+  for (const a of actions) {
+
     businessIds.add(a.business_id);
     if (a.plaque_id) plaqueIds.add(a.plaque_id);
   }
@@ -179,8 +196,10 @@ export const listAllBusinesses = createServerFn({ method: "POST" })
     const { data: businesses } = await client
       .from("businesses")
       .select("id, name, industry, status, is_demo, created_at, updated_at")
+      .eq("is_demo", false)
       .order("created_at", { ascending: false })
       .limit(500);
+
 
     const ids = (businesses ?? []).map((b) => b.id);
     if (!ids.length) return { ok: true as const, businesses: [] };
@@ -302,7 +321,9 @@ export const getBusinessDetail = createServerFn({ method: "POST" })
           .limit(30),
       ]);
 
-    if (!business) return { ok: true as const, detail: null };
+    // Demo businesses are never part of real operations.
+    if (!business || business.is_demo) return { ok: true as const, detail: null };
+
 
     const { data: programming } = plaques?.length
       ? await client
@@ -382,12 +403,15 @@ export const listCustomers = createServerFn({ method: "POST" })
 
     const list = await client.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const { data: profiles } = await client.from("profiles").select("user_id, first_name, last_name, phone, created_at");
-    const { data: members } = await client.from("business_members").select("user_id, business_id, role");
-    const bizIds = [...new Set((members ?? []).map((m) => m.business_id))];
+    const scope = await scopeFor(client);
+    const { data: allMembers } = await client.from("business_members").select("user_id, business_id, role");
+    const members = (allMembers ?? []).filter((m) => !scope.demoBusinessIds.has(m.business_id));
+    const bizIds = [...new Set(members.map((m) => m.business_id))];
     const { data: businesses } = bizIds.length
       ? await client.from("businesses").select("id, name").in("id", bizIds)
       : { data: [] };
     const bizName = new Map((businesses ?? []).map((x) => [x.id, x.name]));
+
 
     const rows = list.data.users.map((u) => {
       const profile = (profiles ?? []).find((p) => p.user_id === u.id);
@@ -433,9 +457,12 @@ export const listAllPlaques = createServerFn({ method: "POST" })
     if (q) request = request.or(`plaque_code.ilike.%${q}%,public_slug.ilike.%${q}%,batch_id.ilike.%${q}%,plaque_name.ilike.%${q}%`);
     if (data.status !== "all") request = request.eq("status", data.status as never);
 
-    const { data: plaques } = await request;
-    const ids = (plaques ?? []).map((p) => p.id);
+    const scope = await scopeFor(client);
+    const { data: allRows } = await request;
+    const plaques = (allRows ?? []).filter((p) => !p.business_id || !scope.demoBusinessIds.has(p.business_id));
+    const ids = plaques.map((p) => p.id);
     if (!ids.length) return { ok: true as const, plaques: [] };
+
 
     const [{ data: programming }, { data: events }, { data: destinations }, { data: businesses }, { data: locations }] =
       await Promise.all([
@@ -486,8 +513,11 @@ export const getPlaqueRecord = createServerFn({ method: "POST" })
     const client = await db();
     const id = data.plaqueId;
 
+    const scope = await scopeFor(client);
     const { data: plaque } = await client.from("plaques").select("*").eq("id", id).maybeSingle();
-    if (!plaque) return { ok: true as const, record: null };
+    if (!plaque || (plaque.business_id && scope.demoBusinessIds.has(plaque.business_id)))
+      return { ok: true as const, record: null };
+
 
     const [{ data: programming }, { data: destinations }, { data: events }, { data: placements }, { data: progEvents }] =
       await Promise.all([
@@ -561,20 +591,26 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const caller = await gate();
     if (!caller.ok) return { ok: false as const, error: caller.error, analytics: null };
     const client = await db();
+    const scope = await scopeFor(client);
 
-    const [{ data: events }, { data: plaques }, { data: businesses }] = await Promise.all([
+    const [{ data: rawEvents }, { data: rawPlaques }, { data: rawBusinesses }] = await Promise.all([
       client
         .from("events")
         .select("business_id, plaque_id, event_type, source_type, destination_type, occurred_at")
         .gte("occurred_at", since(data.days))
         .limit(100000),
       client.from("plaques").select("id, plaque_code, plaque_name, placement_type, business_id, status"),
-      client.from("businesses").select("id, name"),
+      client.from("businesses").select("id, name, is_demo"),
     ]);
 
-    const interactions = (events ?? []).filter((e) => e.event_type === "interaction");
-    const bizName = new Map((businesses ?? []).map((b) => [b.id, b.name]));
-    const plaqueMap = new Map((plaques ?? []).map((p) => [p.id, p]));
+    const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
+    const plaques = (rawPlaques ?? []).filter((p) => !p.business_id || !scope.demoBusinessIds.has(p.business_id));
+    const businesses = (rawBusinesses ?? []).filter((b) => !b.is_demo);
+
+    const interactions = events.filter((e) => e.event_type === "interaction");
+    const bizName = new Map(businesses.map((b) => [b.id, b.name]));
+    const plaqueMap = new Map(plaques.map((p) => [p.id, p]));
+
 
     const tally = <T extends string>(list: (T | null)[]) => {
       const out: Record<string, number> = {};

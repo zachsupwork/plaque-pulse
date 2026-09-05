@@ -1,16 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { GlassPanel, SectionTitle, Stat } from "@/components/taplocal/Field";
+import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taplocal/Field";
 import { networkActivity, networkOverview } from "@/lib/admin-data.functions";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "Network overview — TapLocal admin" },
-      { name: "description", content: "Live counts of TapLocal businesses, plaques, taps and scans." },
+      { name: "description", content: "Real TapLocal businesses, plaques, taps and scans — demo data excluded." },
       { property: "og:title", content: "Network overview — TapLocal admin" },
-      { property: "og:description", content: "Live counts of TapLocal businesses, plaques, taps and scans." },
+      { property: "og:description", content: "Real TapLocal businesses, plaques, taps and scans — demo data excluded." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -28,6 +28,15 @@ function ago(iso: string) {
   return `${Math.round(hrs / 24)} day${Math.round(hrs / 24) === 1 ? "" : "s"} ago`;
 }
 
+const QUICK_ACTIONS = [
+  { to: "/admin/provisioning", label: "+ Create plaques", tone: "primary" as const },
+  { to: "/admin/nfc/write", label: "Program NFC", tone: "plain" as const },
+  { to: "/admin/nfc/verify", label: "Verify plaque", tone: "plain" as const },
+  { to: "/admin/businesses", label: "Find / add business", tone: "plain" as const },
+  { to: "/admin/plaques", label: "Set up customer", tone: "plain" as const },
+  { to: "/demo", label: "Sales mode", tone: "outline" as const },
+];
+
 function AdminDashboard() {
   const overviewFn = useServerFn(networkOverview);
   const activityFn = useServerFn(networkActivity);
@@ -36,38 +45,80 @@ function AdminDashboard() {
   const activity = useQuery({ queryKey: ["admin-activity"], queryFn: () => activityFn({ data: undefined }) });
 
   const o = overview.data?.ok ? overview.data : null;
+  const items = activity.data?.ok ? activity.data.items : [];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-[24px] font-bold tracking-tight">TapLocal Admin</h1>
-        <p className="mt-1 text-[13px] text-muted-foreground">Today · network overview</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <Stat label="Interactions today" value={o ? o.interactionsToday : "—"} hint={o ? `${o.nfcToday} NFC · ${o.qrToday} QR` : undefined} />
-        <Stat label="Last 7 days" value={o ? o.interactions7 : "—"} />
-        <Stat label="Last 30 days" value={o ? o.interactions30 : "—"} />
-        <Stat label="Businesses" value={o ? o.businessesTotal : "—"} hint={o ? `${o.businessesActive} active` : undefined} />
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-[24px] font-bold tracking-tight">TapLocal Admin</h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">Today · real operations only</p>
+        </div>
+        <StatusChip tone="ok">REAL</StatusChip>
       </div>
 
       <div>
-        <SectionTitle>Plaque inventory</SectionTitle>
+        <SectionTitle>Today</SectionTitle>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-          <Stat label="Total" value={o ? o.plaquesTotal : "—"} />
-          <Stat label="Inventory" value={o ? o.plaquesInventory : "—"} />
-          <Stat label="Configured" value={o ? o.plaquesConfigured : "—"} />
-          <Stat label="Active" value={o ? o.plaquesActive : "—"} />
-          <Stat label="Packed" value={o ? o.plaquesPacked : "—"} />
+          <Stat label="Interactions" value={o ? o.interactionsToday : "—"} />
+          <Stat label="NFC" value={o ? o.nfcToday : "—"} />
+          <Stat label="QR" value={o ? o.qrToday : "—"} />
+          <Stat label="Active businesses" value={o ? o.businessesActive : "—"} />
+          <Stat label="Active plaques" value={o ? o.plaquesActive : "—"} />
         </div>
       </div>
 
       <div>
-        <SectionTitle>This month</SectionTitle>
+        <SectionTitle>Quick actions</SectionTitle>
         <div className="grid grid-cols-2 gap-2.5">
-          <Stat label="Businesses activated" value={o ? o.businessesThisMonth : "—"} />
-          <Stat label="Plaques activated" value={o ? o.plaquesActivatedThisMonth : "—"} />
+          {QUICK_ACTIONS.map((a) => (
+            <Link
+              key={a.label}
+              to={a.to}
+              className={`flex min-h-[56px] items-center justify-center rounded-2xl px-3 py-3 text-center text-[14px] font-bold ${
+                a.tone === "primary"
+                  ? "bg-primary text-primary-foreground"
+                  : a.tone === "outline"
+                    ? "border border-primary/40 bg-primary/10 text-primary"
+                    : "border border-border bg-card shadow-[var(--shadow-soft)]"
+              }`}
+            >
+              {a.label}
+            </Link>
+          ))}
+          <Link
+            to="/admin/plaques"
+            className="col-span-2 flex min-h-[52px] items-center justify-center rounded-2xl border border-border bg-card text-[14px] font-bold shadow-[var(--shadow-soft)]"
+          >
+            View all plaques
+          </Link>
         </div>
+      </div>
+
+      <div>
+        <SectionTitle
+          action={
+            <Link to="/admin/provisioning" className="text-[12px] font-semibold text-primary">
+              Manufacturing →
+            </Link>
+          }
+        >
+          Inventory
+        </SectionTitle>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          <Stat label="Ready" value={o ? o.plaquesInventory : "—"} />
+          <Stat label="Configured" value={o ? o.plaquesConfigured : "—"} />
+          <Stat label="Packed" value={o ? o.plaquesPacked : "—"} />
+          <Stat label="Need attention" value={o ? o.plaquesFaulty : "—"} />
+        </div>
+        {o && o.plaquesTotal === 0 ? (
+          <GlassPanel className="mt-2.5 p-4 text-[13px] text-muted-foreground">
+            No plaques manufactured yet.{" "}
+            <Link to="/admin/provisioning" className="font-semibold text-primary">
+              Open manufacturing
+            </Link>
+          </GlassPanel>
+        ) : null}
       </div>
 
       <div>
@@ -78,14 +129,33 @@ function AdminDashboard() {
             </Link>
           }
         >
-          Recent activity
+          Real interactions
         </SectionTitle>
+        <div className="grid grid-cols-3 gap-2.5">
+          <Stat label="Last 7 days" value={o ? o.interactions7 : "—"} />
+          <Stat label="Last 30 days" value={o ? o.interactions30 : "—"} />
+          <Stat label="Businesses" value={o ? o.businessesTotal : "—"} />
+        </div>
+        {o && o.businessesTotal === 0 ? (
+          <GlassPanel className="mt-2.5 p-4 text-[13px] text-muted-foreground">
+            No real businesses yet.{" "}
+            <Link to="/admin/businesses" className="font-semibold text-primary">
+              Add / find a business
+            </Link>
+          </GlassPanel>
+        ) : null}
+      </div>
+
+      <div>
+        <SectionTitle>Recent real activity</SectionTitle>
         <GlassPanel className="divide-y divide-border">
           {activity.isLoading ? <p className="p-4 text-[13px] text-muted-foreground">Loading…</p> : null}
-          {activity.data?.ok && activity.data.items.length === 0 ? (
-            <p className="p-4 text-[13px] text-muted-foreground">No activity recorded yet.</p>
+          {!activity.isLoading && items.length === 0 ? (
+            <p className="p-4 text-[13px] text-muted-foreground">
+              No real customer activity yet. Customer taps and scans will appear here.
+            </p>
           ) : null}
-          {(activity.data?.ok ? activity.data.items : []).map((item, i) => (
+          {items.map((item, i) => (
             <div key={`${item.at}-${i}`} className="flex items-center justify-between gap-3 p-3.5">
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-semibold">{item.business}</p>

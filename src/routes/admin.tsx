@@ -1,9 +1,11 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
 import { adminIdentity } from "@/lib/admin-data.functions";
+import { signOutEverything } from "@/lib/admin-session";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -33,8 +35,83 @@ export function useAdminIdentity() {
   });
 }
 
+/** Sign out everywhere, then land on the admin sign-in screen. */
+export function useAdminSignOut() {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  return async () => {
+    await signOutEverything(qc);
+    await navigate({ to: "/admin", replace: true });
+  };
+}
+
+function initials(email: string | null) {
+  if (!email) return "TL";
+  const name = email.split("@")[0] ?? "";
+  const parts = name.split(/[._-]+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "T") + (parts[1]?.[0] ?? parts[0]?.[1] ?? "L")).toUpperCase();
+}
+
+function AccountButton({ email }: { email: string | null }) {
+  const [open, setOpen] = useState(false);
+  const signOut = useAdminSignOut();
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Account"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-[13px] font-bold shadow-[var(--shadow-soft)]"
+      >
+        {initials(email)}
+      </button>
+
+      {open ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close account menu"
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-soft)]">
+            <p className="text-[11px] text-muted-foreground">Signed in as</p>
+            <p className="truncate text-[13px] font-bold">{email ?? "Unknown account"}</p>
+            <p className="mt-0.5 text-[12px] text-muted-foreground">Platform Administrator</p>
+            <div className="mt-3 space-y-1.5">
+              <Link
+                to="/app"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Open business portal
+              </Link>
+              <Link
+                to="/admin/settings"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Admin settings
+              </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                className="w-full rounded-xl bg-primary px-3 py-2 text-[13px] font-bold text-primary-foreground"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 function AdminLayout() {
   const identity = useAdminIdentity();
+  const signOut = useAdminSignOut();
 
   if (identity.isLoading) {
     return (
@@ -82,9 +159,19 @@ function AdminLayout() {
                 Signed in as <span className="font-semibold">{identity.data.email}</span>
               </p>
             ) : null}
-            <Link to="/app" className="mt-5 inline-block text-[13px] font-semibold text-primary">
-              Go to the business portal →
+            <Link
+              to="/app"
+              className="mt-5 block rounded-xl bg-primary px-4 py-3 text-center text-[13px] font-bold text-primary-foreground"
+            >
+              Go to business portal
             </Link>
+            <button
+              type="button"
+              onClick={signOut}
+              className="mt-2 w-full rounded-xl border border-border px-4 py-3 text-[13px] font-bold"
+            >
+              Sign out
+            </button>
           </GlassPanel>
         </div>
       </Field>
@@ -111,6 +198,14 @@ function AdminLayout() {
         </aside>
 
         <main className="min-w-0 flex-1">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="md:hidden">
+              <BrandLockup suffix="Admin" />
+            </div>
+            <div className="ml-auto">
+              <AccountButton email={identity.data.email} />
+            </div>
+          </div>
           <Outlet />
         </main>
       </div>
