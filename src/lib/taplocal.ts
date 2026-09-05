@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { isDemoMode } from "./demo";
 
 export const DEMO_BUSINESS_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -222,4 +223,26 @@ export async function fetchPlacementHistory(plaqueId: string) {
     .order("effective_from", { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+export type LocationRow = {
+  id: string;
+  name: string;
+  city: string | null;
+  address: string | null;
+  google_place_id: string | null;
+  google_rating: number | null;
+  google_review_count: number | null;
+  google_maps_uri: string | null;
+};
+
+export async function fetchLocations(businessId: string) {
+  const { data, error } = await supabase
+    .from("locations")
+    .select("id, name, city, address, google_place_id, google_rating, google_review_count, google_maps_uri")
+    .eq("business_id", businessId)
+    .eq("active", true)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as LocationRow[];
 }
