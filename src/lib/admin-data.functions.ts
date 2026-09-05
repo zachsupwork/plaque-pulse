@@ -109,30 +109,35 @@ export const networkOverview = createServerFn({ method: "POST" }).handler(async 
 });
 
 
-/** Newest taps, scans and account changes across the whole network. */
+/** Newest real taps, scans and account changes. Demo activity is excluded. */
 export const networkActivity = createServerFn({ method: "POST" }).handler(async () => {
   const caller = await gate();
   if (!caller.ok) return { ok: false as const, error: caller.error, items: [] };
   const client = await db();
+  const scope = await scopeFor(client);
 
-  const { data: events } = await client
+  const { data: rawEvents } = await client
     .from("events")
     .select("business_id, plaque_id, event_type, source_type, occurred_at")
     .order("occurred_at", { ascending: false })
-    .limit(25);
-  const { data: actions } = await client
+    .limit(200);
+  const { data: rawActions } = await client
     .from("action_history")
     .select("business_id, plaque_id, action_type, initiated_by, created_at")
     .order("created_at", { ascending: false })
-    .limit(25);
+    .limit(200);
+
+  const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e)).slice(0, 25);
+  const actions = (rawActions ?? []).filter((a) => !scope.isDemoRow(a)).slice(0, 25);
 
   const businessIds = new Set<string>();
   const plaqueIds = new Set<string>();
-  for (const e of events ?? []) {
+  for (const e of events) {
     if (e.business_id) businessIds.add(e.business_id);
     if (e.plaque_id) plaqueIds.add(e.plaque_id);
   }
-  for (const a of actions ?? []) {
+  for (const a of actions) {
+
     businessIds.add(a.business_id);
     if (a.plaque_id) plaqueIds.add(a.plaque_id);
   }
