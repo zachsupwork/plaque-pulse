@@ -23,7 +23,7 @@ export function WelcomeGate() {
         </p>
       </div>
 
-      <Link to="/activate/$token" params={{ token: "demo-activation-token" }} className="block">
+      <Link to="/activate" className="block">
         <GlassPanel tone="brand" className="flex items-center gap-3 p-4">
           <Radio className="h-5 w-5 shrink-0 text-primary" />
           <span className="min-w-0 flex-1">

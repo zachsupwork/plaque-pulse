@@ -30,8 +30,7 @@ function PlaquesPage() {
           </p>
         </div>
         <Link
-          to="/activate/$token"
-          params={{ token: "demo-activation-token" }}
+          to="/activate"
           className="shrink-0 rounded-xl bg-primary px-3.5 py-2 text-[13px] font-bold text-primary-foreground"
         >
           + Add plaque

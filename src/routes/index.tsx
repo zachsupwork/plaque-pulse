@@ -179,7 +179,7 @@ function MobileMenu() {
             <a href="#how" onClick={close} className={item}>How it works</a>
             <Link to="/smartplaques" onClick={close} className={item}>SmartPlaques</Link>
             <Link to="/offerings" onClick={close} className={item}>Services & offerings</Link>
-            <Link to="/activate/$token" params={{ token: "demo-activation-token" }} onClick={close} className={item}>
+            <Link to="/activate" onClick={close} className={item}>
               Activate a plaque
             </Link>
             {signedIn ? (
@@ -215,7 +215,7 @@ function SiteFooter() {
         <a href="#how" className={link}>How it works</a>
         <Link to="/smartplaques" className={link}>SmartPlaques</Link>
         <Link to="/offerings" className={link}>Offerings</Link>
-        <Link to="/activate/$token" params={{ token: "demo-activation-token" }} className={link}>
+        <Link to="/activate" className={link}>
           Activate a plaque
         </Link>
         {signedIn ? (
@@ -295,8 +295,7 @@ function Marketing() {
             <div className="hidden items-center gap-3 md:flex">
               <AccountArea />
               <Link
-                to="/activate/$token"
-                params={{ token: "demo-activation-token" }}
+                to="/activate"
                 className="rounded-xl bg-primary px-3.5 py-2 text-[13px] font-bold text-primary-foreground shadow-[var(--shadow-brand)]"
               >
                 Activate my plaque
@@ -323,8 +322,7 @@ function Marketing() {
             </p>
             <div className="mt-6 flex flex-wrap gap-2.5">
               <Link
-                to="/activate/$token"
-                params={{ token: "demo-activation-token" }}
+                to="/activate"
                 className="rounded-xl bg-primary px-5 py-3.5 text-[13px] font-bold tracking-wide text-primary-foreground uppercase shadow-[var(--shadow-brand)]"
               >
                 Activate my plaque
@@ -445,8 +443,7 @@ function Marketing() {
                 </p>
               </div>
               <Link
-                to="/activate/$token"
-                params={{ token: "demo-activation-token" }}
+                to="/activate"
                 className="mt-4 inline-block rounded-xl bg-primary px-5 py-3.5 text-[13px] font-bold tracking-wide text-primary-foreground uppercase shadow-[var(--shadow-brand)] md:mt-0"
               >
                 Activate your SmartPlaque

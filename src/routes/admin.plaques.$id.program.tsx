@@ -13,6 +13,7 @@ import {
   type ProgrammablePlaque,
 } from "@/components/taplocal/NfcKit";
 import { getPlaqueProgramming } from "@/lib/nfc.functions";
+import { SmartlinkHostCheck } from "@/components/taplocal/SmartlinkInfra";
 import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
 
 export const Route = createFileRoute("/admin/plaques/$id/program")({
@@ -101,6 +102,8 @@ function ProgramPage() {
           </Button>
         </div>
       </GlassPanel>
+
+      <SmartlinkHostCheck urls={[link, qrUrl(plaque.public_slug)]} />
 
       <ProgramPanel plaque={plaque} onVerified={() => void record.refetch()} />
 
