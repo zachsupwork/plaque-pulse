@@ -37,7 +37,7 @@ export function ProductImage({
   );
 }
 
-export function FeatureList({ features }: { features?: string[] }) {
+export function FeatureList({ features }: { features?: string[] | undefined }) {
   if (!features?.length) return null;
   return (
     <ul className="mt-4 space-y-1.5">
@@ -345,7 +345,7 @@ export function ProductGallery({ offering }: { offering: Offering }) {
       : [];
   const [index, setIndex] = useState(0);
   if (!images.length) return null;
-  const current = images[Math.min(index, images.length - 1)];
+  const current = images[Math.min(index, images.length - 1)]!;
 
   return (
     <div>
