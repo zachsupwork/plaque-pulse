@@ -112,7 +112,7 @@ export function Stat({
   tone?: "default" | "muted";
 }) {
   return (
-    <div className="rounded-xl border border-border bg-foreground/[0.06] px-3 py-3">
+    <div className="rounded-xl border border-border bg-card px-3 py-3 shadow-[var(--shadow-soft)]">
       <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
       <p
         className={cn(
