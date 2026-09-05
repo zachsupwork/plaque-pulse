@@ -20,8 +20,13 @@ export async function requireAdmin(): Promise<AdminCaller> {
     },
   );
 
-  const userId = (await caller.auth.getUser()).data.user?.id;
+  const callerUser = (await caller.auth.getUser()).data.user;
+  const userId = callerUser?.id;
   if (!userId) return { ok: false, error: "unauthorized" };
+
+  // Server-side allowlist bootstrap for the TapLocal platform-owner accounts.
+  const { ensureBootstrapAdmin } = await import("@/lib/admin-bootstrap.server");
+  await ensureBootstrapAdmin(userId, callerUser?.email);
 
   // Role check runs as the caller: RLS on user_roles only exposes their own rows,
   // and the roles table itself accepts no client-side writes.
