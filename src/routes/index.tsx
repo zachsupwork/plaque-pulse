@@ -104,7 +104,7 @@ function AccountArea() {
         className="text-[13px] font-semibold text-foreground"
         aria-expanded={open}
       >
-        My account
+        My Portal
       </button>
       {open ? (
         <>
@@ -123,7 +123,7 @@ function AccountArea() {
                 onClick={() => setOpen(false)}
                 className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
               >
-                Business portal
+                My Portal
               </Link>
               {isAdmin ? (
                 <Link
@@ -142,31 +142,119 @@ function AccountArea() {
   );
 }
 
+/** Mobile menu: every important destination in one tap. */
+function MobileMenu() {
+  const [open, setOpen] = useState(false);
+  const identity = useIdentity();
+  const signedIn = Boolean(identity.data?.signedIn);
+  const isAdmin = Boolean(identity.data?.isAdmin);
+  const item = "block rounded-xl border border-border px-3 py-2.5 text-[14px] font-semibold";
+  const close = () => setOpen(false);
+
+  return (
+    <div className="md:hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+      >
+        Menu
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={close}
+          />
+          <div className="absolute inset-x-3 z-50 mt-2 space-y-1.5 rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-soft)]">
+            <a href="#top" onClick={close} className={item}>Home</a>
+            <a href="#how" onClick={close} className={item}>How it works</a>
+            <a href="#plaques" onClick={close} className={item}>SmartPlaques</a>
+            <Link to="/activate/$token" params={{ token: "demo-activation-token" }} onClick={close} className={item}>
+              Activate a plaque
+            </Link>
+            {signedIn ? (
+              <Link to="/app" onClick={close} className={item}>My Portal</Link>
+            ) : (
+              <Link to="/auth" search={{ returnTo: "/app" }} onClick={close} className={item}>Sign in</Link>
+            )}
+            {isAdmin ? (
+              <Link to="/admin" onClick={close} className={item}>TapLocal Admin</Link>
+            ) : null}
+            <Link to="/demo" onClick={close} className={item}>Demo</Link>
+            <a href="mailto:support@taplocal.digital" onClick={close} className={item}>Support</a>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function SiteFooter() {
+  const identity = useIdentity();
+  const signedIn = Boolean(identity.data?.signedIn);
+  const link = "hover:text-foreground";
+
+  return (
+    <footer className="border-t border-border bg-card">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-6">
+        <BrandLockup suffix="Digital" />
+        <p className="text-[12px] text-muted-foreground">Physical to digital, for local business.</p>
+      </div>
+      <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-5 pb-4 text-[13px] text-muted-foreground">
+        <Link to="/" className={link}>Home</Link>
+        <a href="#how" className={link}>How it works</a>
+        <Link to="/activate/$token" params={{ token: "demo-activation-token" }} className={link}>
+          Activate a plaque
+        </Link>
+        {signedIn ? (
+          <Link to="/app" className={link}>My Portal</Link>
+        ) : (
+          <Link to="/auth" search={{ returnTo: "/app" }} className={link}>Sign in</Link>
+        )}
+        <a href="mailto:support@taplocal.digital" className={link}>Support</a>
+        <span className={link}>Privacy</span>
+        <span className={link}>Terms</span>
+      </nav>
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-5 pb-6 text-[12px] text-muted-foreground">
+        <span>© TapLocal Digital</span>
+        <Link to="/admin" className="hover:text-foreground">Admin</Link>
+      </div>
+    </footer>
+  );
+}
+
 function Marketing() {
   return (
     <Field>
-      <header className="sticky top-0 z-20 border-b border-border bg-card/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+      <header id="top" className="sticky top-0 z-20 border-b border-border bg-card/85 backdrop-blur-xl">
+        <div className="relative mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
 
-          <BrandLockup suffix="Digital" />
+          <Link to="/" aria-label="TapLocal Digital home"><BrandLockup suffix="Digital" /></Link>
           <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted-foreground md:flex">
             <a href="#how" className="hover:text-foreground">How it works</a>
             <a href="#plaques" className="hover:text-foreground">SmartPlaques</a>
             <a href="#anatomy" className="hover:text-foreground">For businesses</a>
           </nav>
           <div className="flex items-center gap-3">
-            <AccountArea />
-
-            <Link
-              to="/activate/$token"
-              params={{ token: "demo-activation-token" }}
-              className="rounded-xl bg-primary px-3.5 py-2 text-[13px] font-bold text-primary-foreground shadow-[var(--shadow-brand)]"
-            >
-              Activate my plaque
-            </Link>
+            <div className="hidden items-center gap-3 md:flex">
+              <AccountArea />
+              <Link
+                to="/activate/$token"
+                params={{ token: "demo-activation-token" }}
+                className="rounded-xl bg-primary px-3.5 py-2 text-[13px] font-bold text-primary-foreground shadow-[var(--shadow-brand)]"
+              >
+                Activate my plaque
+              </Link>
+            </div>
+            <MobileMenu />
           </div>
         </div>
       </header>
+
 
       <main className="mx-auto max-w-6xl px-5 pb-24">
         <section className="pt-10 md:grid md:grid-cols-2 md:items-center md:gap-12 md:pt-16">
