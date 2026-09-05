@@ -10,19 +10,21 @@ export const Route = createFileRoute("/admin")({
 
 const PRIMARY = [
   { to: "/admin", label: "Dashboard", exact: true },
+  { to: "/admin/setup", label: "Set Up", exact: false },
   { to: "/admin/businesses", label: "Businesses", exact: false },
   { to: "/admin/plaques", label: "Plaques", exact: false },
-  { to: "/admin/provisioning", label: "Manufacturing", exact: false },
-  { to: "/admin/inquiries", label: "Inquiries", exact: false },
 ] as const;
 
 const SECONDARY = [
+  { to: "/admin/provisioning", label: "Manufacturing" },
+  { to: "/admin/inquiries", label: "Inquiries" },
   { to: "/admin/offerings", label: "Catalog" },
   { to: "/admin/customers", label: "Customers" },
   { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/nfc", label: "NFC Tools" },
   { to: "/admin/settings", label: "Settings" },
 ] as const;
+
 
 /** Live view of who is signed in and whether they hold the admin role. */
 export const useAdminIdentity = useIdentity;
