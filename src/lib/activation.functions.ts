@@ -255,7 +255,7 @@ export const completeActivation = createServerFn({ method: "POST" })
       metric_type: string;
       metric_value: number;
       captured_at: string;
-      metadata: Record<string, unknown>;
+      metadata: { source: string; google_place_id: string | null };
     }> = [];
     const snapshotMeta = { source: "google_places_public", google_place_id: b.placeId };
     if (typeof b.reviewCount === "number")
