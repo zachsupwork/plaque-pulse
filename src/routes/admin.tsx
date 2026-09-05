@@ -35,7 +35,7 @@ function initials(email: string | null) {
 
 function AccountButton({ email }: { email: string | null }) {
   const [open, setOpen] = useState(false);
-  const { signOut, pending, error } = useSignOut("/admin");
+  const { signOut, pending, error } = useSignOut();
 
 
   return (
@@ -62,6 +62,13 @@ function AccountButton({ email }: { email: string | null }) {
             <p className="truncate text-[13px] font-bold">{email ?? "Unknown account"}</p>
             <p className="mt-0.5 text-[12px] text-muted-foreground">Platform Administrator</p>
             <div className="mt-3 space-y-1.5">
+              <Link
+                to="/"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl border border-border px-3 py-2 text-[13px] font-semibold"
+              >
+                Main TapLocal site
+              </Link>
               <Link
                 to="/app"
                 onClick={() => setOpen(false)}
@@ -93,6 +100,7 @@ function AccountButton({ email }: { email: string | null }) {
     </div>
   );
 }
+
 
 function AdminLayout() {
   const identity = useAdminIdentity();
