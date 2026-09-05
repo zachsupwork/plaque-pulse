@@ -228,7 +228,7 @@ function AdminLayout() {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-border bg-card/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur md:hidden">
         {[...PRIMARY, { to: "/admin/more", label: "More", exact: false } as const].map((tab) => (
           <Link
             key={tab.to}
