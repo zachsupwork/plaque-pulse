@@ -18,13 +18,13 @@ const WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 12;
 
 /**
- * Short activation codes are guessable, so every lookup is counted per caller.
- * Returns false once the caller has burned through the window's budget.
+ * Short activation codes are guessable and Google lookups cost money, so every
+ * public call is counted per caller. Returns false once the budget is spent.
  */
-export async function allowActivationAttempt(): Promise<boolean> {
+export async function allowRequest(prefix: string, max: number, windowMs = WINDOW_MS): Promise<boolean> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const attemptKey = callerKey();
-  const since = new Date(Date.now() - WINDOW_MS).toISOString();
+  const attemptKey = `${prefix}:${callerKey()}`;
+  const since = new Date(Date.now() - windowMs).toISOString();
 
   const { count } = await supabaseAdmin
     .from("activation_attempts")
@@ -32,12 +32,12 @@ export async function allowActivationAttempt(): Promise<boolean> {
     .eq("attempt_key", attemptKey)
     .gte("created_at", since);
 
-  if ((count ?? 0) >= MAX_ATTEMPTS) return false;
+  if ((count ?? 0) >= max) return false;
   await supabaseAdmin.from("activation_attempts").insert({ attempt_key: attemptKey });
   return true;
 }
 
-export async function markAttemptSucceeded() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  await supabaseAdmin.from("activation_attempts").insert({ attempt_key: callerKey(), succeeded: true });
+export function allowActivationAttempt() {
+  return allowRequest("activate", MAX_ATTEMPTS);
 }
+
