@@ -79,39 +79,68 @@ function PlaqueInventory() {
 
       <div className="space-y-2.5">
         {rows.map((p) => (
-          <Link key={p.id} to="/admin/plaques/$id" params={{ id: p.id }} className="block">
-            <GlassPanel className="p-4">
+          <GlassPanel key={p.id} className="p-4">
+            <Link to="/admin/plaques/$id" params={{ id: p.id }} className="block">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-display text-[15px] font-bold tracking-tight">
-                    {p.plaque_name ?? p.plaque_code}
-                  </p>
+                  <p className="truncate font-display text-[15px] font-bold tracking-tight">{p.plaque_code}</p>
                   <p className="truncate text-[12px] text-muted-foreground">
-                    {[p.businessName ?? "Unassigned", p.locationName, p.placement_type ? PLACEMENT_LABEL[p.placement_type] ?? p.placement_type : null]
+                    {[
+                      p.businessName ?? "UNASSIGNED",
+                      p.locationName,
+                      p.placement_type ? (PLACEMENT_LABEL[p.placement_type] ?? p.placement_type) : "No placement",
+                    ]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
                   <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                    {p.plaque_code} · /{p.public_slug} {p.batch_id ? `· batch ${p.batch_id}` : ""}
+                    {p.destinationType ? `→ ${p.destinationType.replace(/_/g, " ")}` : "No destination set"} · /
+                    {p.public_slug}
                   </p>
                 </div>
                 <div className="shrink-0 space-y-1 text-right">
                   <StatusChip tone={p.status === "active" ? "ok" : p.status === "faulty" ? "problem" : "idle"}>
                     {p.status.replace(/_/g, " ")}
                   </StatusChip>
+                  <p className="text-[11px] text-muted-foreground">{p.interactions30} taps / 30d</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {p.interactionsToday} today · {p.interactions30} / 30d
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {p.writeStatus === "written" ? "Written" : "Not written"} ·{" "}
-                    {p.verificationStatus === "verified" ? "Verified" : "Unverified"}
+                    NFC {p.writeStatus === "written" ? "written" : "not written"} ·{" "}
+                    {p.verificationStatus === "verified" ? "verified" : "unverified"}
                   </p>
                 </div>
               </div>
-            </GlassPanel>
-          </Link>
+            </Link>
+
+            <div className="mt-3 grid grid-cols-4 gap-1.5">
+              <Link
+                to="/admin/plaques/$id/program"
+                params={{ id: p.id }}
+                className="rounded-lg border border-border py-2 text-center text-[12px] font-bold"
+              >
+                Program
+              </Link>
+              <Link to="/admin/nfc/verify" className="rounded-lg border border-border py-2 text-center text-[12px] font-bold">
+                Verify
+              </Link>
+              <Link
+                to="/admin/plaques/$id"
+                params={{ id: p.id }}
+                className="rounded-lg border border-border py-2 text-center text-[12px] font-bold"
+              >
+                Assign
+              </Link>
+              <Link
+                to="/admin/plaques/$id"
+                params={{ id: p.id }}
+                className="rounded-lg bg-primary py-2 text-center text-[12px] font-bold text-primary-foreground"
+              >
+                Open
+              </Link>
+            </div>
+          </GlassPanel>
         ))}
       </div>
+
     </div>
   );
 }
