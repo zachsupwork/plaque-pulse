@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SmartplaquesRouteImport } from './routes/smartplaques'
+import { Route as ActivateIndexRouteImport } from './routes/activate.index'
 import { Route as ActivateTokenRouteImport } from './routes/activate.$token'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
@@ -81,6 +82,11 @@ const DemoRoute = DemoRouteImport.update({
 const SmartplaquesRoute = SmartplaquesRouteImport.update({
   id: '/smartplaques',
   path: '/smartplaques',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivateIndexRoute = ActivateIndexRouteImport.update({
+  id: '/activate/',
+  path: '/activate/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivateTokenRoute = ActivateTokenRouteImport.update({
@@ -290,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/offerings/$slug': typeof OfferingsSlugRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
+  '/activate/': typeof ActivateIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
@@ -333,6 +340,7 @@ export interface FileRoutesByTo {
   '/offerings/$slug': typeof OfferingsSlugRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
+  '/activate': typeof ActivateIndexRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/offerings': typeof OfferingsIndexRoute
@@ -379,6 +387,7 @@ export interface FileRoutesById {
   '/offerings/$slug': typeof OfferingsSlugRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
+  '/activate/': typeof ActivateIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
@@ -426,6 +435,7 @@ export interface FileRouteTypes {
     | '/offerings/$slug'
     | '/q/$slug'
     | '/setup/$slug'
+    | '/activate/'
     | '/admin/'
     | '/app/'
     | '/offerings/'
@@ -469,6 +479,7 @@ export interface FileRouteTypes {
     | '/offerings/$slug'
     | '/q/$slug'
     | '/setup/$slug'
+    | '/activate'
     | '/admin'
     | '/app'
     | '/offerings'
@@ -514,6 +525,7 @@ export interface FileRouteTypes {
     | '/offerings/$slug'
     | '/q/$slug'
     | '/setup/$slug'
+    | '/activate/'
     | '/admin/'
     | '/app/'
     | '/offerings/'
@@ -551,6 +563,7 @@ export interface RootRouteChildren {
   OfferingsSlugRoute: typeof OfferingsSlugRoute
   QSlugRoute: typeof QSlugRoute
   SetupSlugRoute: typeof SetupSlugRoute
+  ActivateIndexRoute: typeof ActivateIndexRoute
   OfferingsIndexRoute: typeof OfferingsIndexRoute
 }
 
@@ -596,6 +609,13 @@ declare module '@tanstack/react-router' {
       path: '/smartplaques'
       fullPath: '/smartplaques'
       preLoaderRoute: typeof SmartplaquesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activate/': {
+      id: '/activate/'
+      path: '/activate'
+      fullPath: '/activate/'
+      preLoaderRoute: typeof ActivateIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activate/$token': {
@@ -950,6 +970,7 @@ const rootRouteChildren: RootRouteChildren = {
   OfferingsSlugRoute: OfferingsSlugRoute,
   QSlugRoute: QSlugRoute,
   SetupSlugRoute: SetupSlugRoute,
+  ActivateIndexRoute: ActivateIndexRoute,
   OfferingsIndexRoute: OfferingsIndexRoute,
 }
 export const routeTree = rootRouteImport

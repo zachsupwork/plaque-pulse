@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle } from "@/components/taplocal/Field";
+import { SmartlinkHostCheck } from "@/components/taplocal/SmartlinkInfra";
 import { BASE_TYPES, PRODUCT_TYPES, STYLES, provisionPlaques } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/provisioning")({
@@ -46,6 +47,8 @@ function Provisioning() {
           Create blank plaques with their permanent links and one-time activation codes.
         </p>
       </div>
+
+      <SmartlinkHostCheck urls={result?.ok ? result.plaques.flatMap((p) => [p.nfcUrl, p.qrUrl, p.activationUrl]) : []} />
 
       <GlassPanel className="space-y-2.5 p-4">
         <Select label="Product" value={productType} onChange={setProductType} options={[...PRODUCT_TYPES]} />
