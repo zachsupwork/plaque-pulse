@@ -311,7 +311,15 @@ function Marketing() {
           <BrandLockup suffix="Digital" />
           <p className="text-[12px] text-muted-foreground">Physical to digital, for local business.</p>
         </div>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-5 pb-6 text-[12px] text-muted-foreground">
+          <span>© TapLocal Digital</span>
+          <a href="#anatomy" className="hover:text-foreground">Privacy</a>
+          <a href="#anatomy" className="hover:text-foreground">Terms</a>
+          <a href="#anatomy" className="hover:text-foreground">Support</a>
+          <Link to="/admin" className="hover:text-foreground">Admin</Link>
+        </div>
       </footer>
+
     </Field>
   );
 }
