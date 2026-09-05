@@ -1,9 +1,14 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Field, GlassPanel, EdgePanel } from "@/components/taplocal/Field";
 import { BrandLockup, NfcMark } from "@/components/taplocal/Brand";
 import { useIdentity } from "@/hooks/useAuthSession";
 import plaqueTrio from "@/assets/plaque-trio.jpg";
+import { listOfferings, type Offering } from "@/lib/offerings.functions";
+import { OfferingCard } from "@/components/taplocal/OfferingCard";
+import { InterestForm } from "@/components/taplocal/InterestForm";
 
 
 export const Route = createFileRoute("/")({
@@ -172,7 +177,8 @@ function MobileMenu() {
           <div className="absolute inset-x-3 z-50 mt-2 space-y-1.5 rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-soft)]">
             <a href="#top" onClick={close} className={item}>Home</a>
             <a href="#how" onClick={close} className={item}>How it works</a>
-            <a href="#plaques" onClick={close} className={item}>SmartPlaques</a>
+            <Link to="/smartplaques" onClick={close} className={item}>SmartPlaques</Link>
+            <Link to="/offerings" onClick={close} className={item}>Services & offerings</Link>
             <Link to="/activate/$token" params={{ token: "demo-activation-token" }} onClick={close} className={item}>
               Activate a plaque
             </Link>
@@ -207,6 +213,8 @@ function SiteFooter() {
       <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-5 pb-4 text-[13px] text-muted-foreground">
         <Link to="/" className={link}>Home</Link>
         <a href="#how" className={link}>How it works</a>
+        <Link to="/smartplaques" className={link}>SmartPlaques</Link>
+        <Link to="/offerings" className={link}>Offerings</Link>
         <Link to="/activate/$token" params={{ token: "demo-activation-token" }} className={link}>
           Activate a plaque
         </Link>
@@ -227,6 +235,50 @@ function SiteFooter() {
   );
 }
 
+/** Live catalog highlights, driven by whatever staff have marked featured. */
+function FeaturedOfferings() {
+  const listFn = useServerFn(listOfferings);
+  const { data } = useQuery({ queryKey: ["offerings"], queryFn: () => listFn() });
+  const [interest, setInterest] = useState<Offering | null>(null);
+
+  const all = data?.offerings ?? [];
+  const featured = (all.filter((o) => o.featured).length ? all.filter((o) => o.featured) : all).slice(0, 3);
+  if (!featured.length) return null;
+
+  return (
+    <section id="offerings" className="mt-20">
+      <p className="text-[12px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
+        What TapLocal can do for your business
+      </p>
+      <h2 className="mt-2 max-w-xl text-[26px] leading-tight font-bold tracking-tight md:text-[34px]">
+        Plaques, packs and the setup behind them.
+      </h2>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {featured.map((o) => (
+          <OfferingCard key={o.id} offering={o} onInterested={() => setInterest(o)} />
+        ))}
+      </div>
+
+      <Link
+        to="/offerings"
+        className="mt-6 inline-block rounded-xl border border-border bg-card px-5 py-3 text-[13px] font-bold tracking-wide uppercase"
+      >
+        View all offerings
+      </Link>
+
+      {interest ? (
+        <InterestForm
+          offeringId={interest.id}
+          offeringName={interest.name}
+          physical={interest.metadata?.physical !== false}
+          onClose={() => setInterest(null)}
+        />
+      ) : null}
+    </section>
+  );
+}
+
 function Marketing() {
   return (
     <Field>
@@ -236,8 +288,8 @@ function Marketing() {
           <Link to="/" aria-label="TapLocal Digital home"><BrandLockup suffix="Digital" /></Link>
           <nav className="hidden items-center gap-6 text-[13px] font-medium text-muted-foreground md:flex">
             <a href="#how" className="hover:text-foreground">How it works</a>
-            <a href="#plaques" className="hover:text-foreground">SmartPlaques</a>
-            <a href="#anatomy" className="hover:text-foreground">For businesses</a>
+            <Link to="/smartplaques" className="hover:text-foreground">SmartPlaques</Link>
+            <Link to="/offerings" className="hover:text-foreground">Services</Link>
           </nav>
           <div className="flex items-center gap-3">
             <div className="hidden items-center gap-3 md:flex">
@@ -307,6 +359,8 @@ function Marketing() {
             />
           </div>
         </section>
+
+        <FeaturedOfferings />
 
         <section id="plaques" className="mt-20">
           <p className="text-[12px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
