@@ -27,9 +27,9 @@ import {
 import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
 
 export const Route = createFileRoute("/admin/setup")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    businessId: typeof search["businessId"] === "string" ? (search["businessId"] as string) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { businessId?: string } =>
+    typeof search["businessId"] === "string" ? { businessId: search["businessId"] as string } : {},
+
   head: () => ({
     meta: [
       { title: "Set up a SmartPlaque — TapLocal admin" },
