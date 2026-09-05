@@ -513,8 +513,11 @@ export const getPlaqueRecord = createServerFn({ method: "POST" })
     const client = await db();
     const id = data.plaqueId;
 
+    const scope = await scopeFor(client);
     const { data: plaque } = await client.from("plaques").select("*").eq("id", id).maybeSingle();
-    if (!plaque) return { ok: true as const, record: null };
+    if (!plaque || (plaque.business_id && scope.demoBusinessIds.has(plaque.business_id)))
+      return { ok: true as const, record: null };
+
 
     const [{ data: programming }, { data: destinations }, { data: events }, { data: placements }, { data: progEvents }] =
       await Promise.all([
