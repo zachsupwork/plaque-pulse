@@ -20,6 +20,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminMoreRouteImport } from './routes/admin.more'
+import { Route as AdminOfferingsRouteImport } from './routes/admin.offerings'
 import { Route as AdminProvisioningRouteImport } from './routes/admin.provisioning'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -33,6 +34,8 @@ import { Route as QSlugRouteImport } from './routes/q.$slug'
 import { Route as SetupSlugRouteImport } from './routes/setup.$slug'
 import { Route as AdminBusinessesIndexRouteImport } from './routes/admin.businesses.index'
 import { Route as AdminBusinessesIdRouteImport } from './routes/admin.businesses.$id'
+import { Route as AdminInquiriesIndexRouteImport } from './routes/admin.inquiries.index'
+import { Route as AdminInquiriesIdRouteImport } from './routes/admin.inquiries.$id'
 import { Route as AdminNfcIndexRouteImport } from './routes/admin.nfc.index'
 import { Route as AdminNfcBatchRouteImport } from './routes/admin.nfc.batch'
 import { Route as AdminNfcReadRouteImport } from './routes/admin.nfc.read'
@@ -105,6 +108,11 @@ const AdminMoreRoute = AdminMoreRouteImport.update({
   path: '/more',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOfferingsRoute = AdminOfferingsRouteImport.update({
+  id: '/offerings',
+  path: '/offerings',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProvisioningRoute = AdminProvisioningRouteImport.update({
   id: '/provisioning',
   path: '/provisioning',
@@ -168,6 +176,16 @@ const AdminBusinessesIndexRoute = AdminBusinessesIndexRouteImport.update({
 const AdminBusinessesIdRoute = AdminBusinessesIdRouteImport.update({
   id: '/businesses/$id',
   path: '/businesses/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInquiriesIndexRoute = AdminInquiriesIndexRouteImport.update({
+  id: '/inquiries/',
+  path: '/inquiries/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInquiriesIdRoute = AdminInquiriesIdRouteImport.update({
+  id: '/inquiries/$id',
+  path: '/inquiries/$id',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminNfcIndexRoute = AdminNfcIndexRouteImport.update({
@@ -262,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/more': typeof AdminMoreRoute
+  '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/app/activity': typeof AppActivityRoute
@@ -275,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
+  '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
@@ -284,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/admin/businesses/': typeof AdminBusinessesIndexRoute
+  '/admin/inquiries/': typeof AdminInquiriesIndexRoute
   '/admin/nfc/': typeof AdminNfcIndexRoute
   '/admin/plaques/': typeof AdminPlaquesIndexRoute
   '/app/nfc/': typeof AppNfcIndexRoute
@@ -302,6 +323,7 @@ export interface FileRoutesByTo {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/more': typeof AdminMoreRoute
+  '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/app/activity': typeof AppActivityRoute
@@ -315,6 +337,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppIndexRoute
   '/offerings': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
+  '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
@@ -324,6 +347,7 @@ export interface FileRoutesByTo {
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/admin/businesses': typeof AdminBusinessesIndexRoute
+  '/admin/inquiries': typeof AdminInquiriesIndexRoute
   '/admin/nfc': typeof AdminNfcIndexRoute
   '/admin/plaques': typeof AdminPlaquesIndexRoute
   '/app/nfc': typeof AppNfcIndexRoute
@@ -345,6 +369,7 @@ export interface FileRoutesById {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/more': typeof AdminMoreRoute
+  '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/app/activity': typeof AppActivityRoute
@@ -358,6 +383,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
+  '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
@@ -367,6 +393,7 @@ export interface FileRoutesById {
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/admin/businesses/': typeof AdminBusinessesIndexRoute
+  '/admin/inquiries/': typeof AdminInquiriesIndexRoute
   '/admin/nfc/': typeof AdminNfcIndexRoute
   '/admin/plaques/': typeof AdminPlaquesIndexRoute
   '/app/nfc/': typeof AppNfcIndexRoute
@@ -389,6 +416,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/customers'
     | '/admin/more'
+    | '/admin/offerings'
     | '/admin/provisioning'
     | '/admin/settings'
     | '/app/activity'
@@ -402,6 +430,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/offerings/'
     | '/admin/businesses/$id'
+    | '/admin/inquiries/$id'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
@@ -411,6 +440,7 @@ export interface FileRouteTypes {
     | '/app/nfc/write'
     | '/app/plaques/$id'
     | '/admin/businesses/'
+    | '/admin/inquiries/'
     | '/admin/nfc/'
     | '/admin/plaques/'
     | '/app/nfc/'
@@ -429,6 +459,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/customers'
     | '/admin/more'
+    | '/admin/offerings'
     | '/admin/provisioning'
     | '/admin/settings'
     | '/app/activity'
@@ -442,6 +473,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/offerings'
     | '/admin/businesses/$id'
+    | '/admin/inquiries/$id'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
@@ -451,6 +483,7 @@ export interface FileRouteTypes {
     | '/app/nfc/write'
     | '/app/plaques/$id'
     | '/admin/businesses'
+    | '/admin/inquiries'
     | '/admin/nfc'
     | '/admin/plaques'
     | '/app/nfc'
@@ -471,6 +504,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/customers'
     | '/admin/more'
+    | '/admin/offerings'
     | '/admin/provisioning'
     | '/admin/settings'
     | '/app/activity'
@@ -484,6 +518,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/offerings/'
     | '/admin/businesses/$id'
+    | '/admin/inquiries/$id'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
@@ -493,6 +528,7 @@ export interface FileRouteTypes {
     | '/app/nfc/write'
     | '/app/plaques/$id'
     | '/admin/businesses/'
+    | '/admin/inquiries/'
     | '/admin/nfc/'
     | '/admin/plaques/'
     | '/app/nfc/'
@@ -597,6 +633,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMoreRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/offerings': {
+      id: '/admin/offerings'
+      path: '/offerings'
+      fullPath: '/admin/offerings'
+      preLoaderRoute: typeof AdminOfferingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/provisioning': {
       id: '/admin/provisioning'
       path: '/provisioning'
@@ -686,6 +729,20 @@ declare module '@tanstack/react-router' {
       path: '/businesses/$id'
       fullPath: '/admin/businesses/$id'
       preLoaderRoute: typeof AdminBusinessesIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/inquiries/': {
+      id: '/admin/inquiries/'
+      path: '/inquiries'
+      fullPath: '/admin/inquiries/'
+      preLoaderRoute: typeof AdminInquiriesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/inquiries/$id': {
+      id: '/admin/inquiries/$id'
+      path: '/inquiries/$id'
+      fullPath: '/admin/inquiries/$id'
+      preLoaderRoute: typeof AdminInquiriesIdRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/nfc/': {
@@ -807,15 +864,18 @@ interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminMoreRoute: typeof AdminMoreRoute
+  AdminOfferingsRoute: typeof AdminOfferingsRoute
   AdminProvisioningRoute: typeof AdminProvisioningRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminBusinessesIdRoute: typeof AdminBusinessesIdRoute
+  AdminInquiriesIdRoute: typeof AdminInquiriesIdRoute
   AdminNfcBatchRoute: typeof AdminNfcBatchRoute
   AdminNfcReadRoute: typeof AdminNfcReadRoute
   AdminNfcVerifyRoute: typeof AdminNfcVerifyRoute
   AdminNfcWriteRoute: typeof AdminNfcWriteRoute
   AdminBusinessesIndexRoute: typeof AdminBusinessesIndexRoute
+  AdminInquiriesIndexRoute: typeof AdminInquiriesIndexRoute
   AdminNfcIndexRoute: typeof AdminNfcIndexRoute
   AdminPlaquesIndexRoute: typeof AdminPlaquesIndexRoute
   AdminPlaquesIdProgramRoute: typeof AdminPlaquesIdProgramRoute
@@ -826,15 +886,18 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminMoreRoute: AdminMoreRoute,
+  AdminOfferingsRoute: AdminOfferingsRoute,
   AdminProvisioningRoute: AdminProvisioningRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminBusinessesIdRoute: AdminBusinessesIdRoute,
+  AdminInquiriesIdRoute: AdminInquiriesIdRoute,
   AdminNfcBatchRoute: AdminNfcBatchRoute,
   AdminNfcReadRoute: AdminNfcReadRoute,
   AdminNfcVerifyRoute: AdminNfcVerifyRoute,
   AdminNfcWriteRoute: AdminNfcWriteRoute,
   AdminBusinessesIndexRoute: AdminBusinessesIndexRoute,
+  AdminInquiriesIndexRoute: AdminInquiriesIndexRoute,
   AdminNfcIndexRoute: AdminNfcIndexRoute,
   AdminPlaquesIndexRoute: AdminPlaquesIndexRoute,
   AdminPlaquesIdProgramRoute: AdminPlaquesIdProgramRoute,
