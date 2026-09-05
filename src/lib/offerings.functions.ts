@@ -21,7 +21,14 @@ export type Offering = {
   sort_order: number;
   cta_label: string;
   starting_price_text: string | null;
-  metadata: Record<string, unknown>;
+  metadata: OfferingMeta;
+};
+
+export type OfferingMeta = {
+  styles?: string[];
+  bases?: string[];
+  physical?: boolean;
+  quantity?: number;
 };
 
 const COLUMNS =

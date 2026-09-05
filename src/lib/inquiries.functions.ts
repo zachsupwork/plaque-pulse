@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { OfferingMeta } from "./offerings.functions";
 
 /**
  * Staff-only lead management and catalog editing. Every function verifies the
@@ -86,7 +87,7 @@ export const getInquiry = createServerFn({ method: "POST" })
     if (!row) return { ok: false as const, error: "forbidden" as const, inquiry: null };
 
     let offeringName: string | null = null;
-    let offeringMeta: Record<string, unknown> = {};
+    let offeringMeta: OfferingMeta = {};
     if (row.offering_id) {
       const { data: o } = await client
         .from("offerings")
@@ -94,7 +95,7 @@ export const getInquiry = createServerFn({ method: "POST" })
         .eq("id", row.offering_id)
         .maybeSingle();
       offeringName = o?.name ?? null;
-      offeringMeta = (o?.metadata as Record<string, unknown>) ?? {};
+      offeringMeta = (o?.metadata as OfferingMeta | null) ?? {};
     }
 
     return { ok: true as const, error: null, inquiry: { ...row, offering_name: offeringName, offering_metadata: offeringMeta } };
@@ -109,11 +110,13 @@ export const setInquiryStatus = createServerFn({ method: "POST" })
     if (!caller.ok) return { ok: false as const, error: caller.error };
 
     const client = await db();
-    const patch: Record<string, unknown> = { status: data.status };
-    if (data.status === "contacted") patch["contacted_at"] = new Date().toISOString();
-    if (data.status === "closed" || data.status === "not_interested" || data.status === "won") {
-      patch["closed_at"] = new Date().toISOString();
-    }
+    const now = new Date().toISOString();
+    const closing = data.status === "closed" || data.status === "not_interested" || data.status === "won";
+    const patch = {
+      status: data.status,
+      ...(data.status === "contacted" ? { contacted_at: now } : {}),
+      ...(closing ? { closed_at: now } : {}),
+    };
     const { error } = await client.from("offering_inquiries").update(patch).eq("id", data.id);
     return error ? { ok: false as const, error: "forbidden" as const } : { ok: true as const, error: null };
   });
