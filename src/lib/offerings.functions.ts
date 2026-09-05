@@ -124,7 +124,7 @@ export const submitInquiry = createServerFn({ method: "POST" })
         source: data.source,
       });
 
-    if (error) { console.error("INQUIRY_INSERT_FAIL", JSON.stringify(error)); return { ok: false as const, error: "failed" as const, id: null }; }
+    if (error) return { ok: false as const, error: "failed" as const, id: null };
 
     try {
       const { notifyAdminsOfInquiry } = await import("./inquiry-notify.server");
