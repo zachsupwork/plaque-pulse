@@ -2,6 +2,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /** Resolve a public plaque slug to its live destination and record the interaction. */
 export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", request: Request) {
+  // Manufacturing and support taps carry tl_test=1 and must never touch customer numbers.
+  const isTest = new URL(request.url).searchParams.get("tl_test") === "1";
+
   const { data: plaque } = await supabaseAdmin
     .from("plaques")
     .select("id, business_id, status")
@@ -20,30 +23,52 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
     .eq("active", true)
     .maybeSingle();
 
-  if (!destination?.url)
-    return fallback("This plaque isn't set up yet", "The business hasn't chosen where it should send you.");
+  // Not set up yet: the tap itself proves the tag works, so send them into setup.
+  if (!destination?.url) {
+    return new Response(null, {
+      status: 307,
+      headers: { Location: `/setup/${slug}?source=${source}`, "Cache-Control": "no-store" },
+    });
+  }
+
+  const occurredAt = new Date().toISOString();
+  const key = visitorKey(request);
 
   // Fire-and-forget: never let logging delay the redirect.
-  void supabaseAdmin.from("events").insert([
-    {
-      business_id: plaque.business_id,
-      plaque_id: plaque.id,
-      event_type: "interaction",
-      source_type: source,
-      intent_type: destination.destination_type,
-      occurred_at: new Date().toISOString(),
-      anonymous_visitor_key: visitorKey(request),
-    },
-    {
-      business_id: plaque.business_id,
-      plaque_id: plaque.id,
-      event_type: "redirect_success",
-      source_type: source,
-      intent_type: destination.destination_type,
-      occurred_at: new Date().toISOString(),
-      anonymous_visitor_key: visitorKey(request),
-    },
-  ]);
+  if (isTest) {
+    void supabaseAdmin.from("events").insert([
+      {
+        business_id: plaque.business_id,
+        plaque_id: plaque.id,
+        event_type: "manufacturing_test",
+        source_type: source,
+        intent_type: destination.destination_type,
+        occurred_at: occurredAt,
+        metadata: { tl_test: true },
+      },
+    ]);
+  } else {
+    void supabaseAdmin.from("events").insert([
+      {
+        business_id: plaque.business_id,
+        plaque_id: plaque.id,
+        event_type: "interaction",
+        source_type: source,
+        intent_type: destination.destination_type,
+        occurred_at: occurredAt,
+        anonymous_visitor_key: key,
+      },
+      {
+        business_id: plaque.business_id,
+        plaque_id: plaque.id,
+        event_type: "redirect_success",
+        source_type: source,
+        intent_type: destination.destination_type,
+        occurred_at: occurredAt,
+        anonymous_visitor_key: key,
+      },
+    ]);
+  }
 
   return new Response(null, {
     status: 307,
