@@ -1,17 +1,22 @@
-import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { GlassPanel, StatusChip } from "@/components/taplocal/Field";
+import { GlassPanel, SectionTitle, StatusChip } from "@/components/taplocal/Field";
 import { listAllBusinesses } from "@/lib/admin-data.functions";
+import {
+  adminCreateBusinessFromPlace,
+  adminGooglePlaceDetails,
+  adminSearchGoogle,
+} from "@/lib/admin-discovery.functions";
 
 export const Route = createFileRoute("/admin/businesses/")({
   head: () => ({
     meta: [
       { title: "Business directory — TapLocal admin" },
-      { name: "description", content: "Search every business on the TapLocal network." },
+      { name: "description", content: "Search TapLocal businesses or find a real business on Google." },
       { property: "og:title", content: "Business directory — TapLocal admin" },
-      { property: "og:description", content: "Search every business on the TapLocal network." },
+      { property: "og:description", content: "Search TapLocal businesses or find a real business on Google." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -30,31 +35,129 @@ const FILTERS = [
   ["recent", "Recent"],
 ] as const;
 
+function newSessionToken() {
+  return crypto.randomUUID().replace(/-/g, "");
+}
+
 function BusinessDirectory() {
   const listFn = useServerFn(listAllBusinesses);
+  const googleFn = useServerFn(adminSearchGoogle);
+  const detailsFn = useServerFn(adminGooglePlaceDetails);
+  const createFn = useServerFn(adminCreateBusinessFromPlace);
+  const navigate = useNavigate();
+
   const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number][0]>("all");
+  const [sessionToken, setSessionToken] = useState(newSessionToken);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 350);
+    return () => clearTimeout(t);
+  }, [query]);
 
   const list = useQuery({
-    queryKey: ["admin-businesses", query, filter],
-    queryFn: () => listFn({ data: { query, filter } }),
+    queryKey: ["admin-businesses", debounced, filter],
+    queryFn: () => listFn({ data: { query: debounced, filter } }),
+  });
+
+  const googleEnabled = debounced.length >= 3;
+  const google = useQuery({
+    queryKey: ["admin-google-search", debounced],
+    enabled: googleEnabled,
+    staleTime: 60_000,
+    queryFn: () => googleFn({ data: { query: debounced, sessionToken } }),
+  });
+
+  const details = useQuery({
+    queryKey: ["admin-google-place", selectedPlaceId],
+    enabled: Boolean(selectedPlaceId),
+    queryFn: () => detailsFn({ data: { placeId: selectedPlaceId!, sessionToken } }),
   });
 
   const rows = list.data?.ok ? list.data.businesses : [];
+  const googleResults = google.data?.ok ? google.data.results : [];
+  const googleError = google.data && !google.data.ok ? google.data.error : google.isError ? "failed" : null;
+
+  const googleMessage = useMemo(() => {
+    if (!googleEnabled) return null;
+    if (google.isLoading) return "Searching Google…";
+    switch (googleError) {
+      case "not_configured":
+        return "Google business search isn't configured yet. Existing TapLocal business search still works.";
+      case "rate_limited":
+        return "Too many searches. Try again in a moment.";
+      case "unauthorized":
+      case "forbidden":
+        return "You don't have access to Google business search.";
+      case "failed":
+        return "Couldn't search Google right now.";
+      default:
+        return googleResults.length === 0 ? "No businesses found." : null;
+    }
+  }, [googleEnabled, google.isLoading, googleError, googleResults.length]);
+
+  function clearSearch() {
+    setQuery("");
+    setDebounced("");
+    setSelectedPlaceId(null);
+    setAddError(null);
+    setSessionToken(newSessionToken());
+  }
+
+  async function addToTapLocal(placeId: string) {
+    setAdding(true);
+    setAddError(null);
+    const res = await createFn({ data: { placeId, sessionToken } });
+    setAdding(false);
+    setSessionToken(newSessionToken());
+    if (res.ok && res.businessId) {
+      navigate({ to: "/admin/businesses/$id", params: { id: res.businessId } });
+      return;
+    }
+    setAddError(
+      res.error === "not_configured"
+        ? "Google business search isn't configured yet."
+        : "Couldn't add that business right now.",
+    );
+  }
+
+  const place = details.data?.ok ? details.data.place : null;
+  const placeExistingId = details.data?.ok ? details.data.existingBusinessId : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-24">
       <div>
         <h1 className="font-display text-[24px] font-bold tracking-tight">Businesses</h1>
-        <p className="mt-1 text-[13px] text-muted-foreground">Every business on the TapLocal network.</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          Search TapLocal, or find a real business on Google and add it.
+        </p>
       </div>
 
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Name, address, city, phone or Google Place ID"
-        className="w-full rounded-xl border border-border bg-card px-3.5 py-3 text-[14px] outline-none focus:border-primary/60"
-      />
+      <div className="relative">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search TapLocal or find a business on Google"
+          className="w-full rounded-xl border border-border bg-card px-3.5 py-3 pr-10 text-[14px] outline-none focus:border-primary/60"
+        />
+        {query ? (
+          <button
+            type="button"
+            onClick={clearSearch}
+            aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2.5 py-1 text-[15px] text-muted-foreground"
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
+      {(list.isFetching || google.isFetching) && query ? (
+        <p className="text-[12px] text-muted-foreground">Searching…</p>
+      ) : null}
 
       <div className="flex flex-wrap gap-1.5">
         {FILTERS.map(([value, label]) => (
@@ -71,40 +174,161 @@ function BusinessDirectory() {
         ))}
       </div>
 
-      {list.isLoading ? <p className="text-[13px] text-muted-foreground">Loading…</p> : null}
-      {!list.isLoading && rows.length === 0 ? (
-        <p className="text-[13px] text-muted-foreground">No businesses match that.</p>
-      ) : null}
+      <div>
+        <SectionTitle>Your TapLocal businesses</SectionTitle>
+        {list.isLoading ? <p className="text-[13px] text-muted-foreground">Loading…</p> : null}
+        {!list.isLoading && rows.length === 0 ? (
+          <GlassPanel className="p-4">
+            <p className="text-[13px] text-muted-foreground">
+              {debounced ? "No existing TapLocal businesses found." : "No TapLocal businesses yet."}
+            </p>
+            {!debounced ? (
+              <p className="mt-1 text-[12px] text-muted-foreground">Search above to add your first business.</p>
+            ) : null}
+          </GlassPanel>
+        ) : null}
 
-      <div className="space-y-2.5">
-        {rows.map((b) => (
-          <Link key={b.id} to="/admin/businesses/$id" params={{ id: b.id }} className="block">
-            <GlassPanel className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate font-display text-[16px] font-bold tracking-tight">{b.name}</p>
-                  <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
-                    {[b.industry, b.location?.name, b.location?.city].filter(Boolean).join(" · ")}
-                  </p>
+        <div className="mt-2.5 space-y-2.5">
+          {rows.map((b) => (
+            <Link key={b.id} to="/admin/businesses/$id" params={{ id: b.id }} className="block">
+              <GlassPanel className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-[16px] font-bold tracking-tight">{b.name}</p>
+                    <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                      {[b.industry, b.location?.name, b.location?.city].filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    {b.memberCount === 0 ? <StatusChip tone="attention">Admin managed</StatusChip> : null}
+                  </div>
                 </div>
-                <div className="flex shrink-0 gap-1.5">
-                  {b.isDemo ? <StatusChip tone="brand">DEMO</StatusChip> : <StatusChip tone="idle">REAL</StatusChip>}
-                  {b.memberCount === 0 ? <StatusChip tone="attention">Admin managed</StatusChip> : null}
-                </div>
-              </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] sm:grid-cols-4">
-                <Cell label="Plaques" value={`${b.activePlaques} active / ${b.plaques}`} />
-                <Cell label="Interactions 30d" value={String(b.interactions30)} />
-                <Cell
-                  label="Google listing"
-                  value={b.location?.rating ? `${b.location.rating} ★ · ${b.location.reviews ?? 0}` : "Not linked"}
-                />
-                <Cell label="Last activity" value={new Date(b.lastActivity).toLocaleDateString()} />
-              </div>
-            </GlassPanel>
-          </Link>
-        ))}
+                <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] sm:grid-cols-4">
+                  <Cell label="Plaques" value={`${b.activePlaques} active / ${b.plaques}`} />
+                  <Cell label="Interactions 30d" value={String(b.interactions30)} />
+                  <Cell
+                    label="Google listing"
+                    value={b.location?.rating ? `${b.location.rating} ★ · ${b.location.reviews ?? 0}` : "Not linked"}
+                  />
+                  <Cell label="Last activity" value={new Date(b.lastActivity).toLocaleDateString()} />
+                </div>
+              </GlassPanel>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Find on Google</SectionTitle>
+        {!googleEnabled ? (
+          <p className="text-[12px] text-muted-foreground">Type at least 3 letters to search real businesses.</p>
+        ) : null}
+        {googleMessage ? <p className="text-[13px] text-muted-foreground">{googleMessage}</p> : null}
+
+        <div className="mt-2.5 space-y-2.5">
+          {googleEnabled &&
+            googleResults.map((r) => (
+              <GlassPanel key={r.placeId} className="p-4">
+                <p className="font-display text-[16px] font-bold tracking-tight">{r.name}</p>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">{r.address}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {r.category ? <StatusChip tone="idle">{r.category}</StatusChip> : null}
+                  <StatusChip tone="idle">Public Google data</StatusChip>
+                  {r.existingBusinessId ? <StatusChip tone="ok">Already in TapLocal</StatusChip> : null}
+                </div>
+
+                {r.existingBusinessId ? (
+                  <Link
+                    to="/admin/businesses/$id"
+                    params={{ id: r.existingBusinessId }}
+                    className="mt-3 block rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+                  >
+                    Open business
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddError(null);
+                      setSelectedPlaceId(r.placeId === selectedPlaceId ? null : r.placeId);
+                    }}
+                    className="mt-3 w-full rounded-xl bg-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground"
+                  >
+                    {selectedPlaceId === r.placeId ? "Hide details" : "Add / set up"}
+                  </button>
+                )}
+
+                {selectedPlaceId === r.placeId ? (
+                  <div className="mt-3 rounded-xl border border-border p-3.5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Public Google data
+                    </p>
+                    {details.isLoading ? (
+                      <p className="mt-2 text-[13px] text-muted-foreground">Loading listing…</p>
+                    ) : null}
+                    {details.data && !details.data.ok ? (
+                      <p className="mt-2 text-[13px] text-muted-foreground">Couldn't load that listing right now.</p>
+                    ) : null}
+                    {place ? (
+                      <div className="mt-2 space-y-1 text-[13px]">
+                        <p className="font-semibold">{place.name}</p>
+                        <p className="text-muted-foreground">{place.formattedAddress}</p>
+                        {place.primaryType ? <p className="text-muted-foreground">{place.primaryType}</p> : null}
+                        {place.rating ? (
+                          <p className="text-muted-foreground">
+                            {place.rating} ★ · {place.reviewCount ?? 0} reviews
+                          </p>
+                        ) : null}
+                        {place.phone ? <p className="text-muted-foreground">{place.phone}</p> : null}
+                        {place.website ? <p className="truncate text-muted-foreground">{place.website}</p> : null}
+                        {place.mapsUri ? (
+                          <a
+                            href={place.mapsUri}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block text-primary underline"
+                          >
+                            Google Maps listing
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {addError ? <p className="mt-2 text-[12px] text-destructive">{addError}</p> : null}
+
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPlaceId(null)}
+                        className="flex-1 rounded-xl border border-border px-4 py-3 text-[13px] font-semibold"
+                      >
+                        Cancel
+                      </button>
+                      {placeExistingId ? (
+                        <Link
+                          to="/admin/businesses/$id"
+                          params={{ id: placeExistingId }}
+                          className="flex-1 rounded-xl bg-primary px-4 py-3 text-center text-[13px] font-semibold text-primary-foreground"
+                        >
+                          Open business
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={adding || !place}
+                          onClick={() => addToTapLocal(r.placeId)}
+                          className="flex-1 rounded-xl bg-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
+                        >
+                          {adding ? "Adding…" : "Add to TapLocal"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </GlassPanel>
+            ))}
+        </div>
       </div>
     </div>
   );
