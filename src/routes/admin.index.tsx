@@ -117,10 +117,6 @@ function AdminDashboard() {
               {a.label}
             </Link>
           ))}
-
-              {a.label}
-            </Link>
-          ))}
           <Link
             to="/admin/plaques"
             className="col-span-2 flex min-h-[52px] items-center justify-center rounded-2xl border border-border bg-card text-[14px] font-bold shadow-[var(--shadow-soft)]"
