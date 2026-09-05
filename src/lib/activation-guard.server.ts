@@ -5,6 +5,19 @@ export async function sha256Hex(value: string) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/** Customer-facing codes are typed by hand: accept spacing and case variations. */
+export function normalizeActivationCode(raw: string) {
+  const clean = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (clean.length === 8) return `${clean.slice(0, 4)}-${clean.slice(4)}`;
+  return clean;
+}
+
+/** Hashes to try for a typed code: exactly as given, and the normalized form. */
+export async function activationHashes(raw: string) {
+  const candidates = new Set([raw.trim(), normalizeActivationCode(raw)]);
+  return Promise.all([...candidates].map((c) => sha256Hex(c)));
+}
+
 function callerKey() {
   const headers = getRequest().headers;
   return (

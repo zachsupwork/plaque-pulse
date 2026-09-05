@@ -94,7 +94,7 @@ export const askCopilot = createServerFn({ method: "POST" })
           .eq("business_id", b);
         const { data: dests } = await supabase
           .from("destinations")
-          .select("plaque_id, destination_type, destination_url, effective_from, effective_to")
+          .select("plaque_id, destination_type, url, effective_from, effective_to")
           .eq("business_id", b);
         return {
           plaques: plaques ?? [],
@@ -131,7 +131,7 @@ export const askCopilot = createServerFn({ method: "POST" })
       if (name === "get_outcomes") {
         const { data: rows } = await supabase
           .from("outcomes")
-          .select("outcome_type, attribution_type, value_estimate, occurred_at, notes")
+          .select("outcome_type, attribution_type, value, occurred_at, metadata")
           .eq("business_id", b)
           .order("occurred_at", { ascending: false });
         return summarise(rows ?? [], 100);
@@ -140,7 +140,7 @@ export const askCopilot = createServerFn({ method: "POST" })
       if (name === "get_metric_snapshots") {
         const { data: rows } = await supabase
           .from("metric_snapshots")
-          .select("metric_key, metric_value, captured_at, source")
+          .select("metric_type, metric_value, captured_at, metadata")
           .eq("business_id", b)
           .order("captured_at", { ascending: true });
         return summarise(rows ?? [], 100);
@@ -149,16 +149,21 @@ export const askCopilot = createServerFn({ method: "POST" })
       if (name === "get_recent_changes") {
         const { data: actions } = await supabase
           .from("action_history")
-          .select("action_type, description, initiated_by, created_at")
+          .select("action_type, previous_value, new_value, initiated_by, created_at")
           .eq("business_id", b)
           .order("created_at", { ascending: false })
           .limit(20);
-        const { data: placements } = await supabase
-          .from("plaque_placement_history")
-          .select("plaque_id, placement_type, moved_at, note")
-          .eq("business_id", b)
-          .order("moved_at", { ascending: false })
-          .limit(20);
+        // plaque_placement_history has no business_id — reach it through the business's plaques.
+        const { data: ownPlaques } = await supabase.from("plaques").select("id").eq("business_id", b);
+        const plaqueIds = (ownPlaques ?? []).map((p) => p.id);
+        const { data: placements } = plaqueIds.length
+          ? await supabase
+              .from("plaque_placement_history")
+              .select("plaque_id, placement_type, placement_name, effective_from, effective_to, reason")
+              .in("plaque_id", plaqueIds)
+              .order("effective_from", { ascending: false })
+              .limit(20)
+          : { data: [] };
         return { actions: actions ?? [], placement_moves: placements ?? [] };
       }
 

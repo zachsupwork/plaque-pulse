@@ -42,16 +42,16 @@ export const lookupActivation = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     if (data.token === DEMO_TOKEN) return { demo: true as const, rateLimited: false, plaque: DEMO_PLAQUE };
 
-    const { allowActivationAttempt, sha256Hex } = await import("./activation-guard.server");
+    const { allowActivationAttempt, activationHashes } = await import("./activation-guard.server");
     if (!(await allowActivationAttempt()))
       return { demo: false as const, rateLimited: true, plaque: null };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const hash = await sha256Hex(data.token);
+    const hashes = await activationHashes(data.token);
     const { data: plaque } = await supabaseAdmin
       .from("plaques")
       .select("id, plaque_code, public_slug, status, configured_at, claimed_at")
-      .eq("activation_token_hash", hash)
+      .in("activation_token_hash", hashes)
       .maybeSingle();
 
     if (!plaque) return { demo: false as const, rateLimited: false, plaque: null };
@@ -122,17 +122,17 @@ export const completeActivation = createServerFn({ method: "POST" })
       return { ok: true as const, demo: true as const, publicSlug: "DEMOQR", businessName: data.business.name };
     }
 
-    const { allowActivationAttempt, sha256Hex } = await import("./activation-guard.server");
+    const { allowActivationAttempt, activationHashes } = await import("./activation-guard.server");
     if (!(await allowActivationAttempt())) return { ok: false as const, error: "rate_limited" as const };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { googleReviewUrl } = await import("./google-places.server");
 
-    const hash = await sha256Hex(data.token);
+    const hashes = await activationHashes(data.token);
     const { data: plaque } = await supabaseAdmin
       .from("plaques")
       .select("id, business_id, public_slug, status, claimed_at")
-      .eq("activation_token_hash", hash)
+      .in("activation_token_hash", hashes)
       .maybeSingle();
 
     if (!plaque) return { ok: false as const, error: "not_found" as const };
@@ -318,14 +318,14 @@ export const claimActivation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (data.token === DEMO_TOKEN) return { ok: true as const, demo: true as const };
 
-    const { sha256Hex } = await import("./activation-guard.server");
+    const { activationHashes } = await import("./activation-guard.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const hash = await sha256Hex(data.token);
+    const hashes = await activationHashes(data.token);
     const { data: plaque } = await supabaseAdmin
       .from("plaques")
       .select("id, business_id, claimed_at")
-      .eq("activation_token_hash", hash)
+      .in("activation_token_hash", hashes)
       .maybeSingle();
 
     if (!plaque || !plaque.business_id) return { ok: false as const, error: "not_found" as const };
