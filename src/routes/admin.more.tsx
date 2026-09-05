@@ -18,11 +18,13 @@ export const Route = createFileRoute("/admin/more")({
 
 const LINKS = [
   { to: "/admin/customers", label: "Customers", hint: "Accounts and who they belong to" },
-  { to: "/admin/analytics", label: "Analytics", hint: "Placements, destinations, top performers" },
+  { to: "/admin/analytics", label: "Analytics", hint: "Real placements, destinations, top performers" },
   { to: "/admin/nfc", label: "NFC tools", hint: "Write, verify and batch programming" },
   { to: "/admin/settings", label: "Settings", hint: "Your session and SmartLink domain" },
   { to: "/app", label: "Business portal", hint: "See what customers see" },
+  { to: "/demo", label: "Sales mode", hint: "Labelled example walkthrough for prospects" },
 ] as const;
+
 
 function More() {
   return (
