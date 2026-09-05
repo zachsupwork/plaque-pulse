@@ -5,18 +5,20 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * TapLocal design system — "Kinetic Glass Signal".
- * Dark signal-blue field, floating glass panels, electric brand blue and
- * teal accent. All colours are oklch tokens; never hardcode colours in JSX.
+ * TapLocal design system — "Cloud Acrylic".
+ * Light by default: ivory/white surfaces, faint cloud-marble texture, deep navy
+ * type, TapLocal blue and a restrained multicolour plaque-edge gradient.
+ * Dark tokens are kept under .dark for a future premium black-marble theme.
+ * Never hardcode colours in JSX — use the semantic tokens below.
  */
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 5px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-3xl: calc(var(--radius) + 14px);
 
   --font-display: var(--font-display-family);
   --font-body: var(--font-body-family);
@@ -50,6 +52,11 @@
   --color-down: var(--destructive);
   --color-warning: var(--warning);
 
+  --color-cloud: var(--cloud);
+  --color-blush: var(--blush);
+  --color-lilac: var(--lilac);
+  --color-sky: var(--sky);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -66,63 +73,114 @@
 }
 
 :root {
-  --radius: 1rem;
+  --radius: 1.25rem;
   --font-display-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-body-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
-  --ink: oklch(0.17 0.023 268);
-  --mist: oklch(0.66 0.043 268);
+  /* ink = deep navy #11182F, mist = secondary grey #667085 */
+  --ink: oklch(0.22 0.035 268);
+  --mist: oklch(0.58 0.024 264);
 
-  --background: oklch(0.17 0.023 268);
-  --foreground: oklch(0.98 0.005 268);
+  --background: oklch(0.978 0.004 268); /* #F8F9FC */
+  --foreground: oklch(0.22 0.035 268);
 
-  --card: oklch(0.235 0.028 268);
-  --card-foreground: oklch(0.98 0.005 268);
-  --popover: oklch(0.21 0.036 268);
-  --popover-foreground: oklch(0.98 0.005 268);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.035 268);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.035 268);
 
-  --primary: oklch(0.63 0.204 265);
-  --primary-foreground: oklch(0.99 0 0);
+  --primary: oklch(0.6 0.184 259); /* TapLocal blue #3478F6 */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.972 0.005 268);
+  --secondary-foreground: oklch(0.22 0.035 268);
+
+  --muted: oklch(0.968 0.005 268);
+  --muted-foreground: oklch(0.58 0.024 264);
+
+  --accent: oklch(0.63 0.101 179); /* teal #16A596 */
+  --accent-foreground: oklch(1 0 0);
+
+  --warning: oklch(0.76 0.14 72);
+  --destructive: oklch(0.6 0.18 22);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.92 0.006 264); /* #E5E8EF */
+  --input: oklch(0.92 0.006 264);
+  --ring: oklch(0.6 0.184 259);
+
+  /* plaque-inspired tints */
+  --cloud: oklch(0.99 0.003 30); /* #FCFAFA warm cloud */
+  --blush: oklch(0.975 0.014 5); /* #FFF5F8 */
+  --lilac: oklch(0.968 0.014 295); /* #F7F4FF */
+  --sky: oklch(0.972 0.012 250); /* #F4F8FF */
+
+  --chart-1: oklch(0.6 0.184 259);
+  --chart-2: oklch(0.63 0.101 179);
+  --chart-3: oklch(0.72 0.13 330);
+  --chart-4: oklch(0.78 0.13 70);
+  --chart-5: oklch(0.6 0.18 22);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.22 0.035 268);
+  --sidebar-primary: oklch(0.6 0.184 259);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.968 0.005 268);
+  --sidebar-accent-foreground: oklch(0.22 0.035 268);
+  --sidebar-border: oklch(0.92 0.006 264);
+  --sidebar-ring: oklch(0.6 0.184 259);
+
+  /* The TapLocal plaque-edge gradient: blue → violet → pink → warm orange */
+  --gradient-edge: linear-gradient(
+    100deg,
+    oklch(0.6 0.184 259) 0%,
+    oklch(0.6 0.19 300) 34%,
+    oklch(0.7 0.17 355) 66%,
+    oklch(0.79 0.15 62) 100%
+  );
+
+  /* Page field: white with two very pale cloud washes */
+  --field:
+    radial-gradient(70rem 34rem at 8% -6%, oklch(0.94 0.03 250 / 65%), transparent 62%),
+    radial-gradient(60rem 30rem at 96% 2%, oklch(0.95 0.028 350 / 60%), transparent 60%),
+    linear-gradient(180deg, oklch(0.99 0.003 268) 0%, oklch(0.978 0.004 268) 100%);
+
+  --shadow-soft: 0 8px 30px oklch(0.22 0.035 268 / 8%);
+  --shadow-brand: 0 10px 26px -10px oklch(0.6 0.184 259 / 45%);
+  --shadow-panel: 0 18px 46px -24px oklch(0.22 0.035 268 / 25%);
+}
+
+/* Optional future theme, inspired by the premium black-marble plaque */
+.dark {
+  --ink: oklch(0.17 0.012 268);
+  --mist: oklch(0.68 0.02 268);
+  --background: oklch(0.17 0.012 268);
+  --foreground: oklch(0.97 0.004 268);
+  --card: oklch(0.22 0.014 268);
+  --card-foreground: oklch(0.97 0.004 268);
+  --popover: oklch(0.21 0.014 268);
+  --popover-foreground: oklch(0.97 0.004 268);
+  --primary: oklch(0.66 0.17 259);
+  --primary-foreground: oklch(0.14 0.01 268);
   --secondary: oklch(1 0 0 / 8%);
-  --secondary-foreground: oklch(0.98 0.005 268);
-
-  --muted: oklch(1 0 0 / 6%);
-  --muted-foreground: oklch(0.76 0.028 268);
-
-  --accent: oklch(0.83 0.152 179);
-  --accent-foreground: oklch(0.17 0.023 268);
-
-  --warning: oklch(0.82 0.15 78);
-  --destructive: oklch(0.68 0.19 17);
-  --destructive-foreground: oklch(0.99 0 0);
-
+  --secondary-foreground: oklch(0.97 0.004 268);
+  --muted: oklch(1 0 0 / 7%);
+  --muted-foreground: oklch(0.74 0.02 268);
+  --accent: oklch(0.74 0.11 179);
+  --accent-foreground: oklch(0.15 0.01 268);
   --border: oklch(1 0 0 / 14%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.63 0.204 265);
-
-  --chart-1: oklch(0.63 0.204 265);
-  --chart-2: oklch(0.83 0.152 179);
-  --chart-3: oklch(0.66 0.043 268);
-  --chart-4: oklch(0.72 0.15 300);
-  --chart-5: oklch(0.68 0.19 17);
-
-  --sidebar: oklch(0.19 0.03 268);
-  --sidebar-foreground: oklch(0.98 0.005 268);
-  --sidebar-primary: oklch(0.63 0.204 265);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --card: oklch(0.22 0.014 268);
+  --cloud: oklch(0.24 0.012 268);
+  --blush: oklch(0.24 0.02 350);
+  --lilac: oklch(0.24 0.02 300);
+  --sky: oklch(0.24 0.02 250);
+  --sidebar: oklch(0.2 0.013 268);
+  --sidebar-foreground: oklch(0.97 0.004 268);
   --sidebar-accent: oklch(1 0 0 / 8%);
-  --sidebar-accent-foreground: oklch(0.98 0.005 268);
-  --sidebar-border: oklch(1 0 0 / 11%);
-  --sidebar-ring: oklch(0.63 0.204 265);
-
-  --field: linear-gradient(
-    170deg,
-    oklch(0.165 0.021 268) 0%,
-    oklch(0.185 0.03 266) 60%,
-    oklch(0.175 0.024 250) 100%
-  );
-  --shadow-brand: 0 12px 34px -12px oklch(0.63 0.204 265 / 55%);
-  --shadow-panel: 0 24px 60px -30px oklch(0 0 0 / 80%);
+  --sidebar-accent-foreground: oklch(0.97 0.004 268);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --field: linear-gradient(180deg, oklch(0.18 0.012 268), oklch(0.16 0.012 268));
+  --shadow-soft: 0 10px 30px oklch(0 0 0 / 50%);
 }
 
 @layer base {
@@ -132,7 +190,7 @@
 
   html,
   body {
-    background: var(--ink);
+    background: var(--background);
   }
 
   body {
@@ -146,55 +204,118 @@
   h3 {
     font-family: var(--font-display-family);
     letter-spacing: -0.02em;
+    color: var(--foreground);
   }
 }
 
-/* Ambient signal field used behind every surface */
+/* Ambient page field — static, no drifting shapes */
 @utility field {
   background: var(--field);
+  background-attachment: fixed;
 }
 
-/* Reading surfaces — opaque enough for body copy, thin premium edge */
+/* Primary reading surface: clean acrylic-white card */
 @utility surface {
-  background: oklch(1 0 0 / 7%);
-  border: 1px solid oklch(1 0 0 / 12%);
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 7%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-soft);
 }
 
 @utility surface-quiet {
-  background: oklch(1 0 0 / 4%);
-  border: 1px solid oklch(1 0 0 / 10%);
+  background: color-mix(in oklab, var(--card) 70%, var(--background));
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
 }
 
 @utility surface-brand {
-  background: color-mix(in oklab, var(--primary) 16%, transparent);
-  border: 1px solid color-mix(in oklab, var(--primary) 42%, transparent);
+  background: var(--sky);
+  border: 1px solid color-mix(in oklab, var(--primary) 24%, transparent);
+  border-radius: 1.25rem;
 }
 
 @utility surface-signal {
-  background: color-mix(in oklab, var(--accent) 12%, transparent);
-  border: 1px solid color-mix(in oklab, var(--accent) 38%, transparent);
+  background: color-mix(in oklab, var(--accent) 8%, white);
+  border: 1px solid color-mix(in oklab, var(--accent) 26%, transparent);
+  border-radius: 1.25rem;
 }
 
-/* Light frosted surface, reserved for high-importance setup/confirmation */
+/* Faint cloud-marble, ~4% texture — hero, activation, Copilot, empty states */
 @utility surface-frost {
-  background: oklch(0.97 0.006 268);
-  border: 1px solid oklch(0.85 0.01 268);
-  color: var(--ink);
+  background:
+    radial-gradient(28rem 16rem at 12% 0%, oklch(0.93 0.035 250 / 55%), transparent 65%),
+    radial-gradient(26rem 15rem at 92% 8%, oklch(0.94 0.03 350 / 55%), transparent 62%),
+    radial-gradient(22rem 14rem at 60% 110%, oklch(0.95 0.025 300 / 45%), transparent 60%),
+    var(--cloud);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  color: var(--foreground);
+  box-shadow: var(--shadow-soft);
 }
 
-/* Legacy alias kept for older screens */
-@utility glass {
-  background: oklch(1 0 0 / 7%);
+@utility cloud-surface {
+  background:
+    radial-gradient(30rem 18rem at 10% 0%, oklch(0.94 0.03 250 / 50%), transparent 64%),
+    radial-gradient(28rem 16rem at 95% 10%, oklch(0.95 0.026 350 / 50%), transparent 62%),
+    var(--cloud);
+}
+
+@utility smoke-surface {
+  background:
+    radial-gradient(24rem 14rem at 20% 0%, oklch(0.93 0.006 268 / 80%), transparent 60%),
+    radial-gradient(24rem 14rem at 88% 100%, oklch(0.94 0.006 268 / 80%), transparent 60%),
+    oklch(0.985 0.002 268);
+}
+
+@utility soft-marble {
+  background:
+    radial-gradient(20rem 12rem at 30% 10%, var(--blush), transparent 62%),
+    radial-gradient(20rem 12rem at 80% 80%, var(--lilac), transparent 62%),
+    white;
+}
+
+@utility premium-marble-dark {
+  background:
+    radial-gradient(26rem 15rem at 18% 0%, oklch(0.36 0.012 268 / 85%), transparent 60%),
+    radial-gradient(24rem 14rem at 88% 92%, oklch(0.32 0.014 300 / 80%), transparent 58%),
+    oklch(0.19 0.008 268);
+  color: oklch(0.98 0 0);
   border: 1px solid oklch(1 0 0 / 12%);
 }
 
-@utility glass-quiet {
-  background: oklch(1 0 0 / 4%);
-  border: 1px solid oklch(1 0 0 / 10%);
+/* Thin multicolour plaque edge around a white card */
+@utility gradient-edge {
+  position: relative;
+  background: var(--gradient-edge);
+  padding: 1.5px;
+  border-radius: 1.4rem;
 }
 
-/* Motion is reserved for success, loading, NFC detection and Copilot thinking */
+@utility gradient-text {
+  background: var(--gradient-edge);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility gradient-rule {
+  height: 2px;
+  border-radius: 999px;
+  background: var(--gradient-edge);
+}
+
+/* Legacy aliases kept so older screens keep rendering */
+@utility glass {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility glass-quiet {
+  background: color-mix(in oklab, var(--card) 70%, var(--background));
+  border: 1px solid var(--border);
+}
+
 @utility sheen {
   display: none;
 }
@@ -203,28 +324,17 @@
   animation: tl-floaty 6s ease-in-out infinite;
 }
 
-@keyframes tl-sheen {
-  0% {
-    transform: translateX(-130%) skewX(-18deg);
-  }
-  60%,
-  100% {
-    transform: translateX(240%) skewX(-18deg);
-  }
-}
-
 @keyframes tl-floaty {
   0%,
   100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sheen::before,
   .floaty {
     animation: none;
   }
