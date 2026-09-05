@@ -30,14 +30,14 @@ function ago(iso: string) {
 }
 
 const QUICK_ACTIONS = [
-  { to: "/admin/provisioning", label: "+ Create plaques", tone: "primary" as const },
+  { to: "/admin/provisioning", label: "+ Create plaques", tone: "plain" as const },
   { to: "/admin/nfc/write", label: "Program NFC", tone: "plain" as const },
   { to: "/admin/nfc/verify", label: "Verify plaque", tone: "plain" as const },
   { to: "/admin/businesses", label: "Find / add business", tone: "plain" as const },
-  { to: "/admin/plaques", label: "Set up customer", tone: "plain" as const },
   { to: "/admin/inquiries", label: "Inquiries", tone: "plain" as const },
   { to: "/demo", label: "Sales mode", tone: "outline" as const },
 ];
+
 
 function AdminDashboard() {
   const overviewFn = useServerFn(networkOverview);
