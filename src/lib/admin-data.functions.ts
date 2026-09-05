@@ -57,38 +57,49 @@ export const adminIdentity = createServerFn({ method: "POST" }).handler(async ()
   return { signedIn: true, isAdmin: Boolean(roleRow), email: user.email ?? null };
 });
 
-/** Network-wide counters for the admin dashboard. Never estimates. */
+/** Demo isolation helper, loaded lazily so it stays server-only. */
+async function scopeFor(client: Awaited<ReturnType<typeof db>>) {
+  const { getDemoScope } = await import("@/lib/admin-scope.server");
+  return getDemoScope(client as never);
+}
+
+/** Network-wide counters for the admin dashboard. Real data only — never demo. */
 export const networkOverview = createServerFn({ method: "POST" }).handler(async () => {
   const caller = await gate();
   if (!caller.ok) return { ok: false as const, error: caller.error };
   const client = await db();
+  const scope = await scopeFor(client);
 
-  const { data: businesses } = await client.from("businesses").select("id, status, created_at");
-  const { data: plaques } = await client.from("plaques").select("id, status, activated_at");
-  const { data: events } = await client
+  const { data: allBusinesses } = await client.from("businesses").select("id, status, created_at, is_demo");
+  const businesses = (allBusinesses ?? []).filter((b) => !b.is_demo);
+  const { data: allPlaques } = await client.from("plaques").select("id, status, activated_at, business_id");
+  const plaques = (allPlaques ?? []).filter((p) => !p.business_id || !scope.demoBusinessIds.has(p.business_id));
+  const { data: rawEvents } = await client
     .from("events")
-    .select("event_type, source_type, occurred_at")
+    .select("business_id, plaque_id, event_type, source_type, occurred_at")
     .gte("occurred_at", since(30))
     .limit(50000);
+  const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
 
-  const interactions = (events ?? []).filter((e) => e.event_type === "interaction");
+  const interactions = events.filter((e) => e.event_type === "interaction");
   const today = startOfToday();
   const in7 = since(7);
   const monthStart = new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1).toISOString();
 
-  const countStatus = (s: string) => (plaques ?? []).filter((p) => p.status === s).length;
+  const countStatus = (s: string) => plaques.filter((p) => p.status === s).length;
 
   return {
     ok: true as const,
-    businessesTotal: (businesses ?? []).length,
-    businessesActive: (businesses ?? []).filter((b) => b.status === "active").length,
-    businessesThisMonth: (businesses ?? []).filter((b) => b.created_at >= monthStart).length,
-    plaquesTotal: (plaques ?? []).length,
+    businessesTotal: businesses.length,
+    businessesActive: businesses.filter((b) => b.status === "active").length,
+    businessesThisMonth: businesses.filter((b) => b.created_at >= monthStart).length,
+    plaquesTotal: plaques.length,
     plaquesInventory: countStatus("inventory"),
     plaquesConfigured: countStatus("configured_unclaimed"),
     plaquesActive: countStatus("active"),
     plaquesPacked: countStatus("packed"),
-    plaquesActivatedThisMonth: (plaques ?? []).filter((p) => (p.activated_at ?? "") >= monthStart).length,
+    plaquesFaulty: countStatus("faulty"),
+    plaquesActivatedThisMonth: plaques.filter((p) => (p.activated_at ?? "") >= monthStart).length,
     interactionsToday: interactions.filter((e) => e.occurred_at >= today).length,
     nfcToday: interactions.filter((e) => e.occurred_at >= today && e.source_type === "nfc").length,
     qrToday: interactions.filter((e) => e.occurred_at >= today && e.source_type === "qr").length,
@@ -96,6 +107,7 @@ export const networkOverview = createServerFn({ method: "POST" }).handler(async 
     interactions30: interactions.length,
   };
 });
+
 
 /** Newest taps, scans and account changes across the whole network. */
 export const networkActivity = createServerFn({ method: "POST" }).handler(async () => {
