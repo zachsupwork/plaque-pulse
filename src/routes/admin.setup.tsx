@@ -166,7 +166,7 @@ function SetupWorkbench() {
   function changeBusiness() {
     setBusinessId(null);
     resetPlaqueFlow();
-    navigate({ to: "/admin/setup", search: { businessId: undefined } });
+    navigate({ to: "/admin/setup", search: {} });
   }
 
   async function pickPlace(placeId: string) {
