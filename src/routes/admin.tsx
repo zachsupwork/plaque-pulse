@@ -104,7 +104,7 @@ function AccountButton({ email }: { email: string | null }) {
 
 function AdminLayout() {
   const identity = useAdminIdentity();
-  const { signOut, pending, error } = useSignOut("/admin");
+  const { signOut, pending, error } = useSignOut();
 
   if (identity.isLoading) {
     return (
@@ -131,7 +131,12 @@ function AdminLayout() {
             >
               Sign in as admin
             </Link>
+            <div className="mt-4 flex items-center justify-center gap-4 text-[12px] text-muted-foreground">
+              <Link to="/" className="font-semibold">← TapLocal homepage</Link>
+              <Link to="/auth" search={{ returnTo: "/app" }} className="font-semibold">Business sign in</Link>
+            </div>
           </GlassPanel>
+
         </div>
       </Field>
     );
