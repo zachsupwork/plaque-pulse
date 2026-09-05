@@ -15,10 +15,13 @@ export function useIdentity() {
   });
 }
 
-/** Shared sign-out with loading + error state, used by admin and the business portal. */
-export function useSignOut(redirectTo: "/admin" | "/" = "/admin") {
+/**
+ * The one sign-out used everywhere. Ends the session, wipes cached data and
+ * then does a real page load of the public homepage, so no authenticated
+ * screen can survive in memory or in the back/forward cache.
+ */
+export function useSignOut(_redirectTo?: string) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,14 +31,13 @@ export function useSignOut(redirectTo: "/admin" | "/" = "/admin") {
     setError(null);
     const { ok } = await signOutAndReset(queryClient);
     if (!ok) {
-      setError("Couldn't sign you out. Try again.");
+      setError("We couldn't sign you out. Try again.");
       setPending(false);
       return;
     }
-    await navigate({ to: redirectTo, replace: true });
-    await queryClient.invalidateQueries({ queryKey: ["admin-identity"] });
-    setPending(false);
+    window.location.replace("/");
   }
 
   return { signOut, pending, error };
 }
+
