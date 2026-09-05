@@ -1258,6 +1258,96 @@ export type Database = {
           },
         ]
       }
+      setup_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          business_address: string | null
+          business_id: string | null
+          business_name: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          destination_type: string | null
+          destination_url: string | null
+          details: Json
+          goal: string | null
+          google_place_id: string | null
+          id: string
+          notes: string | null
+          placement_type: string | null
+          plaque_id: string | null
+          plaque_slug: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_address?: string | null
+          business_id?: string | null
+          business_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          destination_type?: string | null
+          destination_url?: string | null
+          details?: Json
+          goal?: string | null
+          google_place_id?: string | null
+          id?: string
+          notes?: string | null
+          placement_type?: string | null
+          plaque_id?: string | null
+          plaque_slug?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_address?: string | null
+          business_id?: string | null
+          business_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          destination_type?: string | null
+          destination_url?: string | null
+          details?: Json
+          goal?: string | null
+          google_place_id?: string | null
+          id?: string
+          notes?: string | null
+          placement_type?: string | null
+          plaque_id?: string | null
+          plaque_slug?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "setup_requests_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           business_id: string
