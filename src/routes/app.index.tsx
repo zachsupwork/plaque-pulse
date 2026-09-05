@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Star, MessageSquare, MapPin, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { GlassPanel, SectionTitle, Stat, TrendPill } from "@/components/taplocal/Field";
 import { usePortal, useOutcomes, useLocations, activeDestination } from "@/hooks/usePortal";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
@@ -189,7 +189,7 @@ function PortalHome() {
   );
 }
 
-function Greeting({ name }: { name?: string | null }) {
+function Greeting({ name }: { name?: string | null | undefined }) {
   return (
     <div className="flex items-start gap-3">
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
@@ -204,5 +204,3 @@ function Greeting({ name }: { name?: string | null }) {
     </div>
   );
 }
-
-export const _icons = { Star, MessageSquare, MapPin };
