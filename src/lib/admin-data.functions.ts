@@ -591,20 +591,26 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const caller = await gate();
     if (!caller.ok) return { ok: false as const, error: caller.error, analytics: null };
     const client = await db();
+    const scope = await scopeFor(client);
 
-    const [{ data: events }, { data: plaques }, { data: businesses }] = await Promise.all([
+    const [{ data: rawEvents }, { data: rawPlaques }, { data: rawBusinesses }] = await Promise.all([
       client
         .from("events")
         .select("business_id, plaque_id, event_type, source_type, destination_type, occurred_at")
         .gte("occurred_at", since(data.days))
         .limit(100000),
       client.from("plaques").select("id, plaque_code, plaque_name, placement_type, business_id, status"),
-      client.from("businesses").select("id, name"),
+      client.from("businesses").select("id, name, is_demo"),
     ]);
 
-    const interactions = (events ?? []).filter((e) => e.event_type === "interaction");
-    const bizName = new Map((businesses ?? []).map((b) => [b.id, b.name]));
-    const plaqueMap = new Map((plaques ?? []).map((p) => [p.id, p]));
+    const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
+    const plaques = (rawPlaques ?? []).filter((p) => !p.business_id || !scope.demoBusinessIds.has(p.business_id));
+    const businesses = (rawBusinesses ?? []).filter((b) => !b.is_demo);
+
+    const interactions = events.filter((e) => e.event_type === "interaction");
+    const bizName = new Map(businesses.map((b) => [b.id, b.name]));
+    const plaqueMap = new Map(plaques.map((p) => [p.id, p]));
+
 
     const tally = <T extends string>(list: (T | null)[]) => {
       const out: Record<string, number> = {};
