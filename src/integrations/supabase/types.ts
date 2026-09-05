@@ -667,6 +667,147 @@ export type Database = {
           },
         ]
       }
+      offering_inquiries: {
+        Row: {
+          assigned_admin_user_id: string | null
+          business_address: string | null
+          business_id: string | null
+          business_name: string | null
+          closed_at: string | null
+          contacted_at: string | null
+          created_at: string
+          email: string
+          google_place_id: string | null
+          id: string
+          message: string | null
+          name: string
+          offering_id: string | null
+          phone: string | null
+          preferred_contact_method: string
+          quantity_interest: string | null
+          source: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assigned_admin_user_id?: string | null
+          business_address?: string | null
+          business_id?: string | null
+          business_name?: string | null
+          closed_at?: string | null
+          contacted_at?: string | null
+          created_at?: string
+          email: string
+          google_place_id?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          offering_id?: string | null
+          phone?: string | null
+          preferred_contact_method?: string
+          quantity_interest?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assigned_admin_user_id?: string | null
+          business_address?: string | null
+          business_id?: string | null
+          business_name?: string | null
+          closed_at?: string | null
+          contacted_at?: string | null
+          created_at?: string
+          email?: string
+          google_place_id?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          offering_id?: string | null
+          phone?: string | null
+          preferred_contact_method?: string
+          quantity_interest?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offering_inquiries_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offering_inquiries_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "offerings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offerings: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          cta_label: string
+          featured: boolean
+          full_description: string | null
+          icon: string | null
+          id: string
+          image_url: string | null
+          metadata: Json
+          name: string
+          short_description: string
+          slug: string
+          sort_order: number
+          starting_price_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          cta_label?: string
+          featured?: boolean
+          full_description?: string | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          metadata?: Json
+          name: string
+          short_description?: string
+          slug: string
+          sort_order?: number
+          starting_price_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          cta_label?: string
+          featured?: boolean
+          full_description?: string | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          metadata?: Json
+          name?: string
+          short_description?: string
+          slug?: string
+          sort_order?: number
+          starting_price_text?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       outcomes: {
         Row: {
           attribution_type: Database["public"]["Enums"]["attribution_type"]
