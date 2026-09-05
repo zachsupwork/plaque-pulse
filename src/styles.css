@@ -48,6 +48,7 @@
   --color-brand: var(--primary);
   --color-signal: var(--accent);
   --color-down: var(--destructive);
+  --color-warning: var(--warning);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -75,7 +76,7 @@
   --background: oklch(0.17 0.023 268);
   --foreground: oklch(0.98 0.005 268);
 
-  --card: oklch(1 0 0 / 6%);
+  --card: oklch(0.235 0.028 268);
   --card-foreground: oklch(0.98 0.005 268);
   --popover: oklch(0.21 0.036 268);
   --popover-foreground: oklch(0.98 0.005 268);
@@ -86,15 +87,16 @@
   --secondary-foreground: oklch(0.98 0.005 268);
 
   --muted: oklch(1 0 0 / 6%);
-  --muted-foreground: oklch(0.66 0.043 268);
+  --muted-foreground: oklch(0.76 0.028 268);
 
   --accent: oklch(0.83 0.152 179);
   --accent-foreground: oklch(0.17 0.023 268);
 
+  --warning: oklch(0.82 0.15 78);
   --destructive: oklch(0.68 0.19 17);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --border: oklch(1 0 0 / 11%);
+  --border: oklch(1 0 0 / 14%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.63 0.204 265);
 
@@ -114,10 +116,10 @@
   --sidebar-ring: oklch(0.63 0.204 265);
 
   --field: linear-gradient(
-    160deg,
-    oklch(0.17 0.023 268) 0%,
-    oklch(0.21 0.055 272) 45%,
-    oklch(0.2 0.036 235) 100%
+    170deg,
+    oklch(0.165 0.021 268) 0%,
+    oklch(0.185 0.03 266) 60%,
+    oklch(0.175 0.024 250) 100%
   );
   --shadow-brand: 0 12px 34px -12px oklch(0.63 0.204 265 / 55%);
   --shadow-panel: 0 24px 60px -30px oklch(0 0 0 / 80%);
@@ -152,11 +154,39 @@
   background: var(--field);
 }
 
-/* Frosted panel */
+/* Reading surfaces — opaque enough for body copy, thin premium edge */
+@utility surface {
+  background: oklch(1 0 0 / 7%);
+  border: 1px solid oklch(1 0 0 / 12%);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 7%);
+}
+
+@utility surface-quiet {
+  background: oklch(1 0 0 / 4%);
+  border: 1px solid oklch(1 0 0 / 10%);
+}
+
+@utility surface-brand {
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 42%, transparent);
+}
+
+@utility surface-signal {
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent) 38%, transparent);
+}
+
+/* Light frosted surface, reserved for high-importance setup/confirmation */
+@utility surface-frost {
+  background: oklch(0.97 0.006 268);
+  border: 1px solid oklch(0.85 0.01 268);
+  color: var(--ink);
+}
+
+/* Legacy alias kept for older screens */
 @utility glass {
-  background: oklch(1 0 0 / 6%);
-  border: 1px solid oklch(1 0 0 / 11%);
-  backdrop-filter: blur(16px);
+  background: oklch(1 0 0 / 7%);
+  border: 1px solid oklch(1 0 0 / 12%);
 }
 
 @utility glass-quiet {
@@ -164,24 +194,9 @@
   border: 1px solid oklch(1 0 0 / 10%);
 }
 
-/* Slow light sweep across a panel */
+/* Motion is reserved for success, loading, NFC detection and Copilot thinking */
 @utility sheen {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  border-radius: inherit;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 45%;
-    background: linear-gradient(100deg, transparent, oklch(1 0 0 / 40%), transparent);
-    animation: tl-sheen 5.5s ease-in-out infinite;
-  }
+  display: none;
 }
 
 @utility floaty {

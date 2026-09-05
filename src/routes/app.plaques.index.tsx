@@ -22,11 +22,20 @@ function PlaquesPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-[26px] font-bold tracking-tight">Your plaques</h1>
-        <p className="mt-1 text-[13px] text-muted-foreground">
-          {plaques.length} plaques · last 30 days
-        </p>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-[24px] font-bold tracking-tight">Your plaques</h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            {plaques.length === 1 ? "1 plaque" : `${plaques.length} plaques`} · last 30 days
+          </p>
+        </div>
+        <Link
+          to="/activate/$token"
+          params={{ token: "demo-activation-token" }}
+          className="shrink-0 rounded-xl bg-primary px-3.5 py-2 text-[13px] font-bold text-primary-foreground"
+        >
+          + Add plaque
+        </Link>
       </div>
 
       <div className="space-y-2.5">
@@ -50,7 +59,7 @@ function PlaquesPage() {
                     {dest ? (DESTINATION_LABEL[dest.destination_type] ?? dest.destination_type) : "Not set up"}
                   </Chip>
                   {paused ? <Chip tone="warn">Paused</Chip> : null}
-                  <Chip tone="strong">{t?.current ?? 0} taps</Chip>
+                  <Chip tone="strong">{(t?.current ?? 0) === 1 ? "1 tap" : `${t?.current ?? 0} taps`}</Chip>
                 </div>
               </GlassPanel>
             </Link>

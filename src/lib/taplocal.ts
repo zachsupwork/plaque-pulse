@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { isDemoMode } from "./demo";
 
 export const DEMO_BUSINESS_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -89,8 +90,11 @@ export type EventRow = {
   occurred_at: string;
 };
 
-/** Resolves the business the signed-in user manages, falling back to the demo tour business. */
-export async function resolveBusinessId(): Promise<string> {
+/**
+ * Resolves the business the signed-in user manages. Returns null when nobody is
+ * signed in — the sample business is only used in explicit demo mode.
+ */
+export async function resolveBusinessId(): Promise<string | null> {
   const { data: session } = await supabase.auth.getSession();
   if (session.session) {
     const { data } = await supabase
@@ -101,7 +105,26 @@ export async function resolveBusinessId(): Promise<string> {
       .limit(1);
     if (data && data[0]) return data[0].business_id;
   }
-  return DEMO_BUSINESS_ID;
+  if (isDemoMode()) return DEMO_BUSINESS_ID;
+  return null;
+}
+
+/** Every business the signed-in user belongs to (for the header switcher). */
+export async function fetchMyBusinesses() {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) {
+    if (!isDemoMode()) return [];
+    const demo = await fetchBusiness(DEMO_BUSINESS_ID);
+    return demo ? [demo] : [];
+  }
+  const { data: members } = await supabase
+    .from("business_members")
+    .select("business_id")
+    .eq("user_id", session.session.user.id);
+  const ids = (members ?? []).map((m) => m.business_id);
+  if (!ids.length) return [];
+  const { data } = await supabase.from("businesses").select("*").in("id", ids);
+  return data ?? [];
 }
 
 export async function fetchBusiness(businessId: string) {
@@ -200,4 +223,26 @@ export async function fetchPlacementHistory(plaqueId: string) {
     .order("effective_from", { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+export type LocationRow = {
+  id: string;
+  name: string;
+  city: string | null;
+  address: string | null;
+  google_place_id: string | null;
+  google_rating: number | null;
+  google_review_count: number | null;
+  google_maps_uri: string | null;
+};
+
+export async function fetchLocations(businessId: string) {
+  const { data, error } = await supabase
+    .from("locations")
+    .select("id, name, city, address, google_place_id, google_rating, google_review_count, google_maps_uri")
+    .eq("business_id", businessId)
+    .eq("active", true)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as LocationRow[];
 }

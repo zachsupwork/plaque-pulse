@@ -47,12 +47,17 @@ function Marketing() {
           </div>
           <span className="font-display text-[15px] font-semibold tracking-tight">TapLocal</span>
         </div>
-        <Link
-          to="/app"
-          className="rounded-xl border border-border bg-foreground/10 px-3.5 py-2 text-[13px] font-semibold"
-        >
-          Open portal
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/demo" className="text-[13px] font-semibold text-muted-foreground">
+            Live demo
+          </Link>
+          <Link
+            to="/auth"
+            className="rounded-xl border border-border bg-foreground/10 px-3.5 py-2 text-[13px] font-semibold"
+          >
+            Sign in
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-5 pb-20">
@@ -65,16 +70,23 @@ function Marketing() {
             A SmartPlaque on your counter. One tap to a Google review, an Instagram follow, a menu or a
             booking. Every interaction lands in a portal that speaks plain English.
           </p>
-          <div className="mt-6 flex gap-2">
+          <div className="mt-6 flex flex-wrap gap-2">
             <Link
-              to="/app"
+              to="/activate/$token"
+              params={{ token: "demo-activation-token" }}
               className="rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-primary-foreground shadow-[var(--shadow-brand)]"
             >
-              See a live portal
+              Activate my plaque
+            </Link>
+            <Link
+              to="/demo"
+              className="rounded-xl border border-border bg-foreground/10 px-5 py-3 text-[13px] font-bold"
+            >
+              See a live demo
             </Link>
           </div>
 
-          <GlassPanel sheen className="mt-10 p-2">
+          <GlassPanel className="mt-10 p-2">
             <img
               src={heroImage}
               alt="A TapLocal SmartPlaque with a glowing contactless icon on a restaurant counter"
