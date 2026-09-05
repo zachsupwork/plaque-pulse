@@ -249,7 +249,14 @@ export const completeActivation = createServerFn({ method: "POST" })
     });
 
     // 6. Day Zero snapshots — only real numbers, never invented ones.
-    const snapshots: Array<Record<string, unknown>> = [];
+    const snapshots: Array<{
+      business_id: string;
+      location_id: string | null;
+      metric_type: string;
+      metric_value: number;
+      captured_at: string;
+      metadata: Record<string, unknown>;
+    }> = [];
     const snapshotMeta = { source: "google_places_public", google_place_id: b.placeId };
     if (typeof b.reviewCount === "number")
       snapshots.push({
