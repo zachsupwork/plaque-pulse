@@ -709,7 +709,10 @@ export function NfcActionArea({
       {showLink && smartlink ? (
         <div className="mt-3 rounded-xl border border-border bg-foreground/5 p-3.5">
           <Label>Permanent SmartLink</Label>
-          <p className="mt-1 font-mono text-[13px] break-all text-accent">{smartlink}</p>
+          <p className={`mt-1 font-mono break-all text-accent ${largeUrl ? "text-[20px] leading-snug" : "text-[13px]"}`}>
+            {smartlink}
+          </p>
+
           <div className="mt-2">
             <CopyButton value={smartlink} label="Copy SmartLink" />
           </div>
