@@ -429,17 +429,17 @@ export function NfcActionArea({
   onContinue,
   continueLabel = "Continue without programming",
 }: {
-  plaqueCode?: string;
-  smartlink?: string;
-  qrValue?: string;
+  plaqueCode?: string | undefined;
+  smartlink?: string | undefined;
+  qrValue?: string | undefined;
   /** Link a second (Android) phone can open to resume this exact plaque. */
-  handoffUrl?: string;
-  preprogrammed?: boolean;
-  busy?: boolean;
-  programLabel?: string;
-  onProgram?: () => void;
-  onContinue?: () => void;
-  continueLabel?: string;
+  handoffUrl?: string | undefined;
+  preprogrammed?: boolean | undefined;
+  busy?: boolean | undefined;
+  programLabel?: string | undefined;
+  onProgram?: (() => void) | undefined;
+  onContinue?: (() => void) | undefined;
+  continueLabel?: string | undefined;
 }) {
   const { readiness, ready, unsupported, checking, result, check } = useNfcReadiness();
   const { enabled: toolsEnabled, setEnabled } = useNfcTools();
