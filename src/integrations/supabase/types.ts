@@ -723,6 +723,68 @@ export type Database = {
           },
         ]
       }
+      nfc_programming_sessions: {
+        Row: {
+          created_at: string
+          error_code: string | null
+          expected_url: string
+          expires_at: string
+          id: string
+          opened_at: string | null
+          plaque_id: string
+          platform: string | null
+          requested_by_user_id: string
+          return_path: string | null
+          status: string
+          token_hash: string
+          updated_at: string
+          used_at: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string | null
+          expected_url: string
+          expires_at: string
+          id?: string
+          opened_at?: string | null
+          plaque_id: string
+          platform?: string | null
+          requested_by_user_id: string
+          return_path?: string | null
+          status?: string
+          token_hash: string
+          updated_at?: string
+          used_at?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_code?: string | null
+          expected_url?: string
+          expires_at?: string
+          id?: string
+          opened_at?: string | null
+          plaque_id?: string
+          platform?: string | null
+          requested_by_user_id?: string
+          return_path?: string | null
+          status?: string
+          token_hash?: string
+          updated_at?: string
+          used_at?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfc_programming_sessions_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offering_inquiries: {
         Row: {
           assigned_admin_user_id: string | null
