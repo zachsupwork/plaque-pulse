@@ -161,6 +161,14 @@ export const adminCreateBusinessFromPlace = createServerFn({ method: "POST" })
       google_review_count: place.reviewCount,
       google_business_status: place.businessStatus,
       google_primary_type: place.primaryType,
+      // Google's own write-a-review link, saved at creation so plaques never guess.
+      ...(place.writeAReviewUri
+        ? {
+            google_review_url: place.writeAReviewUri,
+            google_review_url_source: "google_api",
+            google_review_url_checked_at: new Date().toISOString(),
+          }
+        : {}),
       public_data_last_synced_at: new Date().toISOString(),
       active: true,
     });

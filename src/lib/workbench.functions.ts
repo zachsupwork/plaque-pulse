@@ -132,9 +132,10 @@ export const configurePlaque = createServerFn({ method: "POST" })
         .select("google_place_id, google_maps_uri")
         .eq("id", data.locationId ?? "00000000-0000-0000-0000-000000000000")
         .maybeSingle();
-      const { googleReviewUrl } = await import("./google-places.server");
-      if (data.destinationType === "google_review" && location?.google_place_id) {
-        url = googleReviewUrl(location.google_place_id);
+      if (data.destinationType === "google_review") {
+        // Google's own write-a-review link, stored on the location.
+        const { reviewDestinationForLocation } = await import("./google-link.server");
+        url = (await reviewDestinationForLocation(client, data.locationId ?? null)).url ?? "";
       } else if (data.destinationType === "directions") {
         url =
           location?.google_maps_uri ??

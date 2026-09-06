@@ -28,6 +28,8 @@ export type PlaceDetails = {
   reviewCount: number | null;
   businessStatus: string | null;
   primaryType: string | null;
+  /** Google's own "write a review" destination. Null when Google didn't return one. */
+  writeAReviewUri: string | null;
 };
 
 function key() {
@@ -96,6 +98,7 @@ export async function placeDetails(placeId: string, sessionToken?: string): Prom
     "businessStatus",
     "primaryTypeDisplayName",
     "primaryType",
+    "googleMapsLinks",
   ].join(",");
 
   const url = new URL(`${PLACES}/places/${encodeURIComponent(placeId)}`);
@@ -120,6 +123,7 @@ export async function placeDetails(placeId: string, sessionToken?: string): Prom
     businessStatus?: string;
     primaryTypeDisplayName?: { text?: string };
     primaryType?: string;
+    googleMapsLinks?: { writeAReviewUri?: string; reviewsUri?: string; placeUri?: string; directionsUri?: string };
   };
 
   const component = (type: string) =>
@@ -141,10 +145,85 @@ export async function placeDetails(placeId: string, sessionToken?: string): Prom
     reviewCount: p.userRatingCount ?? null,
     businessStatus: p.businessStatus ?? null,
     primaryType: p.primaryTypeDisplayName?.text ?? prettyType(p.primaryType),
+    // Never invented locally: if Google doesn't return it, the caller must say so.
+    writeAReviewUri: p.googleMapsLinks?.writeAReviewUri ?? null,
   };
 }
 
-/** The write-a-review destination derived from a confirmed Google Place. */
+/**
+ * Legacy fallback only. The source of truth is googleMapsLinks.writeAReviewUri
+ * from Place Details; this is used when Google returns no link at all, so a
+ * plaque still lands on a review box rather than a guessed page.
+ */
 export function googleReviewUrl(placeId: string) {
   return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`;
+}
+
+/** True for links that actually belong to Google (used to validate manual overrides). */
+export function isGoogleUrl(raw: string) {
+  try {
+    const host = new URL(raw).hostname.toLowerCase();
+    return (
+      host === "google.com" ||
+      host.endsWith(".google.com") ||
+      host === "maps.app.goo.gl" ||
+      host === "g.page" ||
+      host.endsWith(".g.page")
+    );
+  } catch {
+    return false;
+  }
+}
+
+export type PlaceSearchResult = {
+  placeId: string;
+  name: string;
+  address: string;
+  rating: number | null;
+  reviewCount: number | null;
+  businessStatus: string | null;
+  mapsUri: string | null;
+  writeAReviewUri: string | null;
+};
+
+/**
+ * Text search: unlike autocomplete this returns the rating and review count, so
+ * the admin can confirm they picked the right listing before saving it.
+ */
+export async function searchBusinessesDetailed(query: string): Promise<PlaceSearchResult[]> {
+  const res = await fetch(`${PLACES}/places:searchText`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": key(),
+      "X-Goog-FieldMask":
+        "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.businessStatus,places.googleMapsUri,places.googleMapsLinks",
+    },
+    body: JSON.stringify({ textQuery: query, maxResultCount: 8 }),
+  });
+  if (!res.ok) throw new Error(`google_places_search_failed_${res.status}`);
+  const json = (await res.json()) as {
+    places?: Array<{
+      id?: string;
+      displayName?: { text?: string };
+      formattedAddress?: string;
+      rating?: number;
+      userRatingCount?: number;
+      businessStatus?: string;
+      googleMapsUri?: string;
+      googleMapsLinks?: { writeAReviewUri?: string };
+    }>;
+  };
+  return (json.places ?? [])
+    .filter((p) => p.id)
+    .map((p) => ({
+      placeId: p.id!,
+      name: p.displayName?.text ?? "Unnamed business",
+      address: p.formattedAddress ?? "",
+      rating: p.rating ?? null,
+      reviewCount: p.userRatingCount ?? null,
+      businessStatus: p.businessStatus ?? null,
+      mapsUri: p.googleMapsUri ?? null,
+      writeAReviewUri: p.googleMapsLinks?.writeAReviewUri ?? null,
+    }));
 }

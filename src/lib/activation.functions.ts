@@ -212,10 +212,12 @@ export const completeActivation = createServerFn({ method: "POST" })
     await supabaseAdmin.from("goals").insert({ business_id: businessId, goal_type: data.goalType, active: true });
 
     // 4. Destination — derived from the confirmed listing where we can.
-    const url =
-      data.destinationType === "google_review" && b.placeId
-        ? googleReviewUrl(b.placeId)
-        : (data.destinationUrl ?? b.website ?? b.mapsUri ?? "");
+    let url = data.destinationUrl ?? b.website ?? b.mapsUri ?? "";
+    if (data.destinationType === "google_review" && b.placeId) {
+      const { reviewDestinationForLocation } = await import("./google-link.server");
+      const resolved = locationId ? await reviewDestinationForLocation(supabaseAdmin, locationId) : null;
+      url = resolved?.url ?? googleReviewUrl(b.placeId);
+    }
     if (!url) return { ok: false as const, error: "no_destination" as const };
 
     await supabaseAdmin
