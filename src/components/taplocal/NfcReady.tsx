@@ -418,7 +418,7 @@ const STATUS_LABEL: Record<NfcAreaStatus, string> = {
   manual_unverified: "PROGRAMMED MANUALLY — UNVERIFIED",
   needs_on: "NFC NEEDS TO BE TURNED ON",
   needs_permission: "NFC NEEDS PERMISSION",
-  ios: "IPHONE DETECTED ✓ — SETUP READY",
+  ios: "NFC READY ✓ — IPHONE",
   unsupported: "EXTERNAL NFC WRITER REQUIRED",
   embedded: "OPEN TAPLOCAL IN ITS OWN TAB",
   checking: "CHECKING THIS PHONE…",
@@ -634,11 +634,11 @@ export function NfcActionArea({
       {iphoneBlock ? (
         <>
           <p className="mt-2 text-[14px] font-bold">
-            {isIphone ? "Your TapLocal setup works on this iPhone" : "This device can't write tags itself"}
+            {isIphone ? "Your iPhone automatically supports NFC tag tapping" : "This device can't write tags itself"}
           </p>
           <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
             {isIphone
-              ? "Choosing the business, the destination, the plaque and the placement, activating a plaque, changing where it points later, the QR code and all activity all work here. Only writing a blank tag is different: this plaque's tag needs to be preprogrammed, or written with an NFC-compatible iPhone app."
+              ? "Hold the TOP of your iPhone near the TapLocal plaque and iOS will detect the tag on its own — no app, no permission, no NFC switch. Everything in this setup works here too; only writing a blank tag from the browser is unavailable in Safari, so the tag needs to be preprogrammed or written with an NFC-compatible iPhone app."
               : "Everything in the setup works here. Writing a blank tag needs an Android phone with Chrome or a separate NFC writing tool."}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
