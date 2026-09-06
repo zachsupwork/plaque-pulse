@@ -437,56 +437,81 @@ export function NfcActionArea({
   qrValue,
   handoffUrl,
   preprogrammed,
+  manualProgrammed,
   busy,
   programLabel = "Program NFC",
   onProgram,
   onContinue,
+  onManualProgrammed,
   continueLabel = "Continue without programming",
 }: {
   plaqueCode?: string | undefined;
   smartlink?: string | undefined;
   qrValue?: string | undefined;
-  /** Link a second (Android) phone can open to resume this exact plaque. */
+  /** Link a second (Android) phone — or the future TapLocal iOS app — can open to resume this exact plaque. */
   handoffUrl?: string | undefined;
   preprogrammed?: boolean | undefined;
+  /** Written with an outside tool: counts as programmed, never as verified. */
+  manualProgrammed?: boolean | undefined;
   busy?: boolean | undefined;
   programLabel?: string | undefined;
   onProgram?: (() => void) | undefined;
   onContinue?: (() => void) | undefined;
+  onManualProgrammed?: (() => void) | undefined;
   continueLabel?: string | undefined;
 }) {
   const { readiness, ready, unsupported, checking, result, check } = useNfcReadiness();
   const { enabled: toolsEnabled, setEnabled } = useNfcTools();
   const [showDetails, setShowDetails] = useState(false);
   const [showLink, setShowLink] = useState(false);
+  const [largeUrl, setLargeUrl] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [showHandoff, setShowHandoff] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [settingsTried, setSettingsTried] = useState(false);
+  const [device, setDevice] = useState<Platform>("other");
+  useEffect(() => setDevice(platform()), []);
 
-  const isAndroid = readiness?.support.device === "Android";
+  const isAndroid = device === "android";
+  const isIphone = device === "ios";
 
   const status: NfcAreaStatus = !readiness
     ? "checking"
     : preprogrammed && !ready
       ? "preprogrammed"
-      : readiness.state === "embedded"
-        ? "embedded"
-        : unsupported
-          ? "unsupported"
-          : ready
-            ? "ready"
-            : readiness.permission === "denied"
-              ? "needs_permission"
-              : "needs_on";
+      : manualProgrammed && !ready
+        ? "manual_unverified"
+        : readiness.state === "embedded"
+          ? "embedded"
+          : unsupported
+            ? isIphone
+              ? "ios"
+              : "unsupported"
+            : ready
+              ? "ready"
+              : readiness.permission === "denied"
+                ? "needs_permission"
+                : "needs_on";
   void result;
 
-  const tone = status === "ready" || status === "preprogrammed" ? "ok" : status === "checking" ? "idle" : "warn";
+  const tone =
+    status === "ready" || status === "preprogrammed" || status === "ios"
+      ? "ok"
+      : status === "checking"
+        ? "idle"
+        : "warn";
+
+  /** Everything except writing a blank tag works on every phone. */
+  const iphoneBlock = status === "ios" || status === "unsupported";
 
   return (
     <GlassPanel className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Chip tone={tone}>{STATUS_LABEL[status]}</Chip>
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip tone="ok">SETUP READY ✓</Chip>
+          <Chip tone={tone}>{STATUS_LABEL[status]}</Chip>
+        </div>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={() => void check()} disabled={checking || unsupported}>
             {checking ? "Checking…" : "Check again"}
@@ -496,6 +521,7 @@ export function NfcActionArea({
           </Button>
         </div>
       </div>
+
 
       {/* ---------- ready ---------- */}
       {status === "ready" ? (
