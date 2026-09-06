@@ -15,13 +15,7 @@ import {
   type NfcSupport,
 } from "@/lib/nfc-client";
 import { useNfcSession } from "@/hooks/useNfcSession";
-import {
-  NfcActionArea,
-  NfcReadyPanel,
-  NfcStatusChip,
-  useNfcReadiness,
-  useNfcTools,
-} from "@/components/taplocal/NfcReady";
+import { NfcActionArea, NfcStatusChip } from "@/components/taplocal/NfcReady";
 import { nfcUrl, qrUrl, smartlinkEnvironmentLabel, testUrl } from "@/lib/smartlink";
 import { checkSmartlink } from "@/lib/smartlink.functions";
 import { logProgrammingEvent, setVerification, setWriteStatus } from "@/lib/nfc.functions";
@@ -217,9 +211,6 @@ export function ProgramPanel({
   const [manualDone, setManualDone] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [largeUrl, setLargeUrl] = useState(false);
-  const [showReady, setShowReady] = useState(false);
-  const { ready: nfcReady } = useNfcReadiness();
-  const { enabled: toolsEnabled } = useNfcTools();
 
 
   useEffect(() => {
