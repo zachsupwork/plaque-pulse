@@ -52,6 +52,7 @@ import { Route as AppNfcWriteRouteImport } from './routes/app.nfc.write'
 import { Route as AppPlaquesIndexRouteImport } from './routes/app.plaques.index'
 import { Route as AppPlaquesIdRouteImport } from './routes/app.plaques.$id'
 import { Route as NfcProgramTokenRouteImport } from './routes/nfc.program.$token'
+import { Route as NfcReturnSessionIdRouteImport } from './routes/nfc.return.$sessionId'
 import { Route as AdminPlaquesIdIndexRouteImport } from './routes/admin.plaques.$id.index'
 import { Route as AdminPlaquesIdProgramRouteImport } from './routes/admin.plaques.$id.program'
 import { Route as ApiPublicNfcProgramRouteImport } from './routes/api/public/nfc.program'
@@ -273,6 +274,11 @@ const NfcProgramTokenRoute = NfcProgramTokenRouteImport.update({
   path: '/nfc/program/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NfcReturnSessionIdRoute = NfcReturnSessionIdRouteImport.update({
+  id: '/nfc/return/$sessionId',
+  path: '/nfc/return/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPlaquesIdIndexRoute = AdminPlaquesIdIndexRouteImport.update({
   id: '/plaques/$id/',
   path: '/plaques/$id/',
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
+  '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
   '/admin/businesses/': typeof AdminBusinessesIndexRoute
   '/admin/inquiries/': typeof AdminInquiriesIndexRoute
   '/admin/nfc/': typeof AdminNfcIndexRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
+  '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
   '/admin/businesses': typeof AdminBusinessesIndexRoute
   '/admin/inquiries': typeof AdminInquiriesIndexRoute
   '/admin/nfc': typeof AdminNfcIndexRoute
@@ -436,6 +444,7 @@ export interface FileRoutesById {
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
+  '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
   '/admin/businesses/': typeof AdminBusinessesIndexRoute
   '/admin/inquiries/': typeof AdminInquiriesIndexRoute
   '/admin/nfc/': typeof AdminNfcIndexRoute
@@ -488,6 +497,7 @@ export interface FileRouteTypes {
     | '/app/nfc/write'
     | '/app/plaques/$id'
     | '/nfc/program/$token'
+    | '/nfc/return/$sessionId'
     | '/admin/businesses/'
     | '/admin/inquiries/'
     | '/admin/nfc/'
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/app/nfc/write'
     | '/app/plaques/$id'
     | '/nfc/program/$token'
+    | '/nfc/return/$sessionId'
     | '/admin/businesses'
     | '/admin/inquiries'
     | '/admin/nfc'
@@ -586,6 +597,7 @@ export interface FileRouteTypes {
     | '/app/nfc/write'
     | '/app/plaques/$id'
     | '/nfc/program/$token'
+    | '/nfc/return/$sessionId'
     | '/admin/businesses/'
     | '/admin/inquiries/'
     | '/admin/nfc/'
@@ -615,6 +627,7 @@ export interface RootRouteChildren {
   ActivateIndexRoute: typeof ActivateIndexRoute
   OfferingsIndexRoute: typeof OfferingsIndexRoute
   NfcProgramTokenRoute: typeof NfcProgramTokenRoute
+  NfcReturnSessionIdRoute: typeof NfcReturnSessionIdRoute
   ApiPublicNfcProgramRoute: typeof ApiPublicNfcProgramRoute
 }
 
@@ -921,6 +934,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NfcProgramTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/nfc/return/$sessionId': {
+      id: '/nfc/return/$sessionId'
+      path: '/nfc/return/$sessionId'
+      fullPath: '/nfc/return/$sessionId'
+      preLoaderRoute: typeof NfcReturnSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/plaques/$id/': {
       id: '/admin/plaques/$id/'
       path: '/plaques/$id'
@@ -1055,6 +1075,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivateIndexRoute: ActivateIndexRoute,
   OfferingsIndexRoute: OfferingsIndexRoute,
   NfcProgramTokenRoute: NfcProgramTokenRoute,
+  NfcReturnSessionIdRoute: NfcReturnSessionIdRoute,
   ApiPublicNfcProgramRoute: ApiPublicNfcProgramRoute,
 }
 export const routeTree = rootRouteImport
