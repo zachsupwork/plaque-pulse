@@ -178,9 +178,17 @@ type Phase = "idle" | "waiting" | "writing" | "written" | "verifying" | "verifie
 export function ProgramPanel({
   plaque,
   onVerified,
+  preprogrammed,
+  onContinue,
+  continueLabel,
 }: {
   plaque: ProgrammablePlaque;
-  onVerified?: () => void;
+  onVerified?: (() => void) | undefined;
+  /** The tag already carries the right SmartLink — no writing required. */
+  preprogrammed?: boolean | undefined;
+  /** Lets the operator move on when this device can't (or needn't) write. */
+  onContinue?: (() => void) | undefined;
+  continueLabel?: string | undefined;
 }) {
   const support = useNfcSupport();
   const session = useNfcSession();
