@@ -105,6 +105,7 @@ function SetupWorkbench() {
   const [destValue, setDestValue] = useState("");
 
   const [plaque, setPlaque] = useState<ProgrammablePlaque | null>(null);
+  const [preprogrammed, setPreprogrammed] = useState(false);
   const [plaqueTab, setPlaqueTab] = useState<"inventory" | "new">("inventory");
   const [inventoryQuery, setInventoryQuery] = useState("");
   const [newProduct, setNewProduct] = useState<string>(PRODUCT_TYPES[0]);
@@ -158,6 +159,7 @@ function SetupWorkbench() {
 
   function resetPlaqueFlow() {
     setPlaque(null);
+    setPreprogrammed(false);
     setConfigured(false);
     setVerified(false);
     setLive(false);
@@ -189,7 +191,10 @@ function SetupWorkbench() {
       data: { productType: newProduct, style: newStyle, baseType: newBase },
     });
     setCreating(false);
-    if (res.ok && res.plaque) setPlaque(res.plaque as ProgrammablePlaque);
+    if (res.ok && res.plaque) {
+      setPlaque(res.plaque as ProgrammablePlaque);
+      setPreprogrammed(false);
+    }
   }
 
   async function saveConfiguration() {
@@ -427,7 +432,10 @@ function SetupWorkbench() {
                       </p>
                       <button
                         type="button"
-                        onClick={() => setPlaque(p as ProgrammablePlaque)}
+                        onClick={() => {
+                          setPlaque(p as ProgrammablePlaque);
+                          setPreprogrammed(p.writeStatus === "programmed");
+                        }}
                         className="mt-3 w-full rounded-xl bg-primary px-4 py-3 text-[13px] font-bold text-primary-foreground"
                       >
                         Use this plaque
@@ -504,11 +512,25 @@ function SetupWorkbench() {
             />
             <Row label="NFC SmartLink" value={nfcUrl(plaque.public_slug)} mono />
             <Row label="QR SmartLink" value={qrUrl(plaque.public_slug)} mono />
-            <div className="pt-1">
+            <div className="flex flex-wrap gap-1.5 pt-1">
               <StatusChip tone={configured ? "ok" : ready ? "brand" : "idle"}>
-                {configured ? "Saved — ready to program" : ready ? "Ready to save" : "Finish the steps above"}
+                {configured ? "Setup saved ✓" : ready ? "Ready to save" : "Finish the steps above"}
               </StatusChip>
+              {configured ? (
+                <StatusChip tone={verified || preprogrammed ? "ok" : "attention"}>
+                  {verified
+                    ? "NFC verified ✓"
+                    : preprogrammed
+                      ? "NFC preprogrammed ✓"
+                      : "NFC: needs programming"}
+                </StatusChip>
+              ) : null}
             </div>
+            {configured ? (
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                Saving never needs NFC. You can come back and program the tag later, from any Android phone.
+              </p>
+            ) : null}
             {saveError ? <p className="text-[12px] text-destructive">{saveError}</p> : null}
             <button
               type="button"
@@ -524,7 +546,7 @@ function SetupWorkbench() {
 
       {/* 6 — Program */}
       {configured && plaque ? (
-        <Section step={6} title="Program NFC" done={verified}>
+        <Section step={6} title="Program NFC" done={verified || preprogrammed}>
           <GlassPanel className="mb-3 p-4">
             <p className="text-[14px] font-bold">Ready to program {plaque.plaque_code}</p>
             <p className="mt-1 text-[13px] text-muted-foreground">
@@ -534,7 +556,13 @@ function SetupWorkbench() {
             <p className="mt-2 font-mono text-[12px] break-all">{nfcUrl(plaque.public_slug)}</p>
           </GlassPanel>
 
-          <ProgramPanel plaque={plaque} onVerified={() => setVerified(true)} />
+          <ProgramPanel
+            plaque={plaque}
+            preprogrammed={preprogrammed}
+            onVerified={() => setVerified(true)}
+            onContinue={() => void goLive()}
+            continueLabel="Continue without programming"
+          />
 
           <GlassPanel className="mt-3 space-y-1 p-4">
             <Check ok={verified}>NFC written</Check>
