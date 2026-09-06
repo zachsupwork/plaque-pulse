@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, StatusChip } from "@/components/taplocal/Field";
 import { listAllBusinesses } from "@/lib/admin-data.functions";
@@ -9,6 +9,7 @@ import {
   adminGooglePlaceDetails,
   adminSearchGoogle,
 } from "@/lib/admin-discovery.functions";
+import { backfillReviewLinks, googleLinkMaintenance } from "@/lib/google-link.functions";
 
 export const Route = createFileRoute("/admin/businesses/")({
   head: () => ({
@@ -204,13 +205,16 @@ function BusinessDirectory() {
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] sm:grid-cols-4">
-                  <Cell label="Plaques" value={`${b.activePlaques} active / ${b.plaques}`} />
-                  <Cell label="Interactions 30d" value={String(b.interactions30)} />
+                <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] sm:grid-cols-5">
+                  <Cell label="Google rating" value={b.location?.rating ? `${b.location.rating} ★` : "—"} />
+                  <Cell label="Google reviews" value={b.location?.reviews != null ? String(b.location.reviews) : "—"} />
                   <Cell
-                    label="Google listing"
-                    value={b.location?.rating ? `${b.location.rating} ★ · ${b.location.reviews ?? 0}` : "Not linked"}
+                    label="Google connection"
+                    value={
+                      b.location?.reviewUrl ? "Review link connected" : b.location?.placeId ? "Needs review link" : "Not linked"
+                    }
                   />
+                  <Cell label="Plaque status" value={`${b.activePlaques} active / ${b.plaques}`} />
                   <Cell label="Last activity" value={new Date(b.lastActivity).toLocaleDateString()} />
                 </div>
               </GlassPanel>
@@ -218,6 +222,8 @@ function BusinessDirectory() {
           ))}
         </div>
       </div>
+
+      <GoogleLinkMaintenance />
 
       <div>
         <SectionTitle>Find on Google</SectionTitle>
@@ -330,6 +336,52 @@ function BusinessDirectory() {
             ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Bulk repair: fetch the direct review link for every listing that is missing one. */
+function GoogleLinkMaintenance() {
+  const qc = useQueryClient();
+  const statusFn = useServerFn(googleLinkMaintenance);
+  const backfillFn = useServerFn(backfillReviewLinks);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const status = useQuery({ queryKey: ["google-link-maintenance"], queryFn: () => statusFn({ data: undefined }) });
+  const run = useMutation({
+    mutationFn: () => backfillFn({ data: { limit: 20 } }),
+    onSuccess: (res) => {
+      setMessage(
+        res.ok
+          ? `${res.fixed} review link${res.fixed === 1 ? "" : "s"} fetched${res.failed ? `, ${res.failed} still missing` : ""}.`
+          : "Google could not be reached right now.",
+      );
+      void qc.invalidateQueries({ queryKey: ["google-link-maintenance"] });
+      void qc.invalidateQueries({ queryKey: ["admin-businesses"] });
+    },
+  });
+
+  const missing = status.data?.ok ? status.data.missing.length : 0;
+  const linked = status.data?.ok ? status.data.linked : 0;
+
+  return (
+    <div>
+      <SectionTitle>Google link maintenance</SectionTitle>
+      <GlassPanel className="space-y-2.5 p-3.5">
+        <p className="text-[13px]">
+          {linked} listing{linked === 1 ? "" : "s"} with a direct review link
+          {missing ? ` · ${missing} still missing` : " · all connected"}
+        </p>
+        {message ? <p className="text-[12px] text-muted-foreground">{message}</p> : null}
+        <button
+          type="button"
+          disabled={run.isPending || missing === 0}
+          onClick={() => run.mutate()}
+          className="min-h-[44px] w-full rounded-xl border border-border text-[13px] font-semibold disabled:opacity-50"
+        >
+          {run.isPending ? "Fetching from Google…" : "Fetch missing review links"}
+        </button>
+      </GlassPanel>
     </div>
   );
 }

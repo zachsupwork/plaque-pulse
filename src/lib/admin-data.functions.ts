@@ -208,7 +208,7 @@ export const listAllBusinesses = createServerFn({ method: "POST" })
       client.from("plaques").select("id, business_id, status").in("business_id", ids),
       client
         .from("locations")
-        .select("business_id, name, address, city, google_rating, google_review_count, google_place_id, phone")
+        .select("business_id, name, address, city, google_rating, google_review_count, google_place_id, google_review_url, phone")
         .in("business_id", ids),
       client.from("business_members").select("business_id, user_id, role").in("business_id", ids),
       client
@@ -242,6 +242,7 @@ export const listAllBusinesses = createServerFn({ method: "POST" })
               rating: loc.google_rating,
               reviews: loc.google_review_count,
               placeId: loc.google_place_id,
+              reviewUrl: loc.google_review_url,
               phone: loc.phone,
             }
           : null,
