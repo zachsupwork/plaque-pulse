@@ -611,19 +611,48 @@ export function NfcActionArea({
         </>
       ) : null}
 
-      {/* ---------- unsupported device ---------- */}
-      {status === "unsupported" ? (
+      {/* ---------- manually written with an outside tool ---------- */}
+      {status === "manual_unverified" ? (
         <>
-          <p className="mt-2 text-[14px] font-bold">NFC web programming is not available on this phone</p>
-          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-            Your SmartPlaque setup can still be completed here. Writing a blank NFC tag needs a compatible Android
-            phone with Chrome, or an NFC writing tool.
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+            This tag was written with an outside NFC tool, so TapLocal has recorded it as programmed but not verified.
+            Verification needs an Android phone with Chrome holding the tag — until then the plaque can still be set up
+            and made live.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {onContinue ? <Button onClick={onContinue}>Continue setup</Button> : null}
+            {handoffUrl ? (
+              <Button variant="ghost" onClick={() => setShowHandoff((v) => !v)}>
+                {showHandoff ? "Hide handoff" : "Verify on an Android phone"}
+              </Button>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+
+      {/* ---------- iPhone, and any other device without Web NFC ---------- */}
+      {iphoneBlock ? (
+        <>
+          <p className="mt-2 text-[14px] font-bold">
+            {isIphone ? "Your TapLocal setup works on this iPhone" : "This device can't write tags itself"}
+          </p>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            {isIphone
+              ? "Choosing the business, the destination, the plaque and the placement, activating a plaque, changing where it points later, the QR code and all activity all work here. Only writing a blank tag is different: this plaque's tag needs to be preprogrammed, or written with an NFC-compatible iPhone app."
+              : "Everything in the setup works here. Writing a blank tag needs an Android phone with Chrome or a separate NFC writing tool."}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {onContinue ? <Button onClick={onContinue}>Continue setup</Button> : null}
+            {smartlink ? <CopyButton value={smartlink} label="Copy SmartLink" /> : null}
             {smartlink ? (
-              <Button variant="ghost" onClick={() => setShowLink((v) => !v)}>
-                {showLink ? "Hide SmartLink" : "Show SmartLink"}
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowLink(true);
+                  setLargeUrl((v) => !v);
+                }}
+              >
+                {largeUrl ? "Normal size" : "Show large URL"}
               </Button>
             ) : null}
             {qrValue ? (
@@ -631,17 +660,51 @@ export function NfcActionArea({
                 {showQr ? "Hide QR" : "Show QR"}
               </Button>
             ) : null}
+            {isIphone ? (
+              <Button variant="ghost" onClick={() => setShowManual((v) => !v)}>
+                {showManual ? "Hide steps" : "Program with an iPhone app"}
+              </Button>
+            ) : null}
             {handoffUrl ? (
               <Button variant="ghost" onClick={() => setShowHandoff((v) => !v)}>
-                {showHandoff ? "Hide handoff" : "Continue on another phone"}
+                {showHandoff ? "Hide handoff" : "Program on an Android phone"}
               </Button>
             ) : null}
             <Button variant="ghost" onClick={() => setShowHelp((v) => !v)}>
               NFC help
             </Button>
           </div>
+
+          {showManual ? (
+            <div className="mt-3 rounded-xl border border-border bg-foreground/5 p-3.5">
+              <p className="text-[12px] font-bold">Programming this tag from your iPhone</p>
+              <ol className="mt-1.5 space-y-1 text-[12px] leading-relaxed text-muted-foreground">
+                {IPHONE_STEPS.map((step, i) => (
+                  <li key={step}>
+                    {i + 1}. {step}
+                  </li>
+                ))}
+              </ol>
+              {smartlink ? (
+                <p className="mt-2 font-mono text-[12px] break-all text-accent">{smartlink}</p>
+              ) : null}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {smartlink ? <CopyButton value={smartlink} label="Copy SmartLink" /> : null}
+                {onManualProgrammed ? (
+                  <Button variant="ghost" onClick={onManualProgrammed}>
+                    I&apos;ve programmed it
+                  </Button>
+                ) : null}
+              </div>
+              <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                A TapLocal iPhone app that writes the tag directly is planned. Until then, confirming here records the
+                tag as programmed manually — never as verified.
+              </p>
+            </div>
+          ) : null}
         </>
       ) : null}
+
 
       {showLink && smartlink ? (
         <div className="mt-3 rounded-xl border border-border bg-foreground/5 p-3.5">
