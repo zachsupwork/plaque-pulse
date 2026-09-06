@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GlassPanel } from "@/components/taplocal/Field";
 import { SupportStatus, useNfcSupport } from "@/components/taplocal/NfcKit";
+import { NfcOnboarding, NfcReadyPanel, NfcStatusChip } from "@/components/taplocal/NfcReady";
 
 export const Route = createFileRoute("/admin/nfc/")({
   head: () => ({
@@ -35,6 +36,10 @@ function NfcHome() {
           Program, read, verify and test SmartPlaque NFC tags.
         </p>
       </div>
+
+      <NfcOnboarding />
+      <NfcStatusChip />
+      <NfcReadyPanel />
 
       <div className="grid gap-3 sm:grid-cols-2">
         {ACTIONS.map((action) => (

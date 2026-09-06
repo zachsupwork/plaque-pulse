@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel } from "@/components/taplocal/Field";
 import { Button, Chip, Label, ProgramPanel, Row, type ProgrammablePlaque } from "@/components/taplocal/NfcKit";
+import { NfcOnboarding, NfcStatusChip } from "@/components/taplocal/NfcReady";
 import { PlaquePicker } from "@/components/taplocal/PlaquePicker";
 import { createPlaqueForProgramming } from "@/lib/nfc.functions";
 import { nfcUrl } from "@/lib/smartlink";
@@ -99,6 +100,8 @@ function WritePage() {
 
   return (
     <div className="space-y-4">
+      <NfcOnboarding />
+      <NfcStatusChip />
       <div>
         <h1 className="font-display text-[24px] font-bold tracking-tight">Write NFC Tag</h1>
         <p className="mt-1.5 text-[13px] text-muted-foreground">

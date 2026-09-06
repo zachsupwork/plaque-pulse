@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, Stat, StatusChip } from "@/components/taplocal/Field";
 import { BusinessSearch } from "@/components/taplocal/BusinessSearch";
+import { NfcOnboarding, NfcStatusChip } from "@/components/taplocal/NfcReady";
 import { CopyButton, ProgramPanel, QrImage, type ProgrammablePlaque } from "@/components/taplocal/NfcKit";
 import { adminCreateBusinessFromPlace } from "@/lib/admin-discovery.functions";
 import { createPlaqueForProgramming } from "@/lib/nfc.functions";
@@ -238,6 +239,9 @@ function SetupWorkbench() {
           Find a business, choose a plaque and make it live.
         </p>
       </div>
+
+      <NfcOnboarding />
+      <NfcStatusChip />
 
       {/* 1 — Business */}
       <Section step={1} title="Business" done={Boolean(biz)}>

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { GlassPanel, SectionTitle, StatusChip } from "@/components/taplocal/Field";
 import { supabase } from "@/integrations/supabase/client";
+import { NfcReadyPanel, NfcToolsSwitch, TestNfcTagButton } from "@/components/taplocal/NfcReady";
 import { useAdminIdentity } from "./admin";
 import {
   SMARTLINK_PRODUCTION_ORIGIN,
@@ -57,6 +58,15 @@ function AdminSettings() {
           >
             Sign out
           </button>
+        </GlassPanel>
+      </div>
+
+      <div>
+        <SectionTitle>NFC &amp; device</SectionTitle>
+        <NfcReadyPanel title="This phone" />
+        <GlassPanel className="mt-3 p-4">
+          <TestNfcTagButton />
+          <NfcToolsSwitch />
         </GlassPanel>
       </div>
 
