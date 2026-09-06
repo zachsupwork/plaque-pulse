@@ -196,6 +196,10 @@ export function ProgramPanel({
   const [manualDone, setManualDone] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [largeUrl, setLargeUrl] = useState(false);
+  const [showReady, setShowReady] = useState(false);
+  const { ready: nfcReady } = useNfcReadiness();
+  const { enabled: toolsEnabled } = useNfcTools();
+
 
   useEffect(() => {
     nfcSession.stop();
