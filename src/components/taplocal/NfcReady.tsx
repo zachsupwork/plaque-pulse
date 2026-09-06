@@ -462,11 +462,10 @@ export function NfcActionArea({
           ? "unsupported"
           : ready
             ? "ready"
-            : readiness.permission === "denied" || result === null
-              ? readiness.permission === "denied"
-                ? "needs_permission"
-                : "needs_on"
+            : readiness.permission === "denied"
+              ? "needs_permission"
               : "needs_on";
+  void result;
 
   const tone = status === "ready" || status === "preprogrammed" ? "ok" : status === "checking" ? "idle" : "warn";
 
