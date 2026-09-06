@@ -30,7 +30,25 @@ export type NfcReadiness = {
 const ONBOARDING_KEY = "nfc_onboarding_seen";
 const TOOLS_KEY = "nfc_tools_enabled";
 
+export type Platform = "android" | "ios" | "desktop" | "other";
+
+/**
+ * Which family of phone we're on. iPhone is a fully supported TapLocal device —
+ * it simply can't write a tag from the browser, so the UI routes it elsewhere.
+ */
+export function platform(): Platform {
+  if (typeof navigator === "undefined") return "other";
+  const ua = navigator.userAgent;
+  if (/Android/i.test(ua)) return "android";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+  // iPadOS 13+ reports itself as a Mac with touch.
+  if (/Macintosh/.test(ua) && typeof document !== "undefined" && "ontouchend" in document) return "ios";
+  if (/Windows|Macintosh|X11|Linux/i.test(ua)) return "desktop";
+  return "other";
+}
+
 export function browserName(): string {
+
   if (typeof navigator === "undefined") return "Unknown";
   const ua = navigator.userAgent;
   if (/EdgA?\//.test(ua)) return "Edge";
