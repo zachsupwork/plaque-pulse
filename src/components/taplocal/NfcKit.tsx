@@ -343,10 +343,13 @@ export function ProgramPanel({
         qrValue={qrUrl(plaque.public_slug)}
         handoffUrl={handoff}
         preprogrammed={preprogrammed}
+        manualProgrammed={manualDone}
         busy={session.busy}
         onProgram={blocked ? undefined : handleWrite}
+        onManualProgrammed={() => void confirmManual()}
         onContinue={onContinue}
         continueLabel={continueLabel}
+
       />
 
 
