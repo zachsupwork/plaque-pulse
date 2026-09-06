@@ -220,7 +220,8 @@ function AdminLayout() {
               <Link to="/admin" aria-label="Admin dashboard"><BrandLockup suffix="Admin" /></Link>
             </div>
 
-            <div className="ml-auto">
+            <div className="relative ml-auto flex items-center gap-2">
+              <NfcHeaderChip />
               <AccountButton email={identity.data.email} />
             </div>
           </div>
