@@ -5,6 +5,7 @@ import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taploca
 import { getBusinessDetail } from "@/lib/admin-data.functions";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
 import { nfcUrl } from "@/lib/smartlink";
+import { GoogleBusinessConnection } from "@/components/taplocal/GoogleBusinessConnection";
 
 export const Route = createFileRoute("/admin/businesses/$id")({
   head: () => ({
@@ -110,6 +111,8 @@ function BusinessRecord() {
         <Stat label="All time" value={performance.allTime} hint={`${performance.nfc} NFC · ${performance.qr} QR`} />
       </div>
 
+
+      <GoogleBusinessConnection businessId={business.id} plaqueSlug={plaques[0]?.public_slug ?? null} />
 
       <div>
         <SectionTitle>Locations</SectionTitle>
