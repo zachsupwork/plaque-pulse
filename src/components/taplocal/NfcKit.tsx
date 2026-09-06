@@ -74,10 +74,10 @@ export function Button({
   className,
 }: {
   children: ReactNode;
-  onClick?: () => void;
-  variant?: "solid" | "ghost" | "danger";
-  disabled?: boolean;
-  className?: string;
+  onClick?: (() => void) | undefined;
+  variant?: "solid" | "ghost" | "danger" | undefined;
+  disabled?: boolean | undefined;
+  className?: string | undefined;
 }) {
   return (
     <button
