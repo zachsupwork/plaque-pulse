@@ -374,3 +374,85 @@ export const reportFaultyTag = createServerFn({ method: "POST" })
     });
     return { ok: true as const };
   });
+
+/* ------------------------------------------------------------------ *
+ * Cross-platform programming handoff.
+ *
+ * The web app cannot write NFC on iPhone, so it mints a short-lived,
+ * admin-authorised handoff for another device (an Android phone today, the
+ * native TapLocal Core NFC app later). The token carries no credentials —
+ * it is only a lookup key, and every use is re-authorised server-side.
+ * ------------------------------------------------------------------ */
+
+const HANDOFF_TTL_MINUTES = 30;
+
+function newToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  return Array.from(bytes, (b) => b.toString(36).padStart(2, "0")).join("").slice(0, 40);
+}
+
+/** Creates a short-lived handoff for one plaque. Admin only. */
+export const createProgrammingHandoff = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ plaqueId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const caller = await admin();
+    if (!caller.ok) return { ok: false as const, error: caller.error, token: null, expiresAt: null };
+    const client = await db();
+
+    const { data: plaque } = await client
+      .from("plaques")
+      .select("id, public_slug")
+      .eq("id", data.plaqueId)
+      .maybeSingle();
+    if (!plaque) return { ok: false as const, error: "not_found" as const, token: null, expiresAt: null };
+
+    const token = newToken();
+    const expiresAt = new Date(Date.now() + HANDOFF_TTL_MINUTES * 60_000).toISOString();
+    await client.from("nfc_handoffs").insert({
+      token,
+      plaque_id: plaque.id,
+      expected_url: nfcUrl(plaque.public_slug),
+      created_by_user_id: caller.userId,
+      expires_at: expiresAt,
+    });
+    return { ok: true as const, token, expiresAt, expiresInMinutes: HANDOFF_TTL_MINUTES };
+  });
+
+/** Resolves a handoff on the second device. Requires an admin session there too. */
+export const resolveProgrammingHandoff = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ token: z.string().min(8).max(64) }).parse(data))
+  .handler(async ({ data }) => {
+    const caller = await admin();
+    if (!caller.ok) return { ok: false as const, error: caller.error, plaque: null, expectedUrl: null };
+    const client = await db();
+
+    const { data: handoff } = await client
+      .from("nfc_handoffs")
+      .select("id, plaque_id, expected_url, expires_at, used_at")
+      .eq("token", data.token)
+      .maybeSingle();
+    if (!handoff) return { ok: false as const, error: "not_found" as const, plaque: null, expectedUrl: null };
+    if (new Date(handoff.expires_at).getTime() < Date.now())
+      return { ok: false as const, error: "expired" as const, plaque: null, expectedUrl: null };
+
+    const { data: plaque } = await client.from("plaques").select(PLAQUE_COLUMNS).eq("id", handoff.plaque_id).maybeSingle();
+    if (!plaque) return { ok: false as const, error: "not_found" as const, plaque: null, expectedUrl: null };
+
+    return { ok: true as const, plaque, expectedUrl: handoff.expected_url, usedAt: handoff.used_at };
+  });
+
+/** The second device (or the future iOS app) reports the outcome back. */
+export const completeProgrammingHandoff = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z.object({ token: z.string().min(8).max(64), result: z.enum(["written", "verified", "failed"]) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const caller = await admin();
+    if (!caller.ok) return { ok: false as const, error: caller.error };
+    const client = await db();
+    await client
+      .from("nfc_handoffs")
+      .update({ used_at: new Date().toISOString(), used_by_user_id: caller.userId, result: data.result })
+      .eq("token", data.token);
+    return { ok: true as const };
+  });

@@ -32,6 +32,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as NSlugRouteImport } from './routes/n.$slug'
 import { Route as OfferingsIndexRouteImport } from './routes/offerings.index'
 import { Route as OfferingsSlugRouteImport } from './routes/offerings.$slug'
+import { Route as ProgramTokenRouteImport } from './routes/program.$token'
 import { Route as QSlugRouteImport } from './routes/q.$slug'
 import { Route as SetupSlugRouteImport } from './routes/setup.$slug'
 import { Route as AdminBusinessesIndexRouteImport } from './routes/admin.businesses.index'
@@ -170,6 +171,11 @@ const OfferingsSlugRoute = OfferingsSlugRouteImport.update({
   path: '/offerings/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProgramTokenRoute = ProgramTokenRouteImport.update({
+  id: '/program/$token',
+  path: '/program/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const QSlugRoute = QSlugRouteImport.update({
   id: '/q/$slug',
   path: '/q/$slug',
@@ -301,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/offerings/$slug': typeof OfferingsSlugRoute
+  '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/activate/': typeof ActivateIndexRoute
@@ -346,6 +353,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/offerings/$slug': typeof OfferingsSlugRoute
+  '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/activate': typeof ActivateIndexRoute
@@ -394,6 +402,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/offerings/$slug': typeof OfferingsSlugRoute
+  '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/activate/': typeof ActivateIndexRoute
@@ -443,6 +452,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/offerings/$slug'
+    | '/program/$token'
     | '/q/$slug'
     | '/setup/$slug'
     | '/activate/'
@@ -488,6 +498,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/offerings/$slug'
+    | '/program/$token'
     | '/q/$slug'
     | '/setup/$slug'
     | '/activate'
@@ -535,6 +546,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/offerings/$slug'
+    | '/program/$token'
     | '/q/$slug'
     | '/setup/$slug'
     | '/activate/'
@@ -573,6 +585,7 @@ export interface RootRouteChildren {
   ActivateTokenRoute: typeof ActivateTokenRoute
   NSlugRoute: typeof NSlugRoute
   OfferingsSlugRoute: typeof OfferingsSlugRoute
+  ProgramTokenRoute: typeof ProgramTokenRoute
   QSlugRoute: typeof QSlugRoute
   SetupSlugRoute: typeof SetupSlugRoute
   ActivateIndexRoute: typeof ActivateIndexRoute
@@ -740,6 +753,13 @@ declare module '@tanstack/react-router' {
       path: '/offerings/$slug'
       fullPath: '/offerings/$slug'
       preLoaderRoute: typeof OfferingsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/program/$token': {
+      id: '/program/$token'
+      path: '/program/$token'
+      fullPath: '/program/$token'
+      preLoaderRoute: typeof ProgramTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/q/$slug': {
@@ -989,6 +1009,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivateTokenRoute: ActivateTokenRoute,
   NSlugRoute: NSlugRoute,
   OfferingsSlugRoute: OfferingsSlugRoute,
+  ProgramTokenRoute: ProgramTokenRoute,
   QSlugRoute: QSlugRoute,
   SetupSlugRoute: SetupSlugRoute,
   ActivateIndexRoute: ActivateIndexRoute,

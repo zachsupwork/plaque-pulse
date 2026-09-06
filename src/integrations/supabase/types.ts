@@ -667,6 +667,53 @@ export type Database = {
           },
         ]
       }
+      nfc_handoffs: {
+        Row: {
+          created_at: string
+          created_by_user_id: string
+          expected_url: string
+          expires_at: string
+          id: string
+          plaque_id: string
+          result: string | null
+          token: string
+          used_at: string | null
+          used_by_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id: string
+          expected_url: string
+          expires_at: string
+          id?: string
+          plaque_id: string
+          result?: string | null
+          token: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string
+          expected_url?: string
+          expires_at?: string
+          id?: string
+          plaque_id?: string
+          result?: string | null
+          token?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfc_handoffs_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offering_inquiries: {
         Row: {
           assigned_admin_user_id: string | null
