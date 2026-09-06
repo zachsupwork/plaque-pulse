@@ -9,7 +9,10 @@ import {
   nfcToolsEnabled,
   onboardingSeen,
   openNfcSettings,
+  platform,
   probeNfc,
+  type Platform,
+
   readNfcPermission,
   setNfcToolsEnabled,
   type NfcReadiness,
