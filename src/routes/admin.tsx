@@ -3,6 +3,7 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
 import { useIdentity, useSignOut } from "@/hooks/useAuthSession";
+import { NfcHeaderChip } from "@/components/taplocal/NfcReady";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -220,7 +221,8 @@ function AdminLayout() {
               <Link to="/admin" aria-label="Admin dashboard"><BrandLockup suffix="Admin" /></Link>
             </div>
 
-            <div className="ml-auto">
+            <div className="relative ml-auto flex items-center gap-2">
+              <NfcHeaderChip />
               <AccountButton email={identity.data.email} />
             </div>
           </div>

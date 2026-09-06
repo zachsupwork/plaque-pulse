@@ -15,7 +15,7 @@ import {
   type NfcSupport,
 } from "@/lib/nfc-client";
 import { useNfcSession } from "@/hooks/useNfcSession";
-import { NfcReadyPanel, NfcStatusChip, useNfcReadiness, useNfcTools } from "@/components/taplocal/NfcReady";
+import { NfcActionArea, NfcStatusChip } from "@/components/taplocal/NfcReady";
 import { nfcUrl, qrUrl, smartlinkEnvironmentLabel, testUrl } from "@/lib/smartlink";
 import { checkSmartlink } from "@/lib/smartlink.functions";
 import { logProgrammingEvent, setVerification, setWriteStatus } from "@/lib/nfc.functions";
@@ -74,10 +74,10 @@ export function Button({
   className,
 }: {
   children: ReactNode;
-  onClick?: () => void;
-  variant?: "solid" | "ghost" | "danger";
-  disabled?: boolean;
-  className?: string;
+  onClick?: (() => void) | undefined;
+  variant?: "solid" | "ghost" | "danger" | undefined;
+  disabled?: boolean | undefined;
+  className?: string | undefined;
 }) {
   return (
     <button
@@ -178,9 +178,17 @@ type Phase = "idle" | "waiting" | "writing" | "written" | "verifying" | "verifie
 export function ProgramPanel({
   plaque,
   onVerified,
+  preprogrammed,
+  onContinue,
+  continueLabel,
 }: {
   plaque: ProgrammablePlaque;
-  onVerified?: () => void;
+  onVerified?: (() => void) | undefined;
+  /** The tag already carries the right SmartLink — no writing required. */
+  preprogrammed?: boolean | undefined;
+  /** Lets the operator move on when this device can't (or needn't) write. */
+  onContinue?: (() => void) | undefined;
+  continueLabel?: string | undefined;
 }) {
   const support = useNfcSupport();
   const session = useNfcSession();
@@ -189,6 +197,12 @@ export function ProgramPanel({
   const log = useServerFn(logProgrammingEvent);
 
   const expected = useMemo(() => nfcUrl(plaque.public_slug), [plaque.public_slug]);
+  // Resuming on a second phone: the saved setup lives server-side, so this link
+  // reopens the very same plaque with nothing to re-enter.
+  const [handoff, setHandoff] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (typeof window !== "undefined") setHandoff(`${window.location.origin}/admin/plaques/${plaque.id}/program`);
+  }, [plaque.id]);
   const health = useSmartlinkHealth(plaque.public_slug);
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -197,9 +211,6 @@ export function ProgramPanel({
   const [manualDone, setManualDone] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [largeUrl, setLargeUrl] = useState(false);
-  const [showReady, setShowReady] = useState(false);
-  const { ready: nfcReady } = useNfcReadiness();
-  const { enabled: toolsEnabled } = useNfcTools();
 
 
   useEffect(() => {
@@ -302,17 +313,6 @@ export function ProgramPanel({
         <div className="mt-4 flex flex-wrap gap-2">
           <CopyButton value={expected} />
           <TestSmartlinkButton slug={plaque.public_slug} />
-          {support?.usable && !toolsEnabled ? (
-            <Chip tone="idle">NFC tools off on this device</Chip>
-          ) : support?.usable && nfcReady ? (
-            <Button onClick={handleWrite} disabled={session.busy || blocked}>
-              {session.operation === "writing" ? "Waiting for tag…" : "Program NFC"}
-            </Button>
-          ) : support?.usable ? (
-            <Button variant="ghost" onClick={() => setShowReady(true)}>
-              Turn on / check NFC
-            </Button>
-          ) : null}
           {session.busy ? (
             <Button variant="ghost" onClick={handleCancel}>
               Cancel
@@ -321,9 +321,19 @@ export function ProgramPanel({
         </div>
       </GlassPanel>
 
-      {support?.usable && toolsEnabled && (!nfcReady || showReady) ? (
-        <NfcReadyPanel title="Before programming" onReady={() => setShowReady(false)} />
-      ) : null}
+      {/* Always present, whatever the device can or can't do. */}
+      <NfcActionArea
+        plaqueCode={plaque.plaque_code}
+        smartlink={expected}
+        qrValue={qrUrl(plaque.public_slug)}
+        handoffUrl={handoff}
+        preprogrammed={preprogrammed}
+        busy={session.busy}
+        onProgram={blocked ? undefined : handleWrite}
+        onContinue={onContinue}
+        continueLabel={continueLabel}
+      />
+
 
       <SmartlinkStatusPanel slug={plaque.public_slug} />
 
