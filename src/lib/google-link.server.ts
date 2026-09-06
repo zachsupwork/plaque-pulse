@@ -42,7 +42,7 @@ export async function syncLocationFromGoogle(
   await client
     .from("locations")
     .update({
-      name: place.name || undefined,
+      ...(place.name ? { name: place.name } : {}),
       address: place.formattedAddress || null,
       city: place.city,
       province_state: place.region,
