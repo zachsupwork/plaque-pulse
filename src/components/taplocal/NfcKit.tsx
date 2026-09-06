@@ -302,17 +302,6 @@ export function ProgramPanel({
         <div className="mt-4 flex flex-wrap gap-2">
           <CopyButton value={expected} />
           <TestSmartlinkButton slug={plaque.public_slug} />
-          {support?.usable && !toolsEnabled ? (
-            <Chip tone="idle">NFC tools off on this device</Chip>
-          ) : support?.usable && nfcReady ? (
-            <Button onClick={handleWrite} disabled={session.busy || blocked}>
-              {session.operation === "writing" ? "Waiting for tag…" : "Program NFC"}
-            </Button>
-          ) : support?.usable ? (
-            <Button variant="ghost" onClick={() => setShowReady(true)}>
-              Turn on / check NFC
-            </Button>
-          ) : null}
           {session.busy ? (
             <Button variant="ghost" onClick={handleCancel}>
               Cancel
@@ -321,9 +310,19 @@ export function ProgramPanel({
         </div>
       </GlassPanel>
 
-      {support?.usable && toolsEnabled && (!nfcReady || showReady) ? (
-        <NfcReadyPanel title="Before programming" onReady={() => setShowReady(false)} />
-      ) : null}
+      {/* Always present, whatever the device can or can't do. */}
+      <NfcActionArea
+        plaqueCode={plaque.plaque_code}
+        smartlink={expected}
+        qrValue={qrUrl(plaque.public_slug)}
+        handoffUrl={handoff}
+        preprogrammed={preprogrammed}
+        busy={session.busy}
+        onProgram={blocked ? undefined : handleWrite}
+        onContinue={onContinue}
+        continueLabel={continueLabel}
+      />
+
 
       <SmartlinkStatusPanel slug={plaque.public_slug} />
 
