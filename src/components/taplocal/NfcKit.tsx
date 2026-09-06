@@ -203,6 +203,12 @@ export function ProgramPanel({
   const log = useServerFn(logProgrammingEvent);
 
   const expected = useMemo(() => nfcUrl(plaque.public_slug), [plaque.public_slug]);
+  // Resuming on a second phone: the saved setup lives server-side, so this link
+  // reopens the very same plaque with nothing to re-enter.
+  const [handoff, setHandoff] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (typeof window !== "undefined") setHandoff(`${window.location.origin}/admin/plaques/${plaque.id}/program`);
+  }, [plaque.id]);
   const health = useSmartlinkHealth(plaque.public_slug);
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState<string | null>(null);
