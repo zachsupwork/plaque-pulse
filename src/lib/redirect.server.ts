@@ -12,8 +12,28 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
     .maybeSingle();
 
   if (!plaque) return fallback("We couldn't find this plaque", "Check the code on the plaque and try again.");
-  if (plaque.status === "paused")
-    return fallback("This plaque is paused", "The business has turned this one off for now.");
+
+  const device = deviceFamily(request);
+
+  // Disabled by an admin: the tag itself still works, so record the tap (it also
+  // lets an admin tap-test a disabled plaque) and show the inactive page.
+  if (plaque.status === "paused") {
+    void supabaseAdmin.from("events").insert([
+      {
+        business_id: plaque.business_id,
+        plaque_id: plaque.id,
+        event_type: "manufacturing_test",
+        source_type: source,
+        device_family: device,
+        occurred_at: new Date().toISOString(),
+        metadata: { inactive: true },
+      },
+    ]);
+    return fallback(
+      "This TapLocal plaque is currently inactive.",
+      "The tag is working — its destination has been turned off. Contact TapLocal to switch it back on.",
+    );
+  }
 
   const { data: destination } = await supabaseAdmin
     .from("destinations")
@@ -43,6 +63,7 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
         event_type: "manufacturing_test",
         source_type: source,
         intent_type: destination.destination_type,
+        device_family: device,
         occurred_at: occurredAt,
         metadata: { tl_test: true },
       },
@@ -55,6 +76,7 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
         event_type: "interaction",
         source_type: source,
         intent_type: destination.destination_type,
+        device_family: device,
         occurred_at: occurredAt,
         anonymous_visitor_key: key,
       },
@@ -64,6 +86,7 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
         event_type: "redirect_success",
         source_type: source,
         intent_type: destination.destination_type,
+        device_family: device,
         occurred_at: occurredAt,
         anonymous_visitor_key: key,
       },
@@ -74,6 +97,15 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
     status: 307,
     headers: { Location: destination.url, "Cache-Control": "no-store" },
   });
+}
+
+/** Coarse device family only — never a fingerprint. */
+function deviceFamily(request: Request) {
+  const ua = request.headers.get("user-agent") ?? "";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "iPhone";
+  if (/Android/i.test(ua)) return "Android";
+  if (/Macintosh|Windows|X11|Linux/i.test(ua)) return "Desktop";
+  return "Other";
 }
 
 function visitorKey(request: Request) {

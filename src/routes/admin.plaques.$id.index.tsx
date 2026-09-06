@@ -7,6 +7,7 @@ import { getPlaqueRecord, listAllBusinesses } from "@/lib/admin-data.functions";
 import { assignPlaque, setPlaqueDestination, setPlaqueStatus } from "@/lib/admin.functions";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
 import { nfcUrl, qrUrl } from "@/lib/smartlink";
+import { NfcPlaquePanel } from "@/components/taplocal/NfcPlaquePanel";
 
 export const Route = createFileRoute("/admin/plaques/$id/")({
   head: () => ({
@@ -133,6 +134,8 @@ function PlaqueRecord() {
         <Row label="NFC link" value={nfcUrl(plaque.publicSlug)} />
         <Row label="QR link" value={qrUrl(plaque.publicSlug)} />
       </GlassPanel>
+
+      <NfcPlaquePanel plaqueId={id} publicSlug={plaque.publicSlug} />
 
       <div className="flex flex-wrap gap-2">
         <Link
