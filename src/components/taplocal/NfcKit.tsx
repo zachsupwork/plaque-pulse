@@ -197,12 +197,27 @@ export function ProgramPanel({
   const log = useServerFn(logProgrammingEvent);
 
   const expected = useMemo(() => nfcUrl(plaque.public_slug), [plaque.public_slug]);
-  // Resuming on a second phone: the saved setup lives server-side, so this link
-  // reopens the very same plaque with nothing to re-enter.
+  // Resuming on a second phone (or, later, the TapLocal iOS app): the saved setup
+  // lives server-side, so this short-lived link reopens the very same plaque.
+  const makeHandoff = useServerFn(createProgrammingHandoff);
   const [handoff, setHandoff] = useState<string | undefined>(undefined);
   useEffect(() => {
-    if (typeof window !== "undefined") setHandoff(`${window.location.origin}/admin/plaques/${plaque.id}/program`);
-  }, [plaque.id]);
+    let cancelled = false;
+    if (typeof window === "undefined") return;
+    const origin = window.location.origin;
+    setHandoff(`${origin}/admin/plaques/${plaque.id}/program`);
+    void makeHandoff({ data: { plaqueId: plaque.id } })
+      .then((result) => {
+        if (!cancelled && result.ok && result.token) setHandoff(`${origin}/program/${result.token}`);
+      })
+      .catch(() => {
+        /* the plaque link above is a perfectly good fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [plaque.id, makeHandoff]);
+
   const health = useSmartlinkHealth(plaque.public_slug);
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState<string | null>(null);
