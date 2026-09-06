@@ -15,6 +15,7 @@ import {
   type NfcSupport,
 } from "@/lib/nfc-client";
 import { useNfcSession } from "@/hooks/useNfcSession";
+import { NfcReadyPanel, NfcStatusChip, useNfcReadiness, useNfcTools } from "@/components/taplocal/NfcReady";
 import { nfcUrl, qrUrl, smartlinkEnvironmentLabel, testUrl } from "@/lib/smartlink";
 import { checkSmartlink } from "@/lib/smartlink.functions";
 import { logProgrammingEvent, setVerification, setWriteStatus } from "@/lib/nfc.functions";
