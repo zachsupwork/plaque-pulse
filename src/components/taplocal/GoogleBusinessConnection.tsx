@@ -258,7 +258,7 @@ function ConnectionCard({
           <p className="truncate text-[13px] font-semibold">{c.name}</p>
           <p className="truncate text-[12px] text-muted-foreground">{[c.address, c.city].filter(Boolean).join(", ")}</p>
         </div>
-        <StatusChip tone={linked ? "ok" : c.placeId ? "warn" : "idle"}>
+        <StatusChip tone={linked ? "ok" : c.placeId ? "problem" : "idle"}>
           {linked ? "Review link connected" : c.placeId ? "No review link" : "Not linked"}
         </StatusChip>
       </div>
