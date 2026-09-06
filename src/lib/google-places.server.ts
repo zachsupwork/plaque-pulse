@@ -174,3 +174,56 @@ export function isGoogleUrl(raw: string) {
     return false;
   }
 }
+
+export type PlaceSearchResult = {
+  placeId: string;
+  name: string;
+  address: string;
+  rating: number | null;
+  reviewCount: number | null;
+  businessStatus: string | null;
+  mapsUri: string | null;
+  writeAReviewUri: string | null;
+};
+
+/**
+ * Text search: unlike autocomplete this returns the rating and review count, so
+ * the admin can confirm they picked the right listing before saving it.
+ */
+export async function searchBusinessesDetailed(query: string): Promise<PlaceSearchResult[]> {
+  const res = await fetch(`${PLACES}/places:searchText`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": key(),
+      "X-Goog-FieldMask":
+        "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.businessStatus,places.googleMapsUri,places.googleMapsLinks",
+    },
+    body: JSON.stringify({ textQuery: query, maxResultCount: 8 }),
+  });
+  if (!res.ok) throw new Error(`google_places_search_failed_${res.status}`);
+  const json = (await res.json()) as {
+    places?: Array<{
+      id?: string;
+      displayName?: { text?: string };
+      formattedAddress?: string;
+      rating?: number;
+      userRatingCount?: number;
+      businessStatus?: string;
+      googleMapsUri?: string;
+      googleMapsLinks?: { writeAReviewUri?: string };
+    }>;
+  };
+  return (json.places ?? [])
+    .filter((p) => p.id)
+    .map((p) => ({
+      placeId: p.id!,
+      name: p.displayName?.text ?? "Unnamed business",
+      address: p.formattedAddress ?? "",
+      rating: p.rating ?? null,
+      reviewCount: p.userRatingCount ?? null,
+      businessStatus: p.businessStatus ?? null,
+      mapsUri: p.googleMapsUri ?? null,
+      writeAReviewUri: p.googleMapsLinks?.writeAReviewUri ?? null,
+    }));
+}
