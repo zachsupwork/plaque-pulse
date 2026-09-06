@@ -19,9 +19,7 @@ export type ReviewLinkResult = {
   error: "no_place_id" | "not_configured" | "unavailable" | null;
 };
 
-type Client = Awaited<
-  ReturnType<typeof import("@/integrations/supabase/client.server").getAdmin>
->;
+type Client = typeof import("@/integrations/supabase/client.server")["supabaseAdmin"];
 
 /** Re-reads one place from Google and writes every public field back to the location. */
 export async function syncLocationFromGoogle(
