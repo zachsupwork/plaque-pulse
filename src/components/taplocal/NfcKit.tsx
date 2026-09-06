@@ -18,7 +18,7 @@ import { useNfcSession } from "@/hooks/useNfcSession";
 import { NfcActionArea, NfcStatusChip } from "@/components/taplocal/NfcReady";
 import { nfcUrl, qrUrl, smartlinkEnvironmentLabel, testUrl } from "@/lib/smartlink";
 import { checkSmartlink } from "@/lib/smartlink.functions";
-import { logProgrammingEvent, setVerification, setWriteStatus } from "@/lib/nfc.functions";
+import { createProgrammingHandoff, logProgrammingEvent, setVerification, setWriteStatus } from "@/lib/nfc.functions";
 
 
 export type ProgrammablePlaque = {
