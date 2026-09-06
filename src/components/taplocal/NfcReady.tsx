@@ -401,8 +401,10 @@ export function TestNfcTagButton() {
 export type NfcAreaStatus =
   | "ready"
   | "preprogrammed"
+  | "manual_unverified"
   | "needs_on"
   | "needs_permission"
+  | "ios"
   | "unsupported"
   | "embedded"
   | "checking";
@@ -410,12 +412,24 @@ export type NfcAreaStatus =
 const STATUS_LABEL: Record<NfcAreaStatus, string> = {
   ready: "NFC READY ✓",
   preprogrammed: "NFC PREPROGRAMMED ✓",
+  manual_unverified: "PROGRAMMED MANUALLY — UNVERIFIED",
   needs_on: "NFC NEEDS TO BE TURNED ON",
   needs_permission: "NFC NEEDS PERMISSION",
-  unsupported: "NFC WEB PROGRAMMING NOT SUPPORTED HERE",
+  ios: "IPHONE DETECTED ✓ — SETUP READY",
+  unsupported: "EXTERNAL NFC WRITER REQUIRED",
   embedded: "OPEN TAPLOCAL IN ITS OWN TAB",
   checking: "CHECKING THIS PHONE…",
 };
+
+const IPHONE_STEPS = [
+  "Copy the TapLocal SmartLink below",
+  "Open your NFC writing app",
+  "Choose Write → URL",
+  "Paste the TapLocal SmartLink",
+  "Hold the top of your iPhone near the tag",
+  "Come back to TapLocal and tap I've programmed it",
+];
+
 
 export function NfcActionArea({
   plaqueCode,
