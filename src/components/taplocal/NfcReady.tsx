@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { GlassPanel } from "@/components/taplocal/Field";
-import { Button, Chip, Label, Row } from "@/components/taplocal/NfcKit";
+import { Button, Chip, CopyButton, Label, QrImage, Row } from "@/components/taplocal/NfcKit";
 import { nfcSession, nfcErrorMessage } from "@/lib/nfc-client";
 import {
   baseReadiness,
