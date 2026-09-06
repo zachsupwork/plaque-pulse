@@ -388,3 +388,329 @@ export function TestNfcTagButton() {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ *
+ * Always-actionable NFC area.
+ *
+ * The rule: whatever the device state, the operator is given a next step.
+ * Nothing here is a second NFC implementation — it reads the same
+ * detectSupport()/readiness primitives and calls back into the existing
+ * write/read flow through onProgram.
+ * ------------------------------------------------------------------ */
+
+export type NfcAreaStatus =
+  | "ready"
+  | "preprogrammed"
+  | "needs_on"
+  | "needs_permission"
+  | "unsupported"
+  | "embedded"
+  | "checking";
+
+const STATUS_LABEL: Record<NfcAreaStatus, string> = {
+  ready: "NFC READY ✓",
+  preprogrammed: "NFC PREPROGRAMMED ✓",
+  needs_on: "NFC NEEDS TO BE TURNED ON",
+  needs_permission: "NFC NEEDS PERMISSION",
+  unsupported: "NFC WEB PROGRAMMING NOT SUPPORTED HERE",
+  embedded: "OPEN TAPLOCAL IN ITS OWN TAB",
+  checking: "CHECKING THIS PHONE…",
+};
+
+export function NfcActionArea({
+  plaqueCode,
+  smartlink,
+  qrValue,
+  handoffUrl,
+  preprogrammed,
+  busy,
+  programLabel = "Program NFC",
+  onProgram,
+  onContinue,
+  continueLabel = "Continue without programming",
+}: {
+  plaqueCode?: string;
+  smartlink?: string;
+  qrValue?: string;
+  /** Link a second (Android) phone can open to resume this exact plaque. */
+  handoffUrl?: string;
+  preprogrammed?: boolean;
+  busy?: boolean;
+  programLabel?: string;
+  onProgram?: () => void;
+  onContinue?: () => void;
+  continueLabel?: string;
+}) {
+  const { readiness, ready, unsupported, checking, result, check } = useNfcReadiness();
+  const { enabled: toolsEnabled, setEnabled } = useNfcTools();
+  const [showDetails, setShowDetails] = useState(false);
+  const [showLink, setShowLink] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const [showHandoff, setShowHandoff] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [settingsTried, setSettingsTried] = useState(false);
+
+  const isAndroid = readiness?.support.device === "Android";
+
+  const status: NfcAreaStatus = !readiness
+    ? "checking"
+    : preprogrammed && !ready
+      ? "preprogrammed"
+      : readiness.state === "embedded"
+        ? "embedded"
+        : unsupported
+          ? "unsupported"
+          : ready
+            ? "ready"
+            : readiness.permission === "denied" || result === null
+              ? readiness.permission === "denied"
+                ? "needs_permission"
+                : "needs_on"
+              : "needs_on";
+
+  const tone = status === "ready" || status === "preprogrammed" ? "ok" : status === "checking" ? "idle" : "warn";
+
+  return (
+    <GlassPanel className="p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Chip tone={tone}>{STATUS_LABEL[status]}</Chip>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => void check()} disabled={checking || unsupported}>
+            {checking ? "Checking…" : "Check again"}
+          </Button>
+          <Button variant="ghost" onClick={() => setShowDetails((v) => !v)}>
+            {showDetails ? "Hide details" : "Details"}
+          </Button>
+        </div>
+      </div>
+
+      {/* ---------- ready ---------- */}
+      {status === "ready" ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {toolsEnabled ? (
+            <Button onClick={onProgram} disabled={busy || !onProgram}>
+              {busy ? "Waiting for tag…" : programLabel}
+            </Button>
+          ) : (
+            <Button onClick={() => setEnabled(true)}>Turn TapLocal NFC tools on</Button>
+          )}
+          {onContinue ? (
+            <Button variant="ghost" onClick={onContinue}>
+              {continueLabel}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* ---------- preprogrammed ---------- */}
+      {status === "preprogrammed" ? (
+        <>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+            This plaque already carries its permanent TapLocal link. No NFC programming is needed — you only need the
+            business, destination and placement. That works on iPhone, Android and desktop.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {onContinue ? <Button onClick={onContinue}>Continue setup</Button> : null}
+            {onProgram ? (
+              <Button variant="ghost" onClick={onProgram} disabled={busy}>
+                Reprogram the tag anyway
+              </Button>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+
+      {/* ---------- Android, but NFC not ready ---------- */}
+      {status === "needs_on" || status === "needs_permission" || status === "embedded" ? (
+        <>
+          <p className="mt-2 text-[14px] font-bold">
+            {status === "needs_permission"
+              ? "TapLocal needs permission to use NFC"
+              : status === "embedded"
+                ? "Open TapLocal in its own browser tab"
+                : "NFC needs to be turned on"}
+          </p>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            {readiness?.detail ??
+              "TapLocal needs NFC enabled on this phone to program the SmartPlaque. Everything else in this setup still works."}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {isAndroid ? (
+              <Button
+                onClick={() => {
+                  openNfcSettings();
+                  setSettingsTried(true);
+                }}
+              >
+                Turn on / open NFC settings
+              </Button>
+            ) : null}
+            <Button variant="ghost" onClick={() => void check()} disabled={checking}>
+              {checking ? "Checking…" : "Check again"}
+            </Button>
+            {onContinue ? (
+              <Button variant="ghost" onClick={onContinue}>
+                {continueLabel}
+              </Button>
+            ) : null}
+          </div>
+          <div className="mt-3 rounded-xl border border-border bg-foreground/5 p-3.5">
+            <p className="text-[12px] font-bold">
+              {settingsTried ? "If the settings screen didn't open:" : "Step by step:"}
+            </p>
+            <ol className="mt-1.5 space-y-1 text-[12px] leading-relaxed text-muted-foreground">
+              {ANDROID_STEPS.map((step, i) => (
+                <li key={step}>
+                  {i + 1}. {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </>
+      ) : null}
+
+      {/* ---------- unsupported device ---------- */}
+      {status === "unsupported" ? (
+        <>
+          <p className="mt-2 text-[14px] font-bold">NFC web programming is not available on this phone</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            Your SmartPlaque setup can still be completed here. Writing a blank NFC tag needs a compatible Android
+            phone with Chrome, or an NFC writing tool.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {onContinue ? <Button onClick={onContinue}>Continue setup</Button> : null}
+            {smartlink ? (
+              <Button variant="ghost" onClick={() => setShowLink((v) => !v)}>
+                {showLink ? "Hide SmartLink" : "Show SmartLink"}
+              </Button>
+            ) : null}
+            {qrValue ? (
+              <Button variant="ghost" onClick={() => setShowQr((v) => !v)}>
+                {showQr ? "Hide QR" : "Show QR"}
+              </Button>
+            ) : null}
+            {handoffUrl ? (
+              <Button variant="ghost" onClick={() => setShowHandoff((v) => !v)}>
+                {showHandoff ? "Hide handoff" : "Continue on another phone"}
+              </Button>
+            ) : null}
+            <Button variant="ghost" onClick={() => setShowHelp((v) => !v)}>
+              NFC help
+            </Button>
+          </div>
+        </>
+      ) : null}
+
+      {showLink && smartlink ? (
+        <div className="mt-3 rounded-xl border border-border bg-foreground/5 p-3.5">
+          <Label>Permanent SmartLink</Label>
+          <p className="mt-1 font-mono text-[13px] break-all text-accent">{smartlink}</p>
+          <div className="mt-2">
+            <CopyButton value={smartlink} label="Copy SmartLink" />
+          </div>
+        </div>
+      ) : null}
+
+      {showQr && qrValue ? (
+        <div className="mt-3 flex flex-col items-center gap-2 rounded-xl border border-border bg-foreground/5 p-3.5">
+          <QrImage value={qrValue} size={168} />
+          <p className="font-mono text-[12px] break-all text-muted-foreground">{qrValue}</p>
+        </div>
+      ) : null}
+
+      {showHandoff && handoffUrl ? (
+        <div className="mt-3 flex flex-col items-center gap-2 rounded-xl border border-border bg-foreground/5 p-3.5">
+          <p className="text-[13px] font-bold">Continue programming {plaqueCode ?? "this plaque"}</p>
+          <QrImage value={handoffUrl} size={168} />
+          <p className="text-center text-[12px] leading-relaxed text-muted-foreground">
+            Scan this with an Android phone running Chrome. It opens the same plaque with the business, destination and
+            placement already saved — nothing has to be re-entered. The second phone has to sign in as a TapLocal
+            admin.
+          </p>
+          <CopyButton value={handoffUrl} label="Copy handoff link" />
+        </div>
+      ) : null}
+
+      {showHelp ? (
+        <div className="mt-3 rounded-xl border border-border bg-foreground/5 p-3.5 text-[12px] leading-relaxed text-muted-foreground">
+          <p className="font-bold text-foreground">What needs NFC and what doesn't</p>
+          <p className="mt-1">
+            Setting the business, the customer destination, the placement, ownership and activity tracking never needs
+            NFC — that is all handled by TapLocal and can be changed at any time from any device.
+          </p>
+          <p className="mt-1.5">
+            Only writing the permanent link onto a blank or replacement tag needs an Android phone with Chrome, or a
+            separate NFC writing tool.
+          </p>
+        </div>
+      ) : null}
+
+      {showDetails ? (
+        <div className="mt-3">
+          <Row label="Device" value={readiness ? deviceName() : "…"} />
+          <Row label="Browser" value={readiness?.browser ?? "…"} />
+          <Row
+            label="Secure connection"
+            value={readiness?.support.secureContext ? <Chip tone="ok">Yes</Chip> : <Chip tone="bad">No</Chip>}
+          />
+          <Row
+            label="Web NFC API"
+            value={readiness?.support.hasApi ? <Chip tone="ok">Available</Chip> : <Chip tone="idle">Not available</Chip>}
+          />
+          <Row
+            label="Programming"
+            value={
+              status === "ready" ? (
+                <Chip tone="ok">Ready</Chip>
+              ) : status === "preprogrammed" ? (
+                <Chip tone="ok">Not needed</Chip>
+              ) : (
+                <Chip tone="warn">Not ready</Chip>
+              )
+            }
+          />
+          {plaqueCode ? <Row label="Current plaque" value={plaqueCode} /> : null}
+          {smartlink ? <Row label="SmartLink" value={<span className="font-mono">{smartlink}</span>} /> : null}
+        </div>
+      ) : null}
+
+      <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+        Your phone's NFC switch is managed by Android — TapLocal can only check it and take you there.
+      </p>
+    </GlassPanel>
+  );
+}
+
+/* ------------------------- admin header chip ------------------------- */
+
+export function NfcHeaderChip({ onOpen }: { onOpen?: () => void }) {
+  const { ready, unsupported } = useNfcReadiness();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="NFC readiness"
+        onClick={() => {
+          setOpen((v) => !v);
+          onOpen?.();
+        }}
+        className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+          ready
+            ? "border-accent/40 bg-accent/15 text-accent"
+            : unsupported
+              ? "border-border bg-foreground/5 text-muted-foreground"
+              : "border-primary/40 bg-primary/10 text-primary"
+        }`}
+      >
+        {ready ? "NFC ✓" : "NFC !"}
+      </button>
+      {open ? (
+        <div className="absolute top-full right-0 z-50 mt-2 w-[19rem]">
+          <NfcActionArea />
+        </div>
+      ) : null}
+    </>
+  );
+}
