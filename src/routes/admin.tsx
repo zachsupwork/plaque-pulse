@@ -3,6 +3,7 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
 import { useIdentity, useSignOut } from "@/hooks/useAuthSession";
+import { NfcHeaderChip } from "@/components/taplocal/NfcReady";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
