@@ -546,6 +546,9 @@ export type Database = {
           google_primary_type: string | null
           google_rating: number | null
           google_review_count: number | null
+          google_review_url: string | null
+          google_review_url_checked_at: string | null
+          google_review_url_source: string | null
           id: string
           latitude: number | null
           longitude: number | null
@@ -569,6 +572,9 @@ export type Database = {
           google_primary_type?: string | null
           google_rating?: number | null
           google_review_count?: number | null
+          google_review_url?: string | null
+          google_review_url_checked_at?: string | null
+          google_review_url_source?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
@@ -592,6 +598,9 @@ export type Database = {
           google_primary_type?: string | null
           google_rating?: number | null
           google_review_count?: number | null
+          google_review_url?: string | null
+          google_review_url_checked_at?: string | null
+          google_review_url_source?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
