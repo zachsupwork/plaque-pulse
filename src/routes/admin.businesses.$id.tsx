@@ -6,6 +6,7 @@ import { getBusinessDetail } from "@/lib/admin-data.functions";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
 import { nfcUrl } from "@/lib/smartlink";
 import { GoogleBusinessConnection } from "@/components/taplocal/GoogleBusinessConnection";
+import { SocialProfilesPanel } from "@/components/taplocal/InstagramDiscovery";
 
 export const Route = createFileRoute("/admin/businesses/$id")({
   head: () => ({
@@ -114,6 +115,8 @@ function BusinessRecord() {
 
 
       <GoogleBusinessConnection businessId={business.id} plaqueSlug={plaques[0]?.public_slug ?? null} />
+
+      <SocialProfilesPanel businessId={business.id} />
 
       <div>
         <SectionTitle>Locations</SectionTitle>
