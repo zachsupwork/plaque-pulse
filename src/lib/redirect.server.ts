@@ -93,7 +93,7 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
 
   const shared = {
     ...base,
-    intent_type: destination.destination_type,
+    intent_type: intentFor(destination.destination_type),
     destination_type: destination.destination_type,
     destination_id: destination.id,
   };
@@ -114,6 +114,28 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
     status: 307,
     headers: { Location: destination.url, "Cache-Control": "no-store" },
   });
+}
+
+type IntentType = NonNullable<EventInsert["intent_type"]>;
+type DestinationType = NonNullable<EventInsert["destination_type"]>;
+
+const INTENT_BY_DESTINATION: Record<DestinationType, IntentType> = {
+  google_review: "review",
+  instagram: "social",
+  facebook: "social",
+  website: "website",
+  menu: "menu",
+  booking: "booking",
+  directions: "directions",
+  call: "lead",
+  quote: "lead",
+  coupon: "promotion",
+  loyalty: "loyalty",
+  custom: "custom",
+};
+
+function intentFor(destinationType: DestinationType): IntentType {
+  return INTENT_BY_DESTINATION[destinationType] ?? "custom";
 }
 
 /** Coarse device family only — never a fingerprint. */
