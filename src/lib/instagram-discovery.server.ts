@@ -549,11 +549,8 @@ export async function discoverInstagramForBusiness(options: {
       evidence: c.evidence as never,
       last_checked_at: searchedAt,
     }));
-    const { error } = await supabaseAdmin
-      .from("business_social_profiles")
-      .upsert(payload, { onConflict: "business_id,platform,username,location_id", ignoreDuplicates: false });
-    if (error) {
-      // Fall back to per-row writes when the composite upsert target is unavailable.
+    {
+      // Written row by row: a confirmed or rejected account is never overwritten.
       for (const row of payload) {
         const { data: existing } = await supabaseAdmin
           .from("business_social_profiles")
