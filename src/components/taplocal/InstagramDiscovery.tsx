@@ -223,7 +223,7 @@ export function InstagramDestinationHelper({
     <div className="space-y-2.5">
       <div className="rounded-xl border border-accent/40 bg-accent/5 p-3.5">
         <div className="flex flex-wrap items-center gap-2">
-          <StatusChip tone="ready">
+          <StatusChip tone="ok">
             {discovery.status === "verified" ? "Instagram verified ✓" : "Public Instagram found ✓"}
           </StatusChip>
           {best.scope === "brand" ? <StatusChip tone="idle">Brand-wide Instagram</StatusChip> : null}
