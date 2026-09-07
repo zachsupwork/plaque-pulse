@@ -141,6 +141,17 @@ function SetupWorkbench() {
   const biz = business.data?.ok ? business.data.business : null;
   const location = biz?.locations?.[0] ?? null;
 
+  // Runs in the background as soon as a business is chosen — setup never waits for it.
+  const discovery = useInstagramDiscovery(businessId);
+  const autoInstagram = discovery.best && discovery.best.confidence >= 80 ? discovery.best : null;
+
+  // High-confidence account fills the Instagram destination so nobody has to type it.
+  useEffect(() => {
+    if (kind !== "instagram" || !autoInstagram || destValue.trim()) return;
+    setDestValue(autoInstagram.profileUrl);
+  }, [kind, autoInstagram, destValue]);
+
+
   const inventory = useQuery({
     queryKey: ["workbench-inventory", inventoryQuery],
     enabled: Boolean(businessId) && !plaque,
