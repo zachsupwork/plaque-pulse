@@ -389,7 +389,22 @@ function SetupWorkbench() {
                   {builtUrl ? (
                     <p className="mt-1 truncate text-[12px] text-accent">Destination ready ✓ {builtUrl}</p>
                   ) : null}
+                  {kind === "instagram" && biz ? (
+                    <div className="mt-3">
+                      <InstagramDestinationHelper
+                        businessId={biz.id}
+                        discovery={discovery}
+                        value={destValue}
+                        onUse={(profileUrl) => {
+                          setDestValue(profileUrl);
+                          setConfigured(false);
+                        }}
+                        onManual={() => setDestValue("")}
+                      />
+                    </div>
+                  ) : null}
                 </>
+
               )}
             </GlassPanel>
           ) : null}
