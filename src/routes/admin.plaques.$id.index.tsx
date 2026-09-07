@@ -8,6 +8,7 @@ import { assignPlaque, setPlaqueDestination, setPlaqueStatus } from "@/lib/admin
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
 import { nfcUrl, qrUrl } from "@/lib/smartlink";
 import { NfcPlaquePanel } from "@/components/taplocal/NfcPlaquePanel";
+import { TrackingStatus } from "@/components/taplocal/TrackingStatus";
 
 export const Route = createFileRoute("/admin/plaques/$id/")({
   head: () => ({
@@ -35,7 +36,11 @@ function PlaqueRecord() {
   const statusFn = useServerFn(setPlaqueStatus);
   const destinationFn = useServerFn(setPlaqueDestination);
 
-  const q = useQuery({ queryKey: ["admin-plaque", id], queryFn: () => recordFn({ data: { plaqueId: id } }) });
+  const q = useQuery({
+    queryKey: ["admin-plaque", id],
+    queryFn: () => recordFn({ data: { plaqueId: id } }),
+    refetchInterval: 5_000,
+  });
   const businesses = useQuery({
     queryKey: ["admin-businesses", "", "all"],
     queryFn: () => businessesFn({ data: { query: "", filter: "all" as const } }),
@@ -134,6 +139,8 @@ function PlaqueRecord() {
         <Row label="NFC link" value={nfcUrl(plaque.publicSlug)} />
         <Row label="QR link" value={qrUrl(plaque.publicSlug)} />
       </GlassPanel>
+
+      <TrackingStatus plaqueId={id} />
 
       <NfcPlaquePanel plaqueId={id} publicSlug={plaque.publicSlug} />
 

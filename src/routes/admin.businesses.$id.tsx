@@ -28,6 +28,7 @@ function BusinessRecord() {
   const q = useQuery({
     queryKey: ["admin-business", id],
     queryFn: () => detailFn({ data: { businessId: id } }),
+    refetchInterval: 10_000,
   });
 
   const detail = q.data?.ok ? q.data.detail : null;

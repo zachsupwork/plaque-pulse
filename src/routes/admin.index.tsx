@@ -43,8 +43,8 @@ function AdminDashboard() {
   const overviewFn = useServerFn(networkOverview);
   const activityFn = useServerFn(networkActivity);
 
-  const overview = useQuery({ queryKey: ["admin-overview"], queryFn: () => overviewFn({ data: undefined }) });
-  const activity = useQuery({ queryKey: ["admin-activity"], queryFn: () => activityFn({ data: undefined }) });
+  const overview = useQuery({ queryKey: ["admin-overview"], queryFn: () => overviewFn({ data: undefined }), refetchInterval: 5_000 });
+  const activity = useQuery({ queryKey: ["admin-activity"], queryFn: () => activityFn({ data: undefined }), refetchInterval: 5_000 });
 
   const o = overview.data?.ok ? overview.data : null;
   const items = activity.data?.ok ? activity.data.items : [];
