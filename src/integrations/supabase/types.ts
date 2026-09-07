@@ -1557,6 +1557,8 @@ export type Database = {
         | "booking_completed"
         | "custom_conversion"
         | "manufacturing_test"
+        | "setup_open"
+        | "inactive_tap"
       initiated_by: "owner" | "copilot" | "admin" | "automation"
       intent_type:
         | "review"
@@ -1743,6 +1745,8 @@ export const Constants = {
         "booking_completed",
         "custom_conversion",
         "manufacturing_test",
+        "setup_open",
+        "inactive_tap",
       ],
       initiated_by: ["owner", "copilot", "admin", "automation"],
       intent_type: [

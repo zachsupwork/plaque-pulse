@@ -26,7 +26,7 @@ const RANGES = [7, 30, 90] as const;
 function Analytics() {
   const analyticsFn = useServerFn(networkAnalytics);
   const [days, setDays] = useState<number>(30);
-  const q = useQuery({ queryKey: ["admin-analytics", days], queryFn: () => analyticsFn({ data: { days } }) });
+  const q = useQuery({ queryKey: ["admin-analytics", days], queryFn: () => analyticsFn({ data: { days } }), refetchInterval: 10_000 });
   const a = q.data?.ok ? q.data.analytics : null;
   const peak = a ? Math.max(1, ...a.perDay.map(([, n]) => n)) : 1;
 
