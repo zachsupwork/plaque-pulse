@@ -1,4 +1,28 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
+
+type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
+
+/**
+ * Persist interaction events before redirecting. Analytics correctness beats a
+ * few milliseconds of latency, so these inserts are awaited, never fire-and-forget.
+ * A logging failure is recorded server-side but never blocks the visitor.
+ */
+async function logEvents(rows: EventInsert[]) {
+  try {
+    const { error } = await supabaseAdmin.from("events").insert(rows);
+    if (error) {
+      console.error(
+        `[TapLocal] EVENT LOGGING FAILED plaque=${rows[0]?.plaque_id ?? "unknown"} reason=${error.message}`,
+      );
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[TapLocal] EVENT LOGGING FAILED plaque=${rows[0]?.plaque_id ?? "unknown"}`, err);
+    return false;
+  }
+}
 
 /** Resolve a public plaque slug to its live destination and record the interaction. */
 export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", request: Request) {
@@ -7,26 +31,34 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
 
   const { data: plaque } = await supabaseAdmin
     .from("plaques")
-    .select("id, business_id, status")
+    .select("id, business_id, location_id, status")
     .eq("public_slug", slug)
     .maybeSingle();
 
   if (!plaque) return fallback("We couldn't find this plaque", "Check the code on the plaque and try again.");
 
   const device = deviceFamily(request);
+  const key = visitorKey(request);
+  const occurredAt = new Date().toISOString();
 
-  // Disabled by an admin: the tag itself still works, so record the tap (it also
-  // lets an admin tap-test a disabled plaque) and show the inactive page.
+  const base = {
+    business_id: plaque.business_id,
+    plaque_id: plaque.id,
+    location_id: plaque.location_id,
+    source_type: source,
+    device_family: device,
+    occurred_at: occurredAt,
+  } satisfies Partial<EventInsert>;
+
+  // Disabled by an admin: the tag itself still works, so record the tap as an
+  // operational inactive_tap (never a manufacturing test) and show the inactive page.
   if (plaque.status === "paused") {
-    void supabaseAdmin.from("events").insert([
+    await logEvents([
       {
-        business_id: plaque.business_id,
-        plaque_id: plaque.id,
-        event_type: "manufacturing_test",
-        source_type: source,
-        device_family: device,
-        occurred_at: new Date().toISOString(),
-        metadata: { inactive: true },
+        ...base,
+        event_type: isTest ? "manufacturing_test" : "inactive_tap",
+        anonymous_visitor_key: isTest ? null : key,
+        metadata: { inactive: true, ...(isTest ? { tl_test: true } : {}) },
       },
     ]);
     return fallback(
@@ -37,59 +69,44 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
 
   const { data: destination } = await supabaseAdmin
     .from("destinations")
-    .select("destination_type, url")
+    .select("id, destination_type, url")
     .eq("plaque_id", plaque.id)
     .is("effective_to", null)
     .eq("active", true)
     .maybeSingle();
 
-  // Not set up yet: the tap itself proves the tag works, so send them into setup.
+  // Not set up yet: the tap itself proves the tag works, so record it for
+  // troubleshooting (never as a customer interaction) and send them into setup.
   if (!destination?.url) {
+    await logEvents([
+      {
+        ...base,
+        event_type: isTest ? "manufacturing_test" : "setup_open",
+        metadata: { unconfigured: true, ...(isTest ? { tl_test: true } : {}) },
+      },
+    ]);
     return new Response(null, {
       status: 307,
       headers: { Location: `/setup/${slug}?source=${source}`, "Cache-Control": "no-store" },
     });
   }
 
-  const occurredAt = new Date().toISOString();
-  const key = visitorKey(request);
+  const shared = {
+    ...base,
+    intent_type: destination.destination_type,
+    destination_type: destination.destination_type,
+    destination_id: destination.id,
+  };
 
-  // Fire-and-forget: never let logging delay the redirect.
   if (isTest) {
-    void supabaseAdmin.from("events").insert([
-      {
-        business_id: plaque.business_id,
-        plaque_id: plaque.id,
-        event_type: "manufacturing_test",
-        source_type: source,
-        intent_type: destination.destination_type,
-        device_family: device,
-        occurred_at: occurredAt,
-        metadata: { tl_test: true },
-      },
-    ]);
+    // Testing/debugging only — excluded from every customer analytics counter.
+    await logEvents([{ ...shared, event_type: "manufacturing_test", metadata: { tl_test: true } }]);
   } else {
-    void supabaseAdmin.from("events").insert([
-      {
-        business_id: plaque.business_id,
-        plaque_id: plaque.id,
-        event_type: "interaction",
-        source_type: source,
-        intent_type: destination.destination_type,
-        device_family: device,
-        occurred_at: occurredAt,
-        anonymous_visitor_key: key,
-      },
-      {
-        business_id: plaque.business_id,
-        plaque_id: plaque.id,
-        event_type: "redirect_success",
-        source_type: source,
-        intent_type: destination.destination_type,
-        device_family: device,
-        occurred_at: occurredAt,
-        anonymous_visitor_key: key,
-      },
+    // Exactly one canonical customer interaction, plus operational redirect telemetry.
+    // Analytics counts only event_type = 'interaction'.
+    await logEvents([
+      { ...shared, event_type: "interaction", anonymous_visitor_key: key, metadata: {} },
+      { ...shared, event_type: "redirect_success", anonymous_visitor_key: key, metadata: { telemetry: true } },
     ]);
   }
 
