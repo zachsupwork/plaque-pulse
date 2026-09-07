@@ -35,10 +35,10 @@ export function TrackingStatus({ plaqueId }: { plaqueId: string }) {
       <SectionTitle>Tracking status</SectionTitle>
       <GlassPanel className="space-y-3 p-3.5 text-[13px]">
         <div className="flex flex-wrap gap-1.5">
-          <StatusChip tone={problems.length === 0 ? "good" : "problem"}>
+          <StatusChip tone={problems.length === 0 ? "ok" : "problem"}>
             {problems.length === 0 ? "Tracking healthy" : "Needs attention"}
           </StatusChip>
-          <StatusChip tone={t.status === "active" ? "good" : "problem"}>{t.status}</StatusChip>
+          <StatusChip tone={t.status === "active" ? "ok" : "attention"}>{t.status}</StatusChip>
         </div>
 
         {problems.map((p) => (
