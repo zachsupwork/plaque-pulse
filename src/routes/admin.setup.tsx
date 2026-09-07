@@ -144,7 +144,7 @@ function SetupWorkbench() {
   const stats = useQuery({
     queryKey: ["workbench-stats", plaque?.id, live],
     enabled: Boolean(plaque) && live,
-    refetchInterval: 20_000,
+    refetchInterval: 5_000,
     queryFn: () => statsFn({ data: { plaqueId: plaque!.id } }),
   });
 
