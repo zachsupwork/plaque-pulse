@@ -185,3 +185,72 @@ export const setPlaqueEnabled = createServerFn({ method: "POST" })
 
     return { ok: true as const, error: null };
   });
+
+/** Tracking diagnostics for one plaque — proves taps are being persisted. */
+export const getPlaqueTracking = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ plaqueId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const caller = await gate();
+    if (!caller.ok) return { ok: false as const, error: caller.error, tracking: null };
+
+    const client = await db();
+    const { data: plaque } = await client
+      .from("plaques")
+      .select("id, plaque_code, public_slug, status, business_id, location_id")
+      .eq("id", data.plaqueId)
+      .maybeSingle();
+    if (!plaque) return { ok: false as const, error: "not_found" as const, tracking: null };
+
+    const [{ data: destination }, { data: business }, { data: events }] = await Promise.all([
+      client
+        .from("destinations")
+        .select("destination_type, url")
+        .eq("plaque_id", plaque.id)
+        .is("effective_to", null)
+        .eq("active", true)
+        .maybeSingle(),
+      plaque.business_id
+        ? client.from("businesses").select("id, name").eq("id", plaque.business_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      client
+        .from("events")
+        .select("event_type, source_type, occurred_at")
+        .eq("plaque_id", plaque.id)
+        .order("occurred_at", { ascending: false })
+        .limit(2000),
+    ]);
+
+    const rows = events ?? [];
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayIso = startOfToday.toISOString();
+    const interactions = rows.filter((e) => e.event_type === "interaction");
+    const today = interactions.filter((e) => e.occurred_at >= todayIso);
+    const lastOf = (predicate: (e: (typeof rows)[number]) => boolean) =>
+      rows.find(predicate)?.occurred_at ?? null;
+
+    return {
+      ok: true as const,
+      error: null,
+      tracking: {
+        plaqueCode: plaque.plaque_code,
+        publicSlug: plaque.public_slug,
+        status: plaque.status,
+        business: business?.name ?? null,
+        businessAssigned: Boolean(plaque.business_id),
+        destinationType: destination?.destination_type ?? null,
+        destinationUrl: destination?.url ?? null,
+        lastNfcTap: lastOf((e) => e.event_type === "interaction" && e.source_type === "nfc"),
+        lastQrScan: lastOf((e) => e.event_type === "interaction" && e.source_type === "qr"),
+        lastEvent: rows[0] ? { type: rows[0].event_type, at: rows[0].occurred_at } : null,
+        eventsToday: rows.filter((e) => e.occurred_at >= todayIso).length,
+        interactionsToday: today.length,
+        nfcToday: today.filter((e) => e.source_type === "nfc").length,
+        qrToday: today.filter((e) => e.source_type === "qr").length,
+        interactionsAllTime: interactions.length,
+        testEvents: rows.filter((e) => e.event_type === "manufacturing_test").length,
+        setupOpens: rows.filter((e) => e.event_type === "setup_open").length,
+        inactiveTaps: rows.filter((e) => e.event_type === "inactive_tap").length,
+      },
+    };
+  });
