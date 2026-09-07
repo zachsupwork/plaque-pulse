@@ -118,6 +118,75 @@ export type Database = {
           },
         ]
       }
+      business_social_profiles: {
+        Row: {
+          business_id: string
+          confidence: number
+          discovered_at: string
+          evidence: Json
+          id: string
+          last_checked_at: string
+          location_id: string | null
+          platform: string
+          profile_url: string
+          scope: string
+          source: string
+          username: string
+          verification_status: string
+          verified_at: string | null
+          verified_by_user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          confidence?: number
+          discovered_at?: string
+          evidence?: Json
+          id?: string
+          last_checked_at?: string
+          location_id?: string | null
+          platform?: string
+          profile_url: string
+          scope?: string
+          source?: string
+          username: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by_user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          confidence?: number
+          discovered_at?: string
+          evidence?: Json
+          id?: string
+          last_checked_at?: string
+          location_id?: string | null
+          platform?: string
+          profile_url?: string
+          scope?: string
+          source?: string
+          username?: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_social_profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_social_profiles_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           created_at: string

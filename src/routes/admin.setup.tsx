@@ -4,6 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, Stat, StatusChip } from "@/components/taplocal/Field";
 import { BusinessSearch } from "@/components/taplocal/BusinessSearch";
+import {
+  BusinessLinksPanel,
+  InstagramDestinationHelper,
+  useInstagramDiscovery,
+} from "@/components/taplocal/InstagramDiscovery";
+
 import { NfcOnboarding, NfcStatusChip } from "@/components/taplocal/NfcReady";
 import { CopyButton, ProgramPanel, QrImage, type ProgrammablePlaque } from "@/components/taplocal/NfcKit";
 import { adminCreateBusinessFromPlace } from "@/lib/admin-discovery.functions";
@@ -134,6 +140,17 @@ function SetupWorkbench() {
   });
   const biz = business.data?.ok ? business.data.business : null;
   const location = biz?.locations?.[0] ?? null;
+
+  // Runs in the background as soon as a business is chosen — setup never waits for it.
+  const discovery = useInstagramDiscovery(businessId);
+  const autoInstagram = discovery.best && discovery.best.confidence >= 80 ? discovery.best : null;
+
+  // High-confidence account fills the Instagram destination so nobody has to type it.
+  useEffect(() => {
+    if (kind !== "instagram" || !autoInstagram || destValue.trim()) return;
+    setDestValue(autoInstagram.profileUrl);
+  }, [kind, autoInstagram, destValue]);
+
 
   const inventory = useQuery({
     queryKey: ["workbench-inventory", inventoryQuery],
@@ -295,7 +312,18 @@ function SetupWorkbench() {
             ) : null}
           </GlassPanel>
         )}
+        {biz ? (
+          <div className="mt-2.5">
+            <BusinessLinksPanel
+              businessId={biz.id}
+              website={location?.website_url ?? null}
+              googleConnected={Boolean(location?.google_place_id)}
+              discovery={discovery}
+            />
+          </div>
+        ) : null}
       </Section>
+
 
       {/* 2 — Destination */}
       {biz ? (
@@ -361,7 +389,22 @@ function SetupWorkbench() {
                   {builtUrl ? (
                     <p className="mt-1 truncate text-[12px] text-accent">Destination ready ✓ {builtUrl}</p>
                   ) : null}
+                  {kind === "instagram" && biz ? (
+                    <div className="mt-3">
+                      <InstagramDestinationHelper
+                        businessId={biz.id}
+                        discovery={discovery}
+                        value={destValue}
+                        onUse={(profileUrl) => {
+                          setDestValue(profileUrl);
+                          setConfigured(false);
+                        }}
+                        onManual={() => setDestValue("")}
+                      />
+                    </div>
+                  ) : null}
                 </>
+
               )}
             </GlassPanel>
           ) : null}
