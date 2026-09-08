@@ -88,7 +88,13 @@ function PlaqueRecord() {
         },
       }),
     onSuccess: (res) => {
-      setNote(res.ok ? "Plaque assigned." : "That didn't save — check you're still signed in as admin.");
+      setNote(
+        res.ok
+          ? "Plaque assigned."
+          : res.error === "use_reassign"
+            ? "This plaque already belongs to another business — use Reassign plaque above."
+            : "That didn't save — check you're still signed in as admin.",
+      );
       refresh();
     },
   });
