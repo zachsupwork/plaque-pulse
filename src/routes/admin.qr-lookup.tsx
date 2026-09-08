@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { PlaqueAdminActions } from "@/components/taplocal/PlaqueAdminActions";
 import { GlassPanel, StatusChip } from "@/components/taplocal/Field";
 import { CopyButton, QrSheet } from "@/components/taplocal/LinkTools";
 import { DESTINATIONS, buildDestinationUrl, destinationLabel, type DestinationKind } from "@/lib/destinations";
@@ -198,6 +199,10 @@ function MatchCard({ match, onRefresh }: { match: QrLookupMatch; onRefresh: () =
             )
           }
         />
+      </div>
+
+      <div className="mt-4">
+        <PlaqueAdminActions plaqueId={match.plaqueId} variant="compact" onChanged={onRefresh} />
       </div>
 
       <Link
