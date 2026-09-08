@@ -14,6 +14,8 @@ import {
 } from "@/components/taplocal/NfcKit";
 import { getPlaqueProgramming } from "@/lib/nfc.functions";
 import { SmartlinkHostCheck } from "@/components/taplocal/SmartlinkInfra";
+import { PlaqueAdminActions } from "@/components/taplocal/PlaqueAdminActions";
+
 import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
 
 export const Route = createFileRoute("/admin/plaques/$id/program")({
