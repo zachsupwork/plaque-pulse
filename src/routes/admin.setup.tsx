@@ -148,7 +148,24 @@ function SetupWorkbench() {
     queryFn: () => businessFn({ data: { businessId: businessId! } }),
   });
   const biz = business.data?.ok ? business.data.business : null;
-  const location = biz?.locations?.[0] ?? null;
+  const location =
+    (search.locationId ? biz?.locations?.find((l) => l.id === search.locationId) : null) ?? biz?.locations?.[0] ?? null;
+
+  // A plaque handed over from provisioning or a place page starts already chosen.
+  const plaqueLookupFn = useServerFn(workbenchPlaque);
+  const preselected = useQuery({
+    queryKey: ["workbench-plaque", search.plaqueId],
+    enabled: Boolean(search.plaqueId) && !plaque,
+    queryFn: () => plaqueLookupFn({ data: { plaqueId: search.plaqueId! } }),
+  });
+  useEffect(() => {
+    const p = preselected.data?.ok ? preselected.data.plaque : null;
+    if (!p || plaque) return;
+    setPlaque(p as ProgrammablePlaque);
+    setPreprogrammed(p.writeStatus === "programmed");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preselected.data]);
+
 
   // Runs in the background as soon as a business is chosen — setup never waits for it.
   const discovery = useInstagramDiscovery(businessId);
