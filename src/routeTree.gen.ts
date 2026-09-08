@@ -19,6 +19,7 @@ import { Route as ActivateIndexRouteImport } from './routes/activate.index'
 import { Route as ActivateTokenRouteImport } from './routes/activate.$token'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminAreaBuilderRouteImport } from './routes/admin.area-builder'
 import { Route as AdminAssignRouteImport } from './routes/admin.assign'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminMoreRouteImport } from './routes/admin.more'
@@ -112,6 +113,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAreaBuilderRoute = AdminAreaBuilderRouteImport.update({
+  id: '/area-builder',
+  path: '/area-builder',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAssignRoute = AdminAssignRouteImport.update({
@@ -344,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/smartplaques': typeof SmartplaquesRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/area-builder': typeof AdminAreaBuilderRoute
   '/admin/assign': typeof AdminAssignRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/more': typeof AdminMoreRoute
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/smartplaques': typeof SmartplaquesRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/area-builder': typeof AdminAreaBuilderRoute
   '/admin/assign': typeof AdminAssignRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/more': typeof AdminMoreRoute
@@ -455,6 +463,7 @@ export interface FileRoutesById {
   '/smartplaques': typeof SmartplaquesRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/area-builder': typeof AdminAreaBuilderRoute
   '/admin/assign': typeof AdminAssignRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/more': typeof AdminMoreRoute
@@ -513,6 +522,7 @@ export interface FileRouteTypes {
     | '/smartplaques'
     | '/activate/$token'
     | '/admin/analytics'
+    | '/admin/area-builder'
     | '/admin/assign'
     | '/admin/customers'
     | '/admin/more'
@@ -567,6 +577,7 @@ export interface FileRouteTypes {
     | '/smartplaques'
     | '/activate/$token'
     | '/admin/analytics'
+    | '/admin/area-builder'
     | '/admin/assign'
     | '/admin/customers'
     | '/admin/more'
@@ -623,6 +634,7 @@ export interface FileRouteTypes {
     | '/smartplaques'
     | '/activate/$token'
     | '/admin/analytics'
+    | '/admin/area-builder'
     | '/admin/assign'
     | '/admin/customers'
     | '/admin/more'
@@ -761,6 +773,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/admin/analytics'
       preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/area-builder': {
+      id: '/admin/area-builder'
+      path: '/area-builder'
+      fullPath: '/admin/area-builder'
+      preLoaderRoute: typeof AdminAreaBuilderRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/assign': {
@@ -1076,6 +1095,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAreaBuilderRoute: typeof AdminAreaBuilderRoute
   AdminAssignRoute: typeof AdminAssignRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminMoreRoute: typeof AdminMoreRoute
@@ -1104,6 +1124,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAreaBuilderRoute: AdminAreaBuilderRoute,
   AdminAssignRoute: AdminAssignRoute,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminMoreRoute: AdminMoreRoute,
