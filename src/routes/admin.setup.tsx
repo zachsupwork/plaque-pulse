@@ -35,10 +35,15 @@ import {
 import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
 
 export const Route = createFileRoute("/admin/setup")({
-  validateSearch: (search: Record<string, unknown>): { businessId?: string; placeId?: string } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { businessId?: string; placeId?: string; plaqueId?: string; locationId?: string } => ({
     ...(typeof search["businessId"] === "string" ? { businessId: search["businessId"] as string } : {}),
     ...(typeof search["placeId"] === "string" ? { placeId: search["placeId"] as string } : {}),
+    ...(typeof search["plaqueId"] === "string" ? { plaqueId: search["plaqueId"] as string } : {}),
+    ...(typeof search["locationId"] === "string" ? { locationId: search["locationId"] as string } : {}),
   }),
+
 
 
   head: () => ({
