@@ -52,6 +52,10 @@ function AdminDashboard() {
   const items = activity.data?.ok ? activity.data.items : [];
 
   const countsFn = useServerFn(inquiryCounts);
+  const placesFn = useServerFn(placesOverview);
+  const placesQuery = useQuery({ queryKey: ["places-overview"], queryFn: () => placesFn({ data: undefined }), refetchInterval: 20_000 });
+  const po = placesQuery.data?.ok ? placesQuery.data : null;
+
   const counts = useQuery({ queryKey: ["admin-inquiry-counts"], queryFn: () => countsFn({ data: undefined }) });
   const newInquiries = counts.data?.ok ? (counts.data.counts["new"] ?? 0) : 0;
   const followUps = counts.data?.ok
