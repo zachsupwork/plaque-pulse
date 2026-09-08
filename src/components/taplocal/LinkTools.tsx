@@ -90,17 +90,26 @@ export function QrSheet({
     if (!png) return;
     const w = window.open("", "_blank", "width=720,height=900");
     if (!w) return;
+    // Every printed sheet carries human-readable identification, so an unscannable
+    // code can still be found by typing the plaque code or slug into admin search.
+    const idBlock = (codeLines ?? [])
+      .map((line) => `<p style="font-size:15px;font-weight:700;letter-spacing:.08em;margin:2px 0">${line}</p>`)
+      .join("");
     w.document.write(
       `<html><head><title>${title}</title></head><body style="font-family:system-ui;text-align:center;padding:40px">` +
         `<img src="${png}" style="width:420px;height:420px"/>` +
         `<h1 style="font-size:20px;margin:18px 0 4px">${title}</h1>` +
         `<p style="font-size:13px;color:#555">${subtitle ?? ""}</p>` +
+        idBlock +
         `<p style="font-size:11px;color:#888;word-break:break-all">${url}</p>` +
         `</body></html>`,
     );
     w.document.close();
     w.focus();
-    setTimeout(() => w.print(), 350);
+    setTimeout(() => {
+      w.print();
+      onPrinted?.();
+    }, 350);
   }
 
   return (
