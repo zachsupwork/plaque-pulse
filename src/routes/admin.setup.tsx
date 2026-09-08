@@ -34,8 +34,11 @@ import {
 import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
 
 export const Route = createFileRoute("/admin/setup")({
-  validateSearch: (search: Record<string, unknown>): { businessId?: string } =>
-    typeof search["businessId"] === "string" ? { businessId: search["businessId"] as string } : {},
+  validateSearch: (search: Record<string, unknown>): { businessId?: string; placeId?: string } => ({
+    ...(typeof search["businessId"] === "string" ? { businessId: search["businessId"] as string } : {}),
+    ...(typeof search["placeId"] === "string" ? { placeId: search["placeId"] as string } : {}),
+  }),
+
 
   head: () => ({
     meta: [
@@ -639,6 +642,16 @@ function SetupWorkbench() {
               {biz?.name} · {plaque.plaque_code} · {kind ? destinationLabel(kind) : ""} · {chosenPlacement}
             </p>
           </GlassPanel>
+          {search.placeId ? (
+            <Link
+              to="/admin/places/$placeId"
+              params={{ placeId: search.placeId }}
+              className="mt-2.5 flex min-h-[52px] items-center justify-center rounded-2xl bg-primary text-center text-[13px] font-bold text-primary-foreground"
+            >
+              ← Back to this place
+            </Link>
+          ) : null}
+
 
           <h2 className="mt-5 mb-2 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
             Live monitoring

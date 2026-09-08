@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taplocal/Field";
 import { networkActivity, networkOverview } from "@/lib/admin-data.functions";
 import { inquiryCounts } from "@/lib/inquiries.functions";
+import { placesOverview } from "@/lib/places.functions";
+
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -30,6 +32,7 @@ function ago(iso: string) {
 }
 
 const QUICK_ACTIONS = [
+  { to: "/admin/places", label: "Places", tone: "plain" as const },
   { to: "/admin/provisioning", label: "+ Create plaques", tone: "plain" as const },
   { to: "/admin/nfc/write", label: "Program NFC", tone: "plain" as const },
   { to: "/admin/nfc/verify", label: "Verify plaque", tone: "plain" as const },
@@ -37,6 +40,7 @@ const QUICK_ACTIONS = [
   { to: "/admin/inquiries", label: "Inquiries", tone: "plain" as const },
   { to: "/demo", label: "Sales mode", tone: "outline" as const },
 ];
+
 
 
 function AdminDashboard() {
@@ -50,6 +54,10 @@ function AdminDashboard() {
   const items = activity.data?.ok ? activity.data.items : [];
 
   const countsFn = useServerFn(inquiryCounts);
+  const placesFn = useServerFn(placesOverview);
+  const placesQuery = useQuery({ queryKey: ["places-overview"], queryFn: () => placesFn({ data: undefined }), refetchInterval: 20_000 });
+  const po = placesQuery.data?.ok ? placesQuery.data : null;
+
   const counts = useQuery({ queryKey: ["admin-inquiry-counts"], queryFn: () => countsFn({ data: undefined }) });
   const newInquiries = counts.data?.ok ? (counts.data.counts["new"] ?? 0) : 0;
   const followUps = counts.data?.ok
@@ -83,6 +91,26 @@ function AdminDashboard() {
           Review
         </span>
       </Link>
+
+      <div className="grid grid-cols-2 gap-2.5">
+        <Link to="/admin/places" className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)]">
+          <p className="text-[12px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">Active places</p>
+          <p className="mt-1 font-display text-[22px] font-bold tracking-tight">{po ? po.activePlaces : "—"}</p>
+          <p className="text-[11px] text-muted-foreground">{po ? `${po.activePlaques} plaques live` : ""}</p>
+        </Link>
+        <Link
+          to="/admin/places"
+          search={{}}
+          className={`rounded-2xl border p-4 shadow-[var(--shadow-soft)] ${
+            po && po.needsAttention > 0 ? "border-amber-500/45 bg-amber-500/[0.06]" : "border-border bg-card"
+          }`}
+        >
+          <p className="text-[12px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">Needs attention</p>
+          <p className="mt-1 font-display text-[22px] font-bold tracking-tight">{po ? po.needsAttention : "—"}</p>
+          <p className="text-[11px] text-muted-foreground">plaques to finish or fix</p>
+        </Link>
+      </div>
+
 
       <div>
         <SectionTitle>Today</SectionTitle>

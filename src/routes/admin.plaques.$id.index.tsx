@@ -9,6 +9,25 @@ import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
 import { nfcUrl, qrUrl } from "@/lib/smartlink";
 import { NfcPlaquePanel } from "@/components/taplocal/NfcPlaquePanel";
 import { TrackingStatus } from "@/components/taplocal/TrackingStatus";
+import { placeForPlaque } from "@/lib/places.functions";
+
+/** Jump from the hardware record to the place this plaque is installed in. */
+function PlaceLink({ plaqueId }: { plaqueId: string }) {
+  const fn = useServerFn(placeForPlaque);
+  const q = useQuery({ queryKey: ["place-for-plaque", plaqueId], queryFn: () => fn({ data: { plaqueId } }) });
+  const place = q.data?.ok ? q.data.place : null;
+  if (!place) return null;
+  return (
+    <Link
+      to="/admin/places/$placeId"
+      params={{ placeId: place.key }}
+      className="truncate text-[12px] font-semibold text-primary"
+    >
+      Place: {place.locationName ?? place.businessName} →
+    </Link>
+  );
+}
+
 
 export const Route = createFileRoute("/admin/plaques/$id/")({
   head: () => ({
@@ -101,9 +120,13 @@ function PlaqueRecord() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/admin/plaques" className="text-[12px] font-semibold text-muted-foreground">
-          ← Plaques
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/admin/plaques" className="text-[12px] font-semibold text-muted-foreground">
+            ← Plaques
+          </Link>
+          <PlaceLink plaqueId={plaque.id} />
+        </div>
+
         <h1 className="mt-2 font-display text-[24px] font-bold tracking-tight">
           {plaque.plaqueName ?? plaque.plaqueCode}
         </h1>

@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS plaques_plaque_code_idx ON public.plaques (plaque_code);
+CREATE INDEX IF NOT EXISTS plaques_public_slug_idx ON public.plaques (public_slug);
+CREATE INDEX IF NOT EXISTS plaques_batch_idx ON public.plaques (batch_id);
+CREATE INDEX IF NOT EXISTS plaques_status_idx ON public.plaques (status);
+CREATE INDEX IF NOT EXISTS plaques_business_idx ON public.plaques (business_id);
+CREATE INDEX IF NOT EXISTS plaques_location_idx ON public.plaques (location_id);
+CREATE INDEX IF NOT EXISTS locations_google_place_idx ON public.locations (google_place_id);
+CREATE INDEX IF NOT EXISTS locations_business_idx ON public.locations (business_id);
+CREATE INDEX IF NOT EXISTS events_plaque_occurred_idx ON public.events (plaque_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS destinations_plaque_active_idx ON public.destinations (plaque_id, effective_to);
