@@ -189,6 +189,11 @@ export const assignPlaque = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!plaque) return { ok: false as const, error: "not_found" };
 
+    // A cross-business move must go through reassignPlaque, which closes the old
+    // destination and placement. Never carry the old business's location forward.
+    const crossBusiness = Boolean(plaque.business_id && plaque.business_id !== data.businessId);
+    if (crossBusiness) return { ok: false as const, error: "use_reassign" };
+
     await client
       .from("plaques")
       .update({

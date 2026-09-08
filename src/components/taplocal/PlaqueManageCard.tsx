@@ -229,6 +229,14 @@ export function PlaqueManageCard({
             </button>
           </div>
 
+          <Link
+            to="/admin/reassign/$plaqueId"
+            params={{ plaqueId: plaque.id }}
+            className="block rounded-lg border border-primary/50 bg-primary/10 py-2 text-center text-[11px] font-bold text-primary"
+          >
+            Reassign plaque
+          </Link>
+
           {editing === "destination" ? (
             <div className="rounded-xl border border-border p-2.5">
               <p className="text-[11px] text-muted-foreground">
