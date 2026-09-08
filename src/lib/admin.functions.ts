@@ -65,7 +65,11 @@ const provisionSchema = z.object({
   style: z.string().min(1).max(60),
   baseType: z.string().min(1).max(60),
   batchId: z.string().max(40).nullish(),
+  /** Optional place context: create the plaques already attached to this business. */
+  businessId: z.string().uuid().nullish(),
+  locationId: z.string().uuid().nullish(),
 });
+
 
 /**
  * Create blank plaques. Admin-only, verified through the caller's own session.
