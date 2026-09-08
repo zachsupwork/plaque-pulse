@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -6,7 +6,12 @@ import { StatusChip } from "@/components/taplocal/Field";
 import { BusinessSearch } from "@/components/taplocal/BusinessSearch";
 import { CopyButton, QrSheet } from "@/components/taplocal/LinkTools";
 import { adminCreateBusinessFromPlace } from "@/lib/admin-discovery.functions";
-import { assignPlaqueToBusiness, plaqueAdminSummary, type PlaqueAdminSummary } from "@/lib/plaque-manage.functions";
+import {
+  assignPlaqueToBusiness,
+  plaqueAdminSummary,
+  updatePlaqueBasics,
+  type PlaqueAdminSummary,
+} from "@/lib/plaque-manage.functions";
 import { changePlaqueDestination, changePlaquePlacement } from "@/lib/places.functions";
 import { recordQrPrint } from "@/lib/qr-lookup.functions";
 import {
@@ -557,7 +562,7 @@ function MoreSheet({
   onClose: () => void;
   onPick: (sheet: Sheet) => void;
 }) {
-  const updateFn = useServerFn(plaqueMoreUpdate);
+  const updateFn = useServerFn(updatePlaqueBasics);
   const [note, setNote] = useState<string | null>(null);
 
   const setStatus = useMutation({
@@ -568,11 +573,23 @@ function MoreSheet({
   return (
     <Sheet title="Manage plaque" subtitle={summary.plaqueCode} onClose={onClose}>
       <div className="space-y-1.5">
-        <LinkItem to="/admin/plaques/$id" params={{ id: summary.plaqueId }} label="Open plaque record" />
-        <LinkItem to="/admin/plaques/$id/program" params={{ id: summary.plaqueId }} label="Programming & verification" />
-        {summary.placeKey ? <LinkItem to="/admin/places/$placeId" params={{ placeId: summary.placeKey }} label="Open place" /> : null}
-        <LinkItem to="/admin/reassign/$plaqueId" params={{ plaqueId: summary.plaqueId }} label="Assign / reassign business" />
-        <LinkItem to="/admin/analytics" label="Analytics" />
+        <Link to="/admin/plaques/$id" params={{ id: summary.plaqueId }} className={ITEM}>
+          Open plaque record
+        </Link>
+        <Link to="/admin/plaques/$id/program" params={{ id: summary.plaqueId }} className={ITEM}>
+          Programming &amp; verification
+        </Link>
+        {summary.placeKey ? (
+          <Link to="/admin/places/$placeId" params={{ placeId: summary.placeKey }} className={ITEM}>
+            Open place
+          </Link>
+        ) : null}
+        <Link to="/admin/reassign/$plaqueId" params={{ plaqueId: summary.plaqueId }} className={ITEM}>
+          Assign / reassign business
+        </Link>
+        <Link to="/admin/analytics" className={ITEM}>
+          Analytics
+        </Link>
         <button
           type="button"
           onClick={() => onPick("destination")}
@@ -622,27 +639,4 @@ function MoreSheet({
   );
 }
 
-function LinkItem({ to, params, label }: { to: string; params?: Record<string, string>; label: string }) {
-  return (
-    <Link
-      to={to as never}
-      params={params as never}
-      className="block rounded-xl border border-border px-3.5 py-3 text-[13px] font-bold"
-    >
-      {label}
-    </Link>
-  );
-}
-
-// Imported last so the sheet code above reads top-down.
-import { updatePlaqueBasics as plaqueMoreUpdate } from "@/lib/plaque-manage.functions";
-
-/** Keeps the sticky bar in sync when a parent refetches after its own edits. */
-export function usePlaqueSummaryRefresh(plaqueId: string) {
-  const qc = useQueryClient();
-  useEffect(() => {
-    return () => {
-      void qc.invalidateQueries({ queryKey: ["plaque-admin-summary", plaqueId] });
-    };
-  }, [qc, plaqueId]);
-}
+const ITEM = "block w-full rounded-xl border border-border px-3.5 py-3 text-left text-[13px] font-bold";
