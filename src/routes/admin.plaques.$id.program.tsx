@@ -63,7 +63,10 @@ function ProgramPage() {
         </Link>
       </div>
 
+      <PlaqueAdminActions plaqueId={id} onChanged={() => void record.refetch()} />
+
       <GlassPanel className="p-5">
+
         <Label>Programming record</Label>
         <div className="mt-2">
           <Row label="Status" value={<Chip tone="idle">{plaque.status}</Chip>} />
