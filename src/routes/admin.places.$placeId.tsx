@@ -105,11 +105,25 @@ function PlaceDetail() {
 
         <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <Link
-            to="/admin/setup"
-            search={{ businessId: place.businessId, placeId: place.key }}
+            to="/admin/provisioning"
+            search={{ businessId: place.businessId, ...(place.locationId ? { locationId: place.locationId } : {}) }}
             className="rounded-xl bg-primary py-2.5 text-center text-[12px] font-bold text-primary-foreground"
           >
-            Add plaque here
+            + Add new plaque
+          </Link>
+          <Link
+            to="/admin/assign"
+            search={{ businessId: place.businessId, ...(place.locationId ? { locationId: place.locationId } : {}) }}
+            className="rounded-xl border border-border py-2.5 text-center text-[12px] font-bold"
+          >
+            Assign existing
+          </Link>
+          <Link
+            to="/admin/setup"
+            search={{ businessId: place.businessId, placeId: place.key, ...(place.locationId ? { locationId: place.locationId } : {}) }}
+            className="rounded-xl border border-border py-2.5 text-center text-[12px] font-bold"
+          >
+            Set up plaque
           </Link>
           <Link
             to="/admin/businesses/$id"
@@ -118,6 +132,7 @@ function PlaceDetail() {
           >
             Business record
           </Link>
+
           {place.googleMapsUri ? (
             <a href={place.googleMapsUri} target="_blank" rel="noreferrer" className="rounded-xl border border-border py-2.5 text-center text-[12px] font-bold">
               Google listing
