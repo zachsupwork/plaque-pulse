@@ -106,7 +106,7 @@ function PlaceDetail() {
         <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <Link
             to="/admin/setup"
-            search={{ businessId: place.businessId }}
+            search={{ businessId: place.businessId, placeId: place.key }}
             className="rounded-xl bg-primary py-2.5 text-center text-[12px] font-bold text-primary-foreground"
           >
             Add plaque here
@@ -215,7 +215,7 @@ function PlaceDetail() {
               <p className="text-[13px] text-muted-foreground">No plaques here yet.</p>
               <Link
                 to="/admin/setup"
-                search={{ businessId: place.businessId }}
+                search={{ businessId: place.businessId, placeId: place.key }}
                 className="mt-3 inline-block rounded-xl bg-primary px-4 py-2.5 text-[13px] font-bold text-primary-foreground"
               >
                 Set one up

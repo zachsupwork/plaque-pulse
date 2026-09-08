@@ -207,7 +207,7 @@ function PlacesCentre() {
               </Link>
               <Link
                 to="/admin/setup"
-                search={{ businessId: p.businessId }}
+                search={{ businessId: p.businessId, placeId: p.key }}
                 className="rounded-lg border border-border py-2 text-center text-[12px] font-bold"
               >
                 Add plaque
