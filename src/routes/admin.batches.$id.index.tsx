@@ -23,7 +23,7 @@ import {
   type ExportRow,
 } from "@/lib/area-export";
 
-export const Route = createFileRoute("/admin/batches/$id")({
+export const Route = createFileRoute("/admin/batches/$id/")({
   head: () => ({
     meta: [
       { title: "Batch — TapLocal Admin" },

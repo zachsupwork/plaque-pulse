@@ -38,6 +38,8 @@ import { Route as OfferingsSlugRouteImport } from './routes/offerings.$slug'
 import { Route as ProgramTokenRouteImport } from './routes/program.$token'
 import { Route as QSlugRouteImport } from './routes/q.$slug'
 import { Route as SetupSlugRouteImport } from './routes/setup.$slug'
+import { Route as AdminBatchesIndexRouteImport } from './routes/admin.batches.index'
+import { Route as AdminBatchesIdRouteImport } from './routes/admin.batches.$id'
 import { Route as AdminBusinessesIndexRouteImport } from './routes/admin.businesses.index'
 import { Route as AdminBusinessesIdRouteImport } from './routes/admin.businesses.$id'
 import { Route as AdminInquiriesIndexRouteImport } from './routes/admin.inquiries.index'
@@ -210,6 +212,16 @@ const SetupSlugRoute = SetupSlugRouteImport.update({
   path: '/setup/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBatchesIndexRoute = AdminBatchesIndexRouteImport.update({
+  id: '/batches/',
+  path: '/batches/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBatchesIdRoute = AdminBatchesIdRouteImport.update({
+  id: '/batches/$id',
+  path: '/batches/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBusinessesIndexRoute = AdminBusinessesIndexRouteImport.update({
   id: '/businesses/',
   path: '/businesses/',
@@ -371,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
+  '/admin/batches/$id': typeof AdminBatchesIdRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
@@ -385,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
   '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
+  '/admin/batches/': typeof AdminBatchesIndexRoute
   '/admin/businesses/': typeof AdminBusinessesIndexRoute
   '/admin/inquiries/': typeof AdminInquiriesIndexRoute
   '/admin/nfc/': typeof AdminNfcIndexRoute
@@ -426,6 +440,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/offerings': typeof OfferingsIndexRoute
+  '/admin/batches/$id': typeof AdminBatchesIdRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
@@ -440,6 +455,7 @@ export interface FileRoutesByTo {
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
   '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
+  '/admin/batches': typeof AdminBatchesIndexRoute
   '/admin/businesses': typeof AdminBusinessesIndexRoute
   '/admin/inquiries': typeof AdminInquiriesIndexRoute
   '/admin/nfc': typeof AdminNfcIndexRoute
@@ -484,6 +500,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
+  '/admin/batches/$id': typeof AdminBatchesIdRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
@@ -498,6 +515,7 @@ export interface FileRoutesById {
   '/app/plaques/$id': typeof AppPlaquesIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
   '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
+  '/admin/batches/': typeof AdminBatchesIndexRoute
   '/admin/businesses/': typeof AdminBusinessesIndexRoute
   '/admin/inquiries/': typeof AdminInquiriesIndexRoute
   '/admin/nfc/': typeof AdminNfcIndexRoute
@@ -543,6 +561,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/offerings/'
+    | '/admin/batches/$id'
     | '/admin/businesses/$id'
     | '/admin/inquiries/$id'
     | '/admin/nfc/batch'
@@ -557,6 +576,7 @@ export interface FileRouteTypes {
     | '/app/plaques/$id'
     | '/nfc/program/$token'
     | '/nfc/return/$sessionId'
+    | '/admin/batches/'
     | '/admin/businesses/'
     | '/admin/inquiries/'
     | '/admin/nfc/'
@@ -598,6 +618,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/offerings'
+    | '/admin/batches/$id'
     | '/admin/businesses/$id'
     | '/admin/inquiries/$id'
     | '/admin/nfc/batch'
@@ -612,6 +633,7 @@ export interface FileRouteTypes {
     | '/app/plaques/$id'
     | '/nfc/program/$token'
     | '/nfc/return/$sessionId'
+    | '/admin/batches'
     | '/admin/businesses'
     | '/admin/inquiries'
     | '/admin/nfc'
@@ -655,6 +677,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/offerings/'
+    | '/admin/batches/$id'
     | '/admin/businesses/$id'
     | '/admin/inquiries/$id'
     | '/admin/nfc/batch'
@@ -669,6 +692,7 @@ export interface FileRouteTypes {
     | '/app/plaques/$id'
     | '/nfc/program/$token'
     | '/nfc/return/$sessionId'
+    | '/admin/batches/'
     | '/admin/businesses/'
     | '/admin/inquiries/'
     | '/admin/nfc/'
@@ -908,6 +932,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/batches/': {
+      id: '/admin/batches/'
+      path: '/batches'
+      fullPath: '/admin/batches/'
+      preLoaderRoute: typeof AdminBatchesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/batches/$id': {
+      id: '/admin/batches/$id'
+      path: '/batches/$id'
+      fullPath: '/admin/batches/$id'
+      preLoaderRoute: typeof AdminBatchesIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/businesses/': {
       id: '/admin/businesses/'
       path: '/businesses'
@@ -1105,6 +1143,7 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSetupRoute: typeof AdminSetupRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminBatchesIdRoute: typeof AdminBatchesIdRoute
   AdminBusinessesIdRoute: typeof AdminBusinessesIdRoute
   AdminInquiriesIdRoute: typeof AdminInquiriesIdRoute
   AdminNfcBatchRoute: typeof AdminNfcBatchRoute
@@ -1113,6 +1152,7 @@ interface AdminRouteChildren {
   AdminNfcWriteRoute: typeof AdminNfcWriteRoute
   AdminPlacesPlaceIdRoute: typeof AdminPlacesPlaceIdRoute
   AdminReassignPlaqueIdRoute: typeof AdminReassignPlaqueIdRoute
+  AdminBatchesIndexRoute: typeof AdminBatchesIndexRoute
   AdminBusinessesIndexRoute: typeof AdminBusinessesIndexRoute
   AdminInquiriesIndexRoute: typeof AdminInquiriesIndexRoute
   AdminNfcIndexRoute: typeof AdminNfcIndexRoute
@@ -1134,6 +1174,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSetupRoute: AdminSetupRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminBatchesIdRoute: AdminBatchesIdRoute,
   AdminBusinessesIdRoute: AdminBusinessesIdRoute,
   AdminInquiriesIdRoute: AdminInquiriesIdRoute,
   AdminNfcBatchRoute: AdminNfcBatchRoute,
@@ -1142,6 +1183,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminNfcWriteRoute: AdminNfcWriteRoute,
   AdminPlacesPlaceIdRoute: AdminPlacesPlaceIdRoute,
   AdminReassignPlaqueIdRoute: AdminReassignPlaqueIdRoute,
+  AdminBatchesIndexRoute: AdminBatchesIndexRoute,
   AdminBusinessesIndexRoute: AdminBusinessesIndexRoute,
   AdminInquiriesIndexRoute: AdminInquiriesIndexRoute,
   AdminNfcIndexRoute: AdminNfcIndexRoute,
