@@ -17,6 +17,8 @@ const PRIMARY = [
 ] as const;
 
 const SECONDARY = [
+  { to: "/admin/area-builder", label: "Area Builder" },
+  { to: "/admin/batches", label: "Area Batches" },
   { to: "/admin/businesses", label: "Businesses" },
   { to: "/admin/provisioning", label: "Manufacturing" },
   { to: "/admin/inquiries", label: "Inquiries" },
