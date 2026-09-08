@@ -23,6 +23,7 @@ const SECONDARY = [
   { to: "/admin/offerings", label: "Catalog" },
   { to: "/admin/customers", label: "Customers" },
   { to: "/admin/analytics", label: "Analytics" },
+  { to: "/admin/qr-lookup", label: "Find QR" },
   { to: "/admin/nfc", label: "NFC Tools" },
   { to: "/admin/settings", label: "Settings" },
 ] as const;

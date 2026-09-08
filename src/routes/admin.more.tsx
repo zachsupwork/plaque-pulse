@@ -24,6 +24,7 @@ const TOOLS = [
   { to: "/admin/offerings", label: "Catalog", hint: "What the public site shows" },
   { to: "/admin/customers", label: "Customers", hint: "Accounts and who they belong to" },
   { to: "/admin/analytics", label: "Analytics", hint: "Real placements, destinations, top performers" },
+  { to: "/admin/qr-lookup", label: "Find QR", hint: "Identify a printed QR code or slug" },
   { to: "/admin/nfc", label: "NFC tools", hint: "Write, verify and batch programming" },
   { to: "/demo", label: "Sales mode", hint: "Labelled example walkthrough for prospects" },
   { to: "/admin/settings", label: "Settings", hint: "Your session and SmartLink domain" },
