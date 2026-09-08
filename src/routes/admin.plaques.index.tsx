@@ -40,14 +40,20 @@ function PlaqueInventory() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-[24px] font-bold tracking-tight">Plaques</h1>
-          <p className="mt-1 text-[13px] text-muted-foreground">{rows.length} shown</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{rows.length} shown · hardware view</p>
         </div>
-        <Link
-          to="/admin/provisioning"
-          className="rounded-xl bg-primary px-4 py-2.5 text-[13px] font-bold text-primary-foreground"
-        >
-          Provision new
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/admin/places" className="rounded-xl border border-border px-4 py-2.5 text-[13px] font-bold">
+            View by place
+          </Link>
+          <Link
+            to="/admin/provisioning"
+            className="rounded-xl bg-primary px-4 py-2.5 text-[13px] font-bold text-primary-foreground"
+          >
+            Provision new
+          </Link>
+        </div>
+
       </div>
 
       <input
