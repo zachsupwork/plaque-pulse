@@ -93,6 +93,39 @@ export const availableInventory = createServerFn({ method: "POST" })
     };
   });
 
+/** One plaque by id, in the same shape the workbench inventory list uses. */
+export const workbenchPlaque = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ plaqueId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const caller = await gate();
+    if (!caller.ok) return { ok: false as const, error: caller.error, plaque: null };
+    const client = await db();
+
+    const { data: plaque } = await client
+      .from("plaques")
+      .select("id, plaque_code, public_slug, product_type, style, base_type, batch_id, status, business_id")
+      .eq("id", data.plaqueId)
+      .maybeSingle();
+    if (!plaque) return { ok: true as const, error: null, plaque: null };
+
+    const { data: prog } = await client
+      .from("plaque_programming")
+      .select("write_status, verification_status")
+      .eq("plaque_id", plaque.id)
+      .maybeSingle();
+
+    return {
+      ok: true as const,
+      error: null,
+      plaque: {
+        ...plaque,
+        writeStatus: prog?.write_status ?? "not_programmed",
+        verificationStatus: prog?.verification_status ?? "not_verified",
+      },
+    };
+  });
+
+
 const configureSchema = z.object({
   plaqueId: z.string().uuid(),
   businessId: z.string().uuid(),
