@@ -52,7 +52,7 @@ export function LockScreenNotice({
         setNote(CAPABILITY_LABEL[current]);
         return;
       }
-      const result = await showNfcNotification({ slug, businessName, test: true });
+      const result = await showNfcNotification({ slug, businessName: businessName ?? null, test: true });
       setNote(
         result.ok
           ? "Test notification sent. Where your phone's settings allow it, it appears on the lock screen — opening it counts as a tap, showing it does not."
