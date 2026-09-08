@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { PlaqueAdminActions } from "@/components/taplocal/PlaqueAdminActions";
 import { GlassPanel, Stat, StatusChip } from "@/components/taplocal/Field";
 import { BusinessSearch } from "@/components/taplocal/BusinessSearch";
 import {
@@ -652,6 +653,10 @@ function SetupWorkbench() {
             </Link>
           ) : null}
 
+
+          <div className="mt-3">
+            <PlaqueAdminActions plaqueId={plaque.id} variant="compact" />
+          </div>
 
           <h2 className="mt-5 mb-2 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
             Live monitoring

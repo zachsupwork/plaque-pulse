@@ -173,8 +173,12 @@ export function PlaqueManageCard({
         >
           {written ? "Reprogram" : "Program"}
         </Link>
-        <Link to="/admin/nfc/verify" className="rounded-lg border border-border py-2 text-center text-[11px] font-bold">
-          Verify
+        <Link
+          to="/admin/reassign/$plaqueId"
+          params={{ plaqueId: plaque.id }}
+          className="rounded-lg border border-primary/50 bg-primary/10 py-2 text-center text-[11px] font-bold text-primary"
+        >
+          Reassign
         </Link>
         <button type="button" onClick={() => setOpen((v) => !v)} className="rounded-lg border border-border py-2 text-[11px] font-bold">
           {open ? "Less" : "Manage"}
