@@ -227,3 +227,163 @@ export async function searchBusinessesDetailed(query: string): Promise<PlaceSear
       writeAReviewUri: p.googleMapsLinks?.writeAReviewUri ?? null,
     }));
 }
+
+/* ------------------------------------------------------------------ */
+/* Bulk area discovery                                                  */
+/* ------------------------------------------------------------------ */
+
+export type AreaPlace = {
+  placeId: string;
+  name: string;
+  address: string;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  category: string | null;
+  rating: number | null;
+  reviewCount: number | null;
+  businessStatus: string | null;
+  mapsUri: string | null;
+  writeAReviewUri: string | null;
+  website: string | null;
+};
+
+export type AreaCategory =
+  | "food"
+  | "restaurants"
+  | "cafes"
+  | "bars"
+  | "retail"
+  | "beauty"
+  | "fitness"
+  | "professional"
+  | "all";
+
+/**
+ * Category-focused query terms. Several narrow searches return far more of a
+ * street than one broad search, and Google Place ID deduplication merges them.
+ */
+const CATEGORY_TERMS: Record<AreaCategory, string[]> = {
+  food: ["restaurants", "cafes", "coffee shops", "bars", "pubs", "bakeries", "takeout", "food"],
+  restaurants: ["restaurants", "dining", "takeout"],
+  cafes: ["cafes", "coffee shops", "bakeries"],
+  bars: ["bars", "pubs", "breweries", "cocktail bars"],
+  retail: ["shops", "stores", "boutiques", "convenience stores"],
+  beauty: ["hair salons", "barbers", "nail salons", "spas"],
+  fitness: ["gyms", "fitness studios", "yoga studios"],
+  professional: ["dentists", "clinics", "law offices", "real estate offices", "accountants"],
+  all: ["businesses", "restaurants", "cafes", "shops", "services"],
+};
+
+const AREA_FIELD_MASK = [
+  "places.id",
+  "places.displayName",
+  "places.formattedAddress",
+  "places.addressComponents",
+  "places.location",
+  "places.rating",
+  "places.userRatingCount",
+  "places.businessStatus",
+  "places.googleMapsUri",
+  "places.googleMapsLinks",
+  "places.primaryTypeDisplayName",
+  "places.primaryType",
+  "places.websiteUri",
+  "nextPageToken",
+].join(",");
+
+type RawPlace = {
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  addressComponents?: Array<{ longText?: string; types?: string[] }>;
+  location?: { latitude?: number; longitude?: number };
+  rating?: number;
+  userRatingCount?: number;
+  businessStatus?: string;
+  googleMapsUri?: string;
+  googleMapsLinks?: { writeAReviewUri?: string };
+  primaryTypeDisplayName?: { text?: string };
+  primaryType?: string;
+  websiteUri?: string;
+};
+
+function toAreaPlace(p: RawPlace): AreaPlace {
+  const city =
+    p.addressComponents?.find((c) => c.types?.includes("locality"))?.longText ??
+    p.addressComponents?.find((c) => c.types?.includes("postal_town"))?.longText ??
+    null;
+  return {
+    placeId: p.id!,
+    name: p.displayName?.text ?? "Unnamed business",
+    address: p.formattedAddress ?? "",
+    city,
+    latitude: p.location?.latitude ?? null,
+    longitude: p.location?.longitude ?? null,
+    category: p.primaryTypeDisplayName?.text ?? prettyType(p.primaryType),
+    rating: p.rating ?? null,
+    reviewCount: p.userRatingCount ?? null,
+    businessStatus: p.businessStatus ?? null,
+    mapsUri: p.googleMapsUri ?? null,
+    writeAReviewUri: p.googleMapsLinks?.writeAReviewUri ?? null,
+    website: p.websiteUri ?? null,
+  };
+}
+
+/** One Text Search page. Returns the results plus Google's next page token. */
+async function textSearchPage(textQuery: string, pageToken?: string) {
+  const res = await fetch(`${PLACES}/places:searchText`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": key(),
+      "X-Goog-FieldMask": AREA_FIELD_MASK,
+    },
+    body: JSON.stringify({ textQuery, pageSize: 20, ...(pageToken ? { pageToken } : {}) }),
+  });
+  if (!res.ok) return { places: [] as AreaPlace[], nextPageToken: undefined as string | undefined };
+  const json = (await res.json()) as { places?: RawPlace[]; nextPageToken?: string };
+  return {
+    places: (json.places ?? []).filter((p) => p.id).map(toAreaPlace),
+    nextPageToken: json.nextPageToken,
+  };
+}
+
+/**
+ * Bulk street/neighbourhood discovery. Runs several compliant Text Search
+ * queries (paged) and merges them, deduplicating strictly by Google Place ID.
+ * Nothing is invented and no Google page is ever scraped.
+ */
+export async function discoverBusinessesInArea(input: {
+  query: string;
+  category?: AreaCategory;
+  maxResults?: number;
+}): Promise<AreaPlace[]> {
+  const category = input.category ?? "food";
+  const max = Math.min(input.maxResults ?? 120, 200);
+  const area = input.query.trim();
+  const terms = CATEGORY_TERMS[category] ?? CATEGORY_TERMS.food;
+  const queries = [area, ...terms.map((t) => `${t} on ${area}`)];
+
+  const byPlaceId = new Map<string, AreaPlace>();
+
+  for (const q of queries) {
+    if (byPlaceId.size >= max) break;
+    let token: string | undefined;
+    for (let page = 0; page < 3; page += 1) {
+      let result;
+      try {
+        result = await textSearchPage(q, token);
+      } catch {
+        break;
+      }
+      for (const place of result.places) {
+        if (!byPlaceId.has(place.placeId)) byPlaceId.set(place.placeId, place);
+      }
+      token = result.nextPageToken;
+      if (!token || byPlaceId.size >= max) break;
+    }
+  }
+
+  return [...byPlaceId.values()].slice(0, max);
+}
