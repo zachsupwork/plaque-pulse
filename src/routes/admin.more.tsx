@@ -19,6 +19,8 @@ export const Route = createFileRoute("/admin/more")({
 
 const TOOLS = [
   { to: "/admin/setup", label: "Set up a plaque", hint: "Business, action, plaque, live" },
+  { to: "/admin/area-builder", label: "Area Builder", hint: "Find a whole street and prepare it at once" },
+  { to: "/admin/batches", label: "Area batches", hint: "Prepared streets, QR downloads, field mode" },
   { to: "/admin/provisioning", label: "Manufacturing", hint: "Create and program batches" },
   { to: "/admin/inquiries", label: "Inquiries", hint: "People who asked about TapLocal" },
   { to: "/admin/offerings", label: "Catalog", hint: "What the public site shows" },

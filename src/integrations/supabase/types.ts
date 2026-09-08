@@ -86,6 +86,187 @@ export type Database = {
         }
         Relationships: []
       }
+      area_batches: {
+        Row: {
+          area_query: string
+          batch_code: string
+          category: string
+          created_at: string
+          created_by_user_id: string | null
+          design_type: string
+          id: string
+          mode: string
+          name: string
+          notes: string | null
+          plaques_per_place: number
+          updated_at: string
+        }
+        Insert: {
+          area_query: string
+          batch_code: string
+          category?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          design_type?: string
+          id?: string
+          mode?: string
+          name: string
+          notes?: string | null
+          plaques_per_place?: number
+          updated_at?: string
+        }
+        Update: {
+          area_query?: string
+          batch_code?: string
+          category?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          design_type?: string
+          id?: string
+          mode?: string
+          name?: string
+          notes?: string | null
+          plaques_per_place?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      area_prospects: {
+        Row: {
+          address: string | null
+          batch_id: string
+          business_id: string | null
+          business_status: string | null
+          category: string | null
+          city: string | null
+          created_at: string
+          error: string | null
+          google_place_id: string
+          id: string
+          instagram: string | null
+          latitude: number | null
+          location_id: string | null
+          longitude: number | null
+          maps_uri: string | null
+          name: string
+          notes: string | null
+          plaques_created: number
+          position: number
+          rating: number | null
+          review_count: number | null
+          review_url: string | null
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          batch_id: string
+          business_id?: string | null
+          business_status?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          error?: string | null
+          google_place_id: string
+          id?: string
+          instagram?: string | null
+          latitude?: number | null
+          location_id?: string | null
+          longitude?: number | null
+          maps_uri?: string | null
+          name: string
+          notes?: string | null
+          plaques_created?: number
+          position: number
+          rating?: number | null
+          review_count?: number | null
+          review_url?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          batch_id?: string
+          business_id?: string | null
+          business_status?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          error?: string | null
+          google_place_id?: string
+          id?: string
+          instagram?: string | null
+          latitude?: number | null
+          location_id?: string | null
+          longitude?: number | null
+          maps_uri?: string | null
+          name?: string
+          notes?: string | null
+          plaques_created?: number
+          position?: number
+          rating?: number | null
+          review_count?: number | null
+          review_url?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_prospects_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "area_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_prospects_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_prospects_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      area_searches: {
+        Row: {
+          area_query: string
+          category: string
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          label: string
+          last_run_at: string | null
+        }
+        Insert: {
+          area_query: string
+          category?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          label: string
+          last_run_at?: string | null
+        }
+        Update: {
+          area_query?: string
+          category?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          label?: string
+          last_run_at?: string | null
+        }
+        Relationships: []
+      }
       business_members: {
         Row: {
           business_id: string
