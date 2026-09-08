@@ -82,6 +82,34 @@ export const provisionPlaques = createServerFn({ method: "POST" })
     if (!caller.ok) return { ok: false as const, error: caller.error, plaques: [] };
     const client = await db();
 
+    // Optional place context. A plaque may be created already attached to a
+    // business/location; its slug, links and activation code are unaffected.
+    let businessId: string | null = null;
+    let locationId: string | null = null;
+    if (data.businessId) {
+      const { data: business } = await client.from("businesses").select("id").eq("id", data.businessId).maybeSingle();
+      if (!business) return { ok: false as const, error: "business_not_found", plaques: [] };
+      businessId = business.id;
+      if (data.locationId) {
+        const { data: loc } = await client
+          .from("locations")
+          .select("id, business_id")
+          .eq("id", data.locationId)
+          .maybeSingle();
+        if (!loc || loc.business_id !== businessId) return { ok: false as const, error: "bad_location", plaques: [] };
+        locationId = loc.id;
+      } else {
+        const { data: first } = await client
+          .from("locations")
+          .select("id")
+          .eq("business_id", businessId)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        locationId = first?.id ?? null;
+      }
+    }
+
     const created: Array<{
       id: string;
       plaqueCode: string;
@@ -107,6 +135,8 @@ export const provisionPlaques = createServerFn({ method: "POST" })
           base_type: data.baseType,
           batch_id: data.batchId || null,
           status: "inventory",
+          business_id: businessId,
+          location_id: locationId,
         })
         .select("id")
         .maybeSingle();
@@ -117,6 +147,15 @@ export const provisionPlaques = createServerFn({ method: "POST" })
         batch_id: data.batchId || null,
         expected_nfc_url: nfcUrl(publicSlug),
       });
+
+      if (businessId)
+        await logAdminAction(client, {
+          businessId,
+          plaqueId: row.id,
+          actionType: "plaque_created_for_place",
+          next: { plaque_code: plaqueCode, slug: publicSlug, location_id: locationId },
+          userId: caller.userId,
+        });
 
       created.push({
         id: row.id,
@@ -129,7 +168,8 @@ export const provisionPlaques = createServerFn({ method: "POST" })
       });
     }
 
-    return { ok: true as const, plaques: created };
+    return { ok: true as const, plaques: created, businessId, locationId };
+
   });
 
 /** Move a plaque through manufacturing states (e.g. mark it packed). */
