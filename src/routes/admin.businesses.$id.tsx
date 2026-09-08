@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taplocal/Field";
 import { getBusinessDetail } from "@/lib/admin-data.functions";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
-import { nfcUrl } from "@/lib/smartlink";
+import { nfcUrl, qrUrl } from "@/lib/smartlink";
 import { GoogleBusinessConnection } from "@/components/taplocal/GoogleBusinessConnection";
 import { SocialProfilesPanel } from "@/components/taplocal/InstagramDiscovery";
 
