@@ -180,6 +180,17 @@ function PlaqueRecord() {
       <div>
         <SectionTitle>Assign to a business</SectionTitle>
         <GlassPanel className="space-y-2.5 p-4">
+          <Link
+            to="/admin/reassign/$plaqueId"
+            params={{ plaqueId: plaque.id }}
+            className="block rounded-xl border border-primary/50 bg-primary/10 py-2.5 text-center text-[13px] font-bold text-primary"
+          >
+            Reassign plaque to another business
+          </Link>
+          <p className="text-[11px] text-muted-foreground">
+            Moving a plaque between businesses goes through Reassign, so the new business never inherits the old address,
+            placement or destination. The printed QR and the programmed tag stay exactly as they are.
+          </p>
           <select
             value={businessId}
             onChange={(e) => setBusinessId(e.target.value)}
