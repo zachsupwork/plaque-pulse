@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel } from "@/components/taplocal/Field";
 import { Button, Chip, Label, ProgramPanel, Row, type ProgrammablePlaque } from "@/components/taplocal/NfcKit";
 import { NfcOnboarding, NfcStatusChip } from "@/components/taplocal/NfcReady";
+import { LockScreenNotice } from "@/components/taplocal/LockScreenNotice";
 import { PlaquePicker } from "@/components/taplocal/PlaquePicker";
 import { createPlaqueForProgramming } from "@/lib/nfc.functions";
 import { nfcUrl } from "@/lib/smartlink";
@@ -72,6 +73,7 @@ function WritePage() {
           </GlassPanel>
         ) : null}
         <ProgramPanel plaque={plaque} />
+        <LockScreenNotice slug={plaque.public_slug} />
       </div>
     );
   }

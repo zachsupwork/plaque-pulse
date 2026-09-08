@@ -1,0 +1,18 @@
+{
+  "name": "TapLocal",
+  "short_name": "TapLocal",
+  "description": "One tap. Whatever action matters to your business.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f9fc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

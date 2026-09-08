@@ -6,6 +6,7 @@ import { GlassPanel, SectionTitle, StatusChip } from "@/components/taplocal/Fiel
 import { checkTapTest, getPlaqueNfcStatus, setPlaqueEnabled, startTapTest } from "@/lib/tap-test.functions";
 import { platform, type Platform } from "@/lib/nfc-readiness";
 import { nfcUrl, qrUrl } from "@/lib/smartlink";
+import { LockScreenNotice } from "@/components/taplocal/LockScreenNotice";
 
 /**
  * The NFC plaque control for one SmartPlaque.
@@ -96,6 +97,10 @@ export function NfcPlaquePanel({ plaqueId, publicSlug }: { plaqueId: string; pub
       <SectionTitle>NFC plaque</SectionTitle>
 
       {note ? <p className="mb-2 rounded-xl border border-border bg-foreground/5 p-3 text-[13px]">{note}</p> : null}
+
+      <div className="mb-3">
+        <LockScreenNotice slug={publicSlug} compact />
+      </div>
 
       <GlassPanel className="space-y-4 p-4">
         {/* ---------- status block ---------- */}
