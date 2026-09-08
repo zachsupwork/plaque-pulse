@@ -340,13 +340,14 @@ export const updatePlaqueBasics = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!plaque) return { ok: false as const, error: "not_found" as const };
 
-    const patch: Record<string, unknown> = {};
-    if (data.plaqueName !== undefined && data.plaqueName !== null) patch["plaque_name"] = data.plaqueName || null;
-    if (data.status) patch["status"] = data.status;
-    if (data.batchId !== undefined && data.batchId !== null) patch["batch_id"] = data.batchId || null;
+    const patch: { plaque_name?: string | null; status?: typeof data.status; batch_id?: string | null } = {};
+    if (data.plaqueName !== undefined && data.plaqueName !== null) patch.plaque_name = data.plaqueName || null;
+    if (data.status) patch.status = data.status;
+    if (data.batchId !== undefined && data.batchId !== null) patch.batch_id = data.batchId || null;
     if (Object.keys(patch).length === 0) return { ok: true as const, error: null };
 
-    const { error } = await client.from("plaques").update(patch).eq("id", plaque.id);
+    const { error } = await client.from("plaques").update(patch as never).eq("id", plaque.id);
+
     if (error) return { ok: false as const, error: "failed" as const };
 
     if (plaque.business_id) {
