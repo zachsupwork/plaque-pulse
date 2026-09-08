@@ -58,6 +58,23 @@ export function testUrl(url: string) {
   return `${url}${url.includes("?") ? "&" : "?"}tl_test=1`;
 }
 
+/**
+ * Best-effort slug extraction from anything a person might paste or scan:
+ * a full SmartLink on any host, a bare "/q/SLUG" path, "q/SLUG", or the slug alone.
+ * Returns null when the input is not recognisably a TapLocal SmartLink identity.
+ */
+export function extractSmartLinkSlug(raw: string): { slug: string; kind: "nfc" | "qr" | null } | null {
+  const input = raw.trim();
+  if (!input) return null;
+
+  const path = input.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, "").split(/[?#]/)[0] ?? "";
+  const withPath = path.match(/(?:^|\/)([nq])\/([A-Za-z0-9_-]{4,32})\/?$/);
+  if (withPath) return { slug: withPath[2]!, kind: withPath[1] === "q" ? "qr" : "nfc" };
+
+  if (/^[A-Za-z0-9_-]{4,32}$/.test(input) && !input.includes("/")) return { slug: input, kind: null };
+  return null;
+}
+
 /** Extracts the slug from a TapLocal SmartLink (nfc or qr), else null. Host-agnostic. */
 export function parseSmartLink(raw: string): { slug: string; kind: "nfc" | "qr" } | null {
   try {
