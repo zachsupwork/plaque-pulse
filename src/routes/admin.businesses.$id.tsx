@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taplocal/Field";
 import { getBusinessDetail } from "@/lib/admin-data.functions";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
-import { nfcUrl } from "@/lib/smartlink";
+import { nfcUrl, qrUrl } from "@/lib/smartlink";
 import { GoogleBusinessConnection } from "@/components/taplocal/GoogleBusinessConnection";
 import { SocialProfilesPanel } from "@/components/taplocal/InstagramDiscovery";
 
@@ -38,6 +38,8 @@ function BusinessRecord() {
   if (!detail) return <p className="text-[13px] text-muted-foreground">That business could not be found.</p>;
 
   const { business, locations, plaques, members, performance, history } = detail;
+  const primaryLocation = locations[0] ?? null;
+
 
   return (
     <div className="space-y-6">
@@ -60,51 +62,51 @@ function BusinessRecord() {
         <SectionTitle>Quick actions</SectionTitle>
         <Link
           to="/admin/setup"
-          search={{ businessId: business.id }}
+          search={{ businessId: business.id, ...(primaryLocation ? { locationId: primaryLocation.id } : {}) }}
           className="mb-2.5 flex min-h-[60px] items-center justify-center rounded-2xl bg-primary px-4 py-4 text-center text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-soft)]"
         >
-          Set up / program plaque
+          Add / set up plaque
         </Link>
         <GlassPanel className="grid grid-cols-1 gap-2 p-3.5 sm:grid-cols-2">
-
           <Link
             to="/admin/provisioning"
+            search={{ businessId: business.id, ...(primaryLocation ? { locationId: primaryLocation.id } : {}) }}
             className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
           >
-            Add plaque
+            Add new plaque
           </Link>
           <Link
-            to="/admin/plaques"
+            to="/admin/assign"
+            search={{ businessId: business.id, ...(primaryLocation ? { locationId: primaryLocation.id } : {}) }}
             className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
           >
             Assign existing plaque
           </Link>
-          {plaques.length ? (
-            <>
-              <Link
-                to="/admin/plaques/$id"
-                params={{ id: plaques[0]!.id }}
-                className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
-              >
-                Set up Google Reviews
-              </Link>
-              <Link
-                to="/admin/plaques/$id"
-                params={{ id: plaques[0]!.id }}
-                className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
-              >
-                Change destination
-              </Link>
-            </>
+          {plaques.length === 1 ? (
+            <Link
+              to="/admin/plaques/$id"
+              params={{ id: plaques[0]!.id }}
+              className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+            >
+              Manage 1 plaque
+            </Link>
+          ) : plaques.length > 1 ? (
+            <a
+              href="#smartplaques"
+              className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+            >
+              Manage {plaques.length} plaques
+            </a>
           ) : null}
           <Link
             to="/admin/customers"
             className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
           >
-            Give owner access
+            Owner access
           </Link>
         </GlassPanel>
       </div>
+
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Stat label="Today" value={performance.today} />
@@ -134,15 +136,19 @@ function BusinessRecord() {
         </GlassPanel>
       </div>
 
-      <div>
-        <SectionTitle>Plaques</SectionTitle>
-        <GlassPanel className="divide-y divide-border">
-          {plaques.length === 0 ? <p className="p-4 text-[13px] text-muted-foreground">No plaques assigned.</p> : null}
+      <div id="smartplaques">
+        <SectionTitle>
+          SmartPlaques — {plaques.length} {plaques.length === 1 ? "plaque" : "plaques"} at this business
+        </SectionTitle>
+        <div className="space-y-2.5">
+          {plaques.length === 0 ? (
+            <GlassPanel className="p-4 text-[13px] text-muted-foreground">No plaques assigned yet.</GlassPanel>
+          ) : null}
           {plaques.map((p) => (
-            <Link key={p.id} to="/admin/plaques/$id" params={{ id: p.id }} className="block p-3.5">
+            <GlassPanel key={p.id} className="p-3.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold">{p.plaque_name ?? p.plaque_code}</p>
+                  <p className="truncate text-[14px] font-bold">{p.plaque_name ?? p.plaque_code}</p>
                   <p className="truncate text-[12px] text-muted-foreground">
                     {[p.placement_type ? PLACEMENT_LABEL[p.placement_type] ?? p.placement_type : null,
                       p.destination ? DESTINATION_LABEL[p.destination.type] ?? p.destination.type : "No destination"]
@@ -150,15 +156,50 @@ function BusinessRecord() {
                       .join(" · ")}
                   </p>
                   <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{nfcUrl(p.public_slug)}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{qrUrl(p.public_slug)}</p>
                 </div>
                 <div className="shrink-0 text-right">
                   <StatusChip tone={p.status === "active" ? "ok" : "idle"}>{p.status}</StatusChip>
                   <p className="mt-1 text-[11px] text-muted-foreground">{p.interactions30} taps / 30d</p>
                 </div>
               </div>
-            </Link>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <Link
+                  to="/admin/plaques/$id"
+                  params={{ id: p.id }}
+                  className="rounded-xl bg-primary px-3 py-2.5 text-center text-[12px] font-bold text-primary-foreground"
+                >
+                  Manage
+                </Link>
+                <Link
+                  to="/admin/setup"
+                  search={{
+                    businessId: business.id,
+                    ...(primaryLocation ? { locationId: primaryLocation.id } : {}),
+                    plaqueId: p.id,
+                  }}
+                  className="rounded-xl border border-border px-3 py-2.5 text-center text-[12px] font-semibold"
+                >
+                  Destination
+                </Link>
+                <Link
+                  to="/admin/plaques/$id/program"
+                  params={{ id: p.id }}
+                  className="rounded-xl border border-border px-3 py-2.5 text-center text-[12px] font-semibold"
+                >
+                  Program
+                </Link>
+              </div>
+            </GlassPanel>
           ))}
-        </GlassPanel>
+          <Link
+            to="/admin/provisioning"
+            search={{ businessId: business.id, ...(primaryLocation ? { locationId: primaryLocation.id } : {}) }}
+            className="flex min-h-[48px] items-center justify-center rounded-2xl border border-dashed border-border text-[13px] font-bold"
+          >
+            + Add another plaque
+          </Link>
+        </div>
       </div>
 
       <div>
