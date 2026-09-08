@@ -45,6 +45,7 @@ import { Route as AdminNfcReadRouteImport } from './routes/admin.nfc.read'
 import { Route as AdminNfcVerifyRouteImport } from './routes/admin.nfc.verify'
 import { Route as AdminNfcWriteRouteImport } from './routes/admin.nfc.write'
 import { Route as AdminPlacesIndexRouteImport } from './routes/admin.places.index'
+import { Route as AdminPlacesPlaceIdRouteImport } from './routes/admin.places.$placeId'
 import { Route as AdminPlaquesIndexRouteImport } from './routes/admin.plaques.index'
 import { Route as AppNfcIndexRouteImport } from './routes/app.nfc.index'
 import { Route as AppNfcReadRouteImport } from './routes/app.nfc.read'
@@ -240,6 +241,11 @@ const AdminPlacesIndexRoute = AdminPlacesIndexRouteImport.update({
   path: '/places/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPlacesPlaceIdRoute = AdminPlacesPlaceIdRouteImport.update({
+  id: '/places/$placeId',
+  path: '/places/$placeId',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPlaquesIndexRoute = AdminPlaquesIndexRouteImport.update({
   id: '/plaques/',
   path: '/plaques/',
@@ -344,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
   '/admin/nfc/write': typeof AdminNfcWriteRoute
+  '/admin/places/$placeId': typeof AdminPlacesPlaceIdRoute
   '/app/nfc/read': typeof AppNfcReadRoute
   '/app/nfc/verify': typeof AppNfcVerifyRoute
   '/app/nfc/write': typeof AppNfcWriteRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
   '/admin/nfc/write': typeof AdminNfcWriteRoute
+  '/admin/places/$placeId': typeof AdminPlacesPlaceIdRoute
   '/app/nfc/read': typeof AppNfcReadRoute
   '/app/nfc/verify': typeof AppNfcVerifyRoute
   '/app/nfc/write': typeof AppNfcWriteRoute
@@ -447,6 +455,7 @@ export interface FileRoutesById {
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
   '/admin/nfc/write': typeof AdminNfcWriteRoute
+  '/admin/places/$placeId': typeof AdminPlacesPlaceIdRoute
   '/app/nfc/read': typeof AppNfcReadRoute
   '/app/nfc/verify': typeof AppNfcVerifyRoute
   '/app/nfc/write': typeof AppNfcWriteRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
     | '/admin/nfc/write'
+    | '/admin/places/$placeId'
     | '/app/nfc/read'
     | '/app/nfc/verify'
     | '/app/nfc/write'
@@ -551,6 +561,7 @@ export interface FileRouteTypes {
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
     | '/admin/nfc/write'
+    | '/admin/places/$placeId'
     | '/app/nfc/read'
     | '/app/nfc/verify'
     | '/app/nfc/write'
@@ -603,6 +614,7 @@ export interface FileRouteTypes {
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
     | '/admin/nfc/write'
+    | '/admin/places/$placeId'
     | '/app/nfc/read'
     | '/app/nfc/verify'
     | '/app/nfc/write'
@@ -897,6 +909,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlacesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/places/$placeId': {
+      id: '/admin/places/$placeId'
+      path: '/places/$placeId'
+      fullPath: '/admin/places/$placeId'
+      preLoaderRoute: typeof AdminPlacesPlaceIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/plaques/': {
       id: '/admin/plaques/'
       path: '/plaques'
@@ -1013,6 +1032,7 @@ interface AdminRouteChildren {
   AdminNfcReadRoute: typeof AdminNfcReadRoute
   AdminNfcVerifyRoute: typeof AdminNfcVerifyRoute
   AdminNfcWriteRoute: typeof AdminNfcWriteRoute
+  AdminPlacesPlaceIdRoute: typeof AdminPlacesPlaceIdRoute
   AdminBusinessesIndexRoute: typeof AdminBusinessesIndexRoute
   AdminInquiriesIndexRoute: typeof AdminInquiriesIndexRoute
   AdminNfcIndexRoute: typeof AdminNfcIndexRoute
@@ -1037,6 +1057,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminNfcReadRoute: AdminNfcReadRoute,
   AdminNfcVerifyRoute: AdminNfcVerifyRoute,
   AdminNfcWriteRoute: AdminNfcWriteRoute,
+  AdminPlacesPlaceIdRoute: AdminPlacesPlaceIdRoute,
   AdminBusinessesIndexRoute: AdminBusinessesIndexRoute,
   AdminInquiriesIndexRoute: AdminInquiriesIndexRoute,
   AdminNfcIndexRoute: AdminNfcIndexRoute,
