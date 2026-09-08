@@ -482,7 +482,13 @@ function DestinationSheet({ summary, onClose, onDone }: { summary: PlaqueAdminSu
 
   return (
     <Sheet title="Change destination" subtitle="The tag is never rewritten." onClose={onClose}>
-      <DestinationPicker kind={kind} setKind={setKind} value={value} setValue={setValue} />
+      <SmartDestinationPicker
+        plaqueId={summary.plaqueId}
+        kind={kind}
+        setKind={setKind}
+        value={value}
+        setValue={setValue}
+      />
       {error ? <p className="mt-2 text-[12px] text-destructive">{error}</p> : null}
       <button
         type="button"
