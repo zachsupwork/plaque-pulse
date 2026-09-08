@@ -129,6 +129,16 @@ export function QrSheet({
           {png ? <img src={png} alt={`QR code for ${title}`} className="h-56 w-56" /> : <div className="h-56 w-56 animate-pulse rounded-xl bg-black/5" />}
         </div>
 
+        {codeLines?.length ? (
+          <div className="mt-3 text-center">
+            {codeLines.map((line) => (
+              <p key={line} className="text-[13px] font-bold tracking-[0.08em] uppercase">
+                {line}
+              </p>
+            ))}
+          </div>
+        ) : null}
+
         <p className="mt-3 break-all text-center font-mono text-[11px] text-muted-foreground">{url}</p>
 
         <div className="mt-4 grid grid-cols-3 gap-1.5">
