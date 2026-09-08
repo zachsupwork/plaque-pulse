@@ -200,7 +200,15 @@ function MatchCard({ match, onRefresh }: { match: QrLookupMatch; onRefresh: () =
         />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-1.5">
+      <Link
+        to="/admin/reassign/$plaqueId"
+        params={{ plaqueId: match.plaqueId }}
+        className="mt-4 block rounded-xl border border-primary/50 bg-primary/10 py-3 text-center text-[13px] font-bold text-primary"
+      >
+        Reassign to another business
+      </Link>
+
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
         <button type="button" onClick={() => setQrOpen(true)} className="rounded-xl bg-primary py-2.5 text-[12px] font-bold text-primary-foreground">
           Show QR
         </button>
