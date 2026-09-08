@@ -309,6 +309,17 @@ export function PlaqueManageCard({
           url={qr}
           title={plaque.plaqueCode}
           subtitle={`${placeTitle}${plaque.placement ? ` · ${PLACEMENT_LABEL[plaque.placement] ?? plaque.placement}` : ""}`}
+          codeLines={[placeTitle, plaque.plaqueCode, plaque.slug]}
+          onPrinted={() => {
+            void printFn({
+              data: {
+                plaqueId: plaque.id,
+                encodedUrl: qr,
+                ...(plaque.batchId ? { batchId: plaque.batchId } : {}),
+                designName: [placeTitle, plaque.name, plaque.style].filter(Boolean).join(" — "),
+              },
+            });
+          }}
           onClose={() => setQrOpen(false)}
         />
       ) : null}
