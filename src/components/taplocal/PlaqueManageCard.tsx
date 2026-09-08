@@ -8,6 +8,7 @@ import { DESTINATIONS, buildDestinationUrl, destinationLabel, type DestinationKi
 import { nfcUrl, qrUrl } from "@/lib/smartlink";
 import { PLACEMENT_LABEL } from "@/lib/taplocal";
 import { attentionLabel, changePlaqueDestination, changePlaquePlacement } from "@/lib/places.functions";
+import { recordQrPrint } from "@/lib/qr-lookup.functions";
 
 export type PlaceePlaque = {
   id: string;
@@ -67,6 +68,7 @@ export function PlaqueManageCard({
   const qc = useQueryClient();
   const destFn = useServerFn(changePlaqueDestination);
   const placeFn = useServerFn(changePlaquePlacement);
+  const printFn = useServerFn(recordQrPrint);
 
   const saveDestination = useMutation({
     mutationFn: async () => {
