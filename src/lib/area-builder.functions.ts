@@ -512,18 +512,14 @@ export const researchProspect = createServerFn({ method: "POST" })
     }
 
     let instagram: string | null = null;
-    try {
-      const { discoverInstagram } = await import("./instagram-discovery.server");
-      const found = await (discoverInstagram as unknown as (input: unknown) => Promise<unknown>)({
-        businessName: prospect.name,
-        website,
-        city: prospect.city,
-        address: prospect.address,
-      });
-      const best = found as { username?: string; candidates?: Array<{ username?: string }> } | null;
-      instagram = best?.username ?? best?.candidates?.[0]?.username ?? null;
-    } catch {
-      instagram = null;
+    if (prospect.business_id) {
+      try {
+        const { discoverInstagramForBusiness } = await import("./instagram-discovery.server");
+        const found = await discoverInstagramForBusiness({ businessId: prospect.business_id });
+        instagram = found.bestCandidate?.username ?? null;
+      } catch {
+        instagram = null;
+      }
     }
 
     await client
