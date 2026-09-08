@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { StatusChip } from "@/components/taplocal/Field";
 import { BusinessSearch } from "@/components/taplocal/BusinessSearch";
+import { SmartDestinationPicker } from "@/components/taplocal/DestinationDiscovery";
 import { CopyButton, QrSheet } from "@/components/taplocal/LinkTools";
 import { adminCreateBusinessFromPlace } from "@/lib/admin-discovery.functions";
 import {
@@ -482,7 +483,13 @@ function DestinationSheet({ summary, onClose, onDone }: { summary: PlaqueAdminSu
 
   return (
     <Sheet title="Change destination" subtitle="The tag is never rewritten." onClose={onClose}>
-      <DestinationPicker kind={kind} setKind={setKind} value={value} setValue={setValue} />
+      <SmartDestinationPicker
+        plaqueId={summary.plaqueId}
+        kind={kind}
+        setKind={setKind}
+        value={value}
+        setValue={setValue}
+      />
       {error ? <p className="mt-2 text-[12px] text-destructive">{error}</p> : null}
       <button
         type="button"
