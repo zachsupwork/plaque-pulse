@@ -60,51 +60,51 @@ function BusinessRecord() {
         <SectionTitle>Quick actions</SectionTitle>
         <Link
           to="/admin/setup"
-          search={{ businessId: business.id }}
+          search={{ businessId: business.id, ...(primaryLocation ? { locationId: primaryLocation.id } : {}) }}
           className="mb-2.5 flex min-h-[60px] items-center justify-center rounded-2xl bg-primary px-4 py-4 text-center text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-soft)]"
         >
-          Set up / program plaque
+          Add / set up plaque
         </Link>
         <GlassPanel className="grid grid-cols-1 gap-2 p-3.5 sm:grid-cols-2">
-
           <Link
             to="/admin/provisioning"
+            search={{ businessId: business.id, ...(primaryLocation ? { locationId: primaryLocation.id } : {}) }}
             className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
           >
-            Add plaque
+            Add new plaque
           </Link>
           <Link
-            to="/admin/plaques"
+            to="/admin/assign"
+            search={{ businessId: business.id, ...(primaryLocation ? { locationId: primaryLocation.id } : {}) }}
             className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
           >
             Assign existing plaque
           </Link>
-          {plaques.length ? (
-            <>
-              <Link
-                to="/admin/plaques/$id"
-                params={{ id: plaques[0]!.id }}
-                className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
-              >
-                Set up Google Reviews
-              </Link>
-              <Link
-                to="/admin/plaques/$id"
-                params={{ id: plaques[0]!.id }}
-                className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
-              >
-                Change destination
-              </Link>
-            </>
+          {plaques.length === 1 ? (
+            <Link
+              to="/admin/plaques/$id"
+              params={{ id: plaques[0]!.id }}
+              className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+            >
+              Manage 1 plaque
+            </Link>
+          ) : plaques.length > 1 ? (
+            <a
+              href="#smartplaques"
+              className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
+            >
+              Manage {plaques.length} plaques
+            </a>
           ) : null}
           <Link
             to="/admin/customers"
             className="rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold"
           >
-            Give owner access
+            Owner access
           </Link>
         </GlassPanel>
       </div>
+
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Stat label="Today" value={performance.today} />
