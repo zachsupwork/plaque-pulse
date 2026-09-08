@@ -125,15 +125,19 @@ function PlaqueInventory() {
               >
                 Program
               </Link>
-              <Link to="/admin/nfc/verify" className="rounded-lg border border-border py-2 text-center text-[12px] font-bold">
-                Verify
+              <Link
+                to="/admin/reassign/$plaqueId"
+                params={{ plaqueId: p.id }}
+                className="rounded-lg border border-primary/50 bg-primary/10 py-2 text-center text-[12px] font-bold text-primary"
+              >
+                Reassign
               </Link>
               <Link
                 to="/admin/plaques/$id"
                 params={{ id: p.id }}
                 className="rounded-lg border border-border py-2 text-center text-[12px] font-bold"
               >
-                Assign
+                {p.businessName ? "Manage" : "Assign"}
               </Link>
               <Link
                 to="/admin/plaques/$id"

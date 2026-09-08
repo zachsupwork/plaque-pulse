@@ -3,13 +3,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taplocal/Field";
-import { getPlaqueRecord, listAllBusinesses } from "@/lib/admin-data.functions";
-import { assignPlaque, setPlaqueDestination, setPlaqueStatus } from "@/lib/admin.functions";
+import { getPlaqueRecord } from "@/lib/admin-data.functions";
+import { setPlaqueStatus } from "@/lib/admin.functions";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
 import { nfcUrl, qrUrl } from "@/lib/smartlink";
 import { NfcPlaquePanel } from "@/components/taplocal/NfcPlaquePanel";
 import { TrackingStatus } from "@/components/taplocal/TrackingStatus";
 import { placeForPlaque } from "@/lib/places.functions";
+import { PlaqueAdminActions } from "@/components/taplocal/PlaqueAdminActions";
 
 /** Jump from the hardware record to the place this plaque is installed in. */
 function PlaceLink({ plaqueId }: { plaqueId: string }) {
@@ -50,26 +51,13 @@ function PlaqueRecord() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const recordFn = useServerFn(getPlaqueRecord);
-  const businessesFn = useServerFn(listAllBusinesses);
-  const assignFn = useServerFn(assignPlaque);
   const statusFn = useServerFn(setPlaqueStatus);
-  const destinationFn = useServerFn(setPlaqueDestination);
 
   const q = useQuery({
     queryKey: ["admin-plaque", id],
     queryFn: () => recordFn({ data: { plaqueId: id } }),
     refetchInterval: 5_000,
   });
-  const businesses = useQuery({
-    queryKey: ["admin-businesses", "", "all"],
-    queryFn: () => businessesFn({ data: { query: "", filter: "all" as const } }),
-  });
-
-  const [businessId, setBusinessId] = useState("");
-  const [placement, setPlacement] = useState("");
-  const [plaqueName, setPlaqueName] = useState("");
-  const [destType, setDestType] = useState("google_review");
-  const [destUrl, setDestUrl] = useState("");
   const [note, setNote] = useState<string | null>(null);
 
   const refresh = () => {
@@ -77,41 +65,10 @@ function PlaqueRecord() {
     void qc.invalidateQueries({ queryKey: ["admin-plaques"] });
   };
 
-  const assign = useMutation({
-    mutationFn: () =>
-      assignFn({
-        data: {
-          plaqueId: id,
-          businessId,
-          placementType: placement || null,
-          plaqueName: plaqueName || null,
-        },
-      }),
-    onSuccess: (res) => {
-      setNote(
-        res.ok
-          ? "Plaque assigned."
-          : res.error === "use_reassign"
-            ? "This plaque already belongs to another business — use Reassign plaque above."
-            : "That didn't save — check you're still signed in as admin.",
-      );
-      refresh();
-    },
-  });
-
   const changeStatus = useMutation({
     mutationFn: (status: (typeof STATUS_OPTIONS)[number]) => statusFn({ data: { plaqueId: id, status } }),
     onSuccess: (res) => {
       setNote(res.ok ? "Status updated." : "Status change was rejected.");
-      refresh();
-    },
-  });
-
-  const setDestination = useMutation({
-    mutationFn: () => destinationFn({ data: { plaqueId: id, destinationType: destType, url: destUrl } }),
-    onSuccess: (res) => {
-      setNote(res.ok ? "Destination updated." : "Assign the plaque to a business first.");
-      setDestUrl("");
       refresh();
     },
   });
@@ -169,6 +126,8 @@ function PlaqueRecord() {
         <Row label="QR link" value={qrUrl(plaque.publicSlug)} />
       </GlassPanel>
 
+      <PlaqueAdminActions plaqueId={id} onChanged={refresh} />
+
       <TrackingStatus plaqueId={id} />
 
       <NfcPlaquePanel plaqueId={id} publicSlug={plaque.publicSlug} />
@@ -181,94 +140,6 @@ function PlaqueRecord() {
         >
           Open programming record
         </Link>
-      </div>
-
-      <div>
-        <SectionTitle>Assign to a business</SectionTitle>
-        <GlassPanel className="space-y-2.5 p-4">
-          <Link
-            to="/admin/reassign/$plaqueId"
-            params={{ plaqueId: plaque.id }}
-            className="block rounded-xl border border-primary/50 bg-primary/10 py-2.5 text-center text-[13px] font-bold text-primary"
-          >
-            Reassign plaque to another business
-          </Link>
-          <p className="text-[11px] text-muted-foreground">
-            Moving a plaque between businesses goes through Reassign, so the new business never inherits the old address,
-            placement or destination. The printed QR and the programmed tag stay exactly as they are.
-          </p>
-          <select
-            value={businessId}
-            onChange={(e) => setBusinessId(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px]"
-          >
-            <option value="">Choose a business…</option>
-            {(businesses.data?.ok ? businesses.data.businesses : []).map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-          <div className="grid gap-2.5 sm:grid-cols-2">
-            <input
-              value={plaqueName}
-              onChange={(e) => setPlaqueName(e.target.value)}
-              placeholder="Plaque name (e.g. Front counter)"
-              className="rounded-xl border border-border bg-card px-3 py-2.5 text-[13px]"
-            />
-            <select
-              value={placement}
-              onChange={(e) => setPlacement(e.target.value)}
-              className="rounded-xl border border-border bg-card px-3 py-2.5 text-[13px]"
-            >
-              <option value="">Placement…</option>
-              {Object.entries(PLACEMENT_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            type="button"
-            disabled={!businessId || assign.isPending}
-            onClick={() => assign.mutate()}
-            className="w-full rounded-xl bg-primary px-4 py-2.5 text-[13px] font-bold text-primary-foreground disabled:opacity-50"
-          >
-            {assign.isPending ? "Saving…" : "Assign plaque"}
-          </button>
-        </GlassPanel>
-      </div>
-
-      <div>
-        <SectionTitle>Where it sends people</SectionTitle>
-        <GlassPanel className="space-y-2.5 p-4">
-          <select
-            value={destType}
-            onChange={(e) => setDestType(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px]"
-          >
-            {Object.entries(DESTINATION_LABEL).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <input
-            value={destUrl}
-            onChange={(e) => setDestUrl(e.target.value)}
-            placeholder="https://…"
-            className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px]"
-          />
-          <button
-            type="button"
-            disabled={!destUrl || setDestination.isPending}
-            onClick={() => setDestination.mutate()}
-            className="w-full rounded-xl border border-border bg-foreground/5 px-4 py-2.5 text-[13px] font-bold disabled:opacity-50"
-          >
-            {setDestination.isPending ? "Saving…" : "Update destination"}
-          </button>
-        </GlassPanel>
       </div>
 
       <div>
