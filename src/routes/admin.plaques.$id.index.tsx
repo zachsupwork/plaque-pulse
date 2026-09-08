@@ -101,9 +101,13 @@ function PlaqueRecord() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/admin/plaques" className="text-[12px] font-semibold text-muted-foreground">
-          ← Plaques
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/admin/plaques" className="text-[12px] font-semibold text-muted-foreground">
+            ← Plaques
+          </Link>
+          <PlaceLink plaqueId={plaque.id} />
+        </div>
+
         <h1 className="mt-2 font-display text-[24px] font-bold tracking-tight">
           {plaque.plaqueName ?? plaque.plaqueCode}
         </h1>
