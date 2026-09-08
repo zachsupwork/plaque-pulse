@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { extractSmartLinkSlug } from "@/lib/smartlink";
 
 /**
  * The Places management centre.
@@ -389,7 +390,11 @@ export const listPlaces = createServerFn({ method: "POST" })
     if (!caller.ok) return { ok: false as const, error: caller.error, places: [], total: 0, cities: [], batches: [] };
 
     const all = buildPlaces(await loadNetwork(await db()));
-    const q = data.query.trim().toLowerCase();
+    // A pasted SmartLink (any host, any format) is reduced to its slug so the
+    // printed QR, the NFC link and the bare slug all find the same plaque.
+    const rawQuery = data.query.trim();
+    const parsedLink = extractSmartLinkSlug(rawQuery);
+    const q = (parsedLink?.slug ?? rawQuery).toLowerCase();
     const filter = (FILTERS as readonly string[]).includes(data.filter) ? data.filter : "all";
     const sort = (SORTS as readonly string[]).includes(data.sort) ? data.sort : "recent";
 
