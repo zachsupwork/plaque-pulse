@@ -642,6 +642,16 @@ function SetupWorkbench() {
               {biz?.name} · {plaque.plaque_code} · {kind ? destinationLabel(kind) : ""} · {chosenPlacement}
             </p>
           </GlassPanel>
+          {search.placeId ? (
+            <Link
+              to="/admin/places/$placeId"
+              params={{ placeId: search.placeId }}
+              className="mt-2.5 flex min-h-[52px] items-center justify-center rounded-2xl bg-primary text-center text-[13px] font-bold text-primary-foreground"
+            >
+              ← Back to this place
+            </Link>
+          ) : null}
+
 
           <h2 className="mt-5 mb-2 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
             Live monitoring
