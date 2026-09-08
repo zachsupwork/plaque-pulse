@@ -173,10 +173,10 @@ function MatchCard({ match, onRefresh }: { match: QrLookupMatch; onRefresh: () =
           label="QR status"
           value={
             <span className="flex flex-wrap gap-1.5">
-              <StatusChip tone={match.verificationStatus === "verified" ? "ok" : "muted"}>
+              <StatusChip tone={match.verificationStatus === "verified" ? "ok" : "idle"}>
                 {match.verificationStatus === "verified" ? "Verified ✓" : "Unverified"}
               </StatusChip>
-              <StatusChip tone={match.status === "active" ? "ok" : "muted"}>{match.status}</StatusChip>
+              <StatusChip tone={match.status === "active" ? "ok" : "idle"}>{match.status}</StatusChip>
             </span>
           }
         />
