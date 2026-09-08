@@ -38,6 +38,8 @@ function BusinessRecord() {
   if (!detail) return <p className="text-[13px] text-muted-foreground">That business could not be found.</p>;
 
   const { business, locations, plaques, members, performance, history } = detail;
+  const primaryLocation = locations[0] ?? null;
+
 
   return (
     <div className="space-y-6">
