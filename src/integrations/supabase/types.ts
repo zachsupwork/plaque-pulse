@@ -1395,6 +1395,62 @@ export type Database = {
           },
         ]
       }
+      qr_print_records: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          design_name: string | null
+          design_version: string | null
+          encoded_url: string
+          id: string
+          notes: string | null
+          plaque_id: string
+          print_position: number | null
+          printed_at: string
+          printed_by_user_id: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          design_name?: string | null
+          design_version?: string | null
+          encoded_url: string
+          id?: string
+          notes?: string | null
+          plaque_id: string
+          print_position?: number | null
+          printed_at?: string
+          printed_by_user_id?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          design_name?: string | null
+          design_version?: string | null
+          encoded_url?: string
+          id?: string
+          notes?: string | null
+          plaque_id?: string
+          print_position?: number | null
+          printed_at?: string
+          printed_by_user_id?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_print_records_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommendations: {
         Row: {
           business_id: string
