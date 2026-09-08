@@ -86,6 +86,26 @@ function AdminDashboard() {
         </span>
       </Link>
 
+      <div className="grid grid-cols-2 gap-2.5">
+        <Link to="/admin/places" className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)]">
+          <p className="text-[12px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">Active places</p>
+          <p className="mt-1 font-display text-[22px] font-bold tracking-tight">{po ? po.activePlaces : "—"}</p>
+          <p className="text-[11px] text-muted-foreground">{po ? `${po.activePlaques} plaques live` : ""}</p>
+        </Link>
+        <Link
+          to="/admin/places"
+          search={{}}
+          className={`rounded-2xl border p-4 shadow-[var(--shadow-soft)] ${
+            po && po.needsAttention > 0 ? "border-amber-500/45 bg-amber-500/[0.06]" : "border-border bg-card"
+          }`}
+        >
+          <p className="text-[12px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">Needs attention</p>
+          <p className="mt-1 font-display text-[22px] font-bold tracking-tight">{po ? po.needsAttention : "—"}</p>
+          <p className="text-[11px] text-muted-foreground">plaques to finish or fix</p>
+        </Link>
+      </div>
+
+
       <div>
         <SectionTitle>Today</SectionTitle>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
