@@ -62,11 +62,16 @@ export function QrSheet({
   url,
   title,
   subtitle,
+  codeLines,
+  onPrinted,
   onClose,
 }: {
   url: string;
   title: string;
   subtitle?: string | null;
+  /** Human-readable identification printed beside the code, e.g. plaque code and slug. */
+  codeLines?: string[];
+  onPrinted?: () => void;
   onClose: () => void;
 }) {
   const [png, setPng] = useState<string | null>(null);
