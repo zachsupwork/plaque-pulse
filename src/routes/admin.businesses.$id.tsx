@@ -200,8 +200,6 @@ function BusinessRecord() {
             + Add another plaque
           </Link>
         </div>
-
-        </GlassPanel>
       </div>
 
       <div>
