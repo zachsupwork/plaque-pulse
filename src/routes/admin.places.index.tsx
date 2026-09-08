@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, StatusChip } from "@/components/taplocal/Field";
 import { listPlaces, placesOverview } from "@/lib/places.functions";
+import { extractSmartLinkSlug } from "@/lib/smartlink";
 
 export const Route = createFileRoute("/admin/places/")({
   head: () => ({
@@ -94,6 +95,15 @@ function PlacesCentre() {
           className="w-full rounded-xl border border-border bg-card px-3.5 py-3 text-[14px] outline-none focus:border-primary/60"
         />
       </div>
+
+      {extractSmartLinkSlug(query)?.slug ? (
+        <Link
+          to="/admin/qr-lookup"
+          className="block rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-3 text-[13px] font-semibold text-primary"
+        >
+          SmartLink detected · slug {extractSmartLinkSlug(query)!.slug} — open Find QR for the full plaque record →
+        </Link>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Card label="Active places" value={o ? String(o.activePlaces) : "—"} sub={o ? `${o.placesWithPlaques} with plaques` : ""} />

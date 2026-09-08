@@ -23,6 +23,7 @@ const ACTIONS = [
   { to: "/admin/nfc/read", label: "Read NFC Tag", hint: "See exactly what a tag contains", icon: "📡" },
   { to: "/admin/nfc/verify", label: "Verify Plaque", hint: "Check plaque ID, NFC and QR all match", icon: "✓" },
   { to: "/admin/nfc/batch", label: "Batch Programming", hint: "Run a full production batch fast", icon: "▦" },
+  { to: "/admin/qr-lookup", label: "Find QR", hint: "Identify a printed QR code, link or slug", icon: "🔎" },
 ] as const;
 
 function NfcHome() {

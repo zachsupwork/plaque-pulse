@@ -62,11 +62,16 @@ export function QrSheet({
   url,
   title,
   subtitle,
+  codeLines,
+  onPrinted,
   onClose,
 }: {
   url: string;
   title: string;
   subtitle?: string | null;
+  /** Human-readable identification printed beside the code, e.g. plaque code and slug. */
+  codeLines?: string[];
+  onPrinted?: () => void;
   onClose: () => void;
 }) {
   const [png, setPng] = useState<string | null>(null);
@@ -85,17 +90,26 @@ export function QrSheet({
     if (!png) return;
     const w = window.open("", "_blank", "width=720,height=900");
     if (!w) return;
+    // Every printed sheet carries human-readable identification, so an unscannable
+    // code can still be found by typing the plaque code or slug into admin search.
+    const idBlock = (codeLines ?? [])
+      .map((line) => `<p style="font-size:15px;font-weight:700;letter-spacing:.08em;margin:2px 0">${line}</p>`)
+      .join("");
     w.document.write(
       `<html><head><title>${title}</title></head><body style="font-family:system-ui;text-align:center;padding:40px">` +
         `<img src="${png}" style="width:420px;height:420px"/>` +
         `<h1 style="font-size:20px;margin:18px 0 4px">${title}</h1>` +
         `<p style="font-size:13px;color:#555">${subtitle ?? ""}</p>` +
+        idBlock +
         `<p style="font-size:11px;color:#888;word-break:break-all">${url}</p>` +
         `</body></html>`,
     );
     w.document.close();
     w.focus();
-    setTimeout(() => w.print(), 350);
+    setTimeout(() => {
+      w.print();
+      onPrinted?.();
+    }, 350);
   }
 
   return (
@@ -114,6 +128,16 @@ export function QrSheet({
         <div className="mt-4 grid place-items-center rounded-2xl bg-white p-4">
           {png ? <img src={png} alt={`QR code for ${title}`} className="h-56 w-56" /> : <div className="h-56 w-56 animate-pulse rounded-xl bg-black/5" />}
         </div>
+
+        {codeLines?.length ? (
+          <div className="mt-3 text-center">
+            {codeLines.map((line) => (
+              <p key={line} className="text-[13px] font-bold tracking-[0.08em] uppercase">
+                {line}
+              </p>
+            ))}
+          </div>
+        ) : null}
 
         <p className="mt-3 break-all text-center font-mono text-[11px] text-muted-foreground">{url}</p>
 

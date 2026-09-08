@@ -23,6 +23,7 @@ import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminMoreRouteImport } from './routes/admin.more'
 import { Route as AdminOfferingsRouteImport } from './routes/admin.offerings'
 import { Route as AdminProvisioningRouteImport } from './routes/admin.provisioning'
+import { Route as AdminQrLookupRouteImport } from './routes/admin.qr-lookup'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSetupRouteImport } from './routes/admin.setup'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -129,6 +130,11 @@ const AdminOfferingsRoute = AdminOfferingsRouteImport.update({
 const AdminProvisioningRoute = AdminProvisioningRouteImport.update({
   id: '/provisioning',
   path: '/provisioning',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQrLookupRoute = AdminQrLookupRouteImport.update({
+  id: '/qr-lookup',
+  path: '/qr-lookup',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
@@ -330,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/admin/more': typeof AdminMoreRoute
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
+  '/admin/qr-lookup': typeof AdminQrLookupRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/setup': typeof AdminSetupRoute
   '/app/activity': typeof AppActivityRoute
@@ -381,6 +388,7 @@ export interface FileRoutesByTo {
   '/admin/more': typeof AdminMoreRoute
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
+  '/admin/qr-lookup': typeof AdminQrLookupRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/setup': typeof AdminSetupRoute
   '/app/activity': typeof AppActivityRoute
@@ -435,6 +443,7 @@ export interface FileRoutesById {
   '/admin/more': typeof AdminMoreRoute
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
+  '/admin/qr-lookup': typeof AdminQrLookupRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/setup': typeof AdminSetupRoute
   '/app/activity': typeof AppActivityRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/admin/more'
     | '/admin/offerings'
     | '/admin/provisioning'
+    | '/admin/qr-lookup'
     | '/admin/settings'
     | '/admin/setup'
     | '/app/activity'
@@ -541,6 +551,7 @@ export interface FileRouteTypes {
     | '/admin/more'
     | '/admin/offerings'
     | '/admin/provisioning'
+    | '/admin/qr-lookup'
     | '/admin/settings'
     | '/admin/setup'
     | '/app/activity'
@@ -594,6 +605,7 @@ export interface FileRouteTypes {
     | '/admin/more'
     | '/admin/offerings'
     | '/admin/provisioning'
+    | '/admin/qr-lookup'
     | '/admin/settings'
     | '/admin/setup'
     | '/app/activity'
@@ -753,6 +765,13 @@ declare module '@tanstack/react-router' {
       path: '/provisioning'
       fullPath: '/admin/provisioning'
       preLoaderRoute: typeof AdminProvisioningRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/qr-lookup': {
+      id: '/admin/qr-lookup'
+      path: '/qr-lookup'
+      fullPath: '/admin/qr-lookup'
+      preLoaderRoute: typeof AdminQrLookupRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/settings': {
@@ -1023,6 +1042,7 @@ interface AdminRouteChildren {
   AdminMoreRoute: typeof AdminMoreRoute
   AdminOfferingsRoute: typeof AdminOfferingsRoute
   AdminProvisioningRoute: typeof AdminProvisioningRoute
+  AdminQrLookupRoute: typeof AdminQrLookupRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSetupRoute: typeof AdminSetupRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -1048,6 +1068,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMoreRoute: AdminMoreRoute,
   AdminOfferingsRoute: AdminOfferingsRoute,
   AdminProvisioningRoute: AdminProvisioningRoute,
+  AdminQrLookupRoute: AdminQrLookupRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSetupRoute: AdminSetupRoute,
   AdminIndexRoute: AdminIndexRoute,
