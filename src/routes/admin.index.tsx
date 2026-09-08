@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taplocal/Field";
 import { networkActivity, networkOverview } from "@/lib/admin-data.functions";
 import { inquiryCounts } from "@/lib/inquiries.functions";
+import { placesOverview } from "@/lib/places.functions";
+
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
