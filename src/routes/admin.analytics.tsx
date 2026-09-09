@@ -57,11 +57,66 @@ function Analytics() {
 
       {a ? (
         <>
+          {a.diagnosticWarning ? (
+            <GlassPanel className="border-destructive/40 p-3.5 text-[13px] font-semibold text-destructive">
+              {a.diagnosticWarning}
+            </GlassPanel>
+          ) : null}
+
           <div className="grid grid-cols-3 gap-2.5">
-            <Stat label="Interactions" value={a.total} />
+            <Stat label={`Interactions (${days}d)`} value={a.total} />
             <Stat label="NFC taps" value={a.nfc} />
             <Stat label="QR scans" value={a.qr} />
           </div>
+
+          <div>
+            <SectionTitle>Matching periods ({a.timezone})</SectionTitle>
+            <GlassPanel className="divide-y divide-border">
+              {(
+                [
+                  ["Today", a.periods.today],
+                  ["Last 7 days", a.periods.days7],
+                  ["Last 30 days", a.periods.days30],
+                  ["All time", a.periods.allTime],
+                ] as const
+              ).map(([label, p]) => (
+                <div key={label} className="flex items-center justify-between gap-3 p-3 text-[13px]">
+                  <span className="font-semibold">{label}</span>
+                  <span className="text-muted-foreground">
+                    <span className="font-bold text-foreground">{p.total}</span> total · {p.nfc} NFC · {p.qr} QR
+                  </span>
+                </div>
+              ))}
+              <div className="p-3 text-[12px] text-muted-foreground">
+                Last tap: {a.periods.lastNfc ? new Date(a.periods.lastNfc).toLocaleString() : "never"} · Last scan:{" "}
+                {a.periods.lastQr ? new Date(a.periods.lastQr).toLocaleString() : "never"}
+              </div>
+            </GlassPanel>
+          </div>
+
+          <div>
+            <SectionTitle>Latest real customer interactions</SectionTitle>
+            <GlassPanel className="divide-y divide-border">
+              {a.latest.length === 0 ? (
+                <p className="p-4 text-[13px] text-muted-foreground">No customer interactions yet.</p>
+              ) : null}
+              {a.latest.map((l, i) => (
+                <div key={`${l.at}-${i}`} className="flex items-center justify-between gap-3 p-3 text-[13px]">
+                  <span className="min-w-0 truncate">
+                    <span className="font-semibold">{l.source}</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      · {l.business} · {l.plaque || l.slug} · {l.destination} · {l.device}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                    {new Date(l.at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </span>
+                </div>
+              ))}
+            </GlassPanel>
+          </div>
+
 
           <div>
             <SectionTitle>Daily volume</SectionTitle>

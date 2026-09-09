@@ -221,9 +221,9 @@ export const getPlaqueTracking = createServerFn({ method: "POST" })
     ]);
 
     const rows = events ?? [];
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const todayIso = startOfToday.toISOString();
+    const { startOfTodayInTimezone, REPORT_TIMEZONE } = await import("@/lib/report-time");
+    // Local reporting day, never a UTC day — an 11 PM Ottawa tap belongs to today.
+    const todayIso = startOfTodayInTimezone();
     const interactions = rows.filter((e) => e.event_type === "interaction");
     const today = interactions.filter((e) => e.occurred_at >= todayIso);
     const lastOf = (predicate: (e: (typeof rows)[number]) => boolean) =>
@@ -233,24 +233,112 @@ export const getPlaqueTracking = createServerFn({ method: "POST" })
       ok: true as const,
       error: null,
       tracking: {
+        timezone: REPORT_TIMEZONE,
         plaqueCode: plaque.plaque_code,
         publicSlug: plaque.public_slug,
         status: plaque.status,
         business: business?.name ?? null,
         businessAssigned: Boolean(plaque.business_id),
+        locationAssigned: Boolean(plaque.location_id),
         destinationType: destination?.destination_type ?? null,
         destinationUrl: destination?.url ?? null,
         lastNfcTap: lastOf((e) => e.event_type === "interaction" && e.source_type === "nfc"),
         lastQrScan: lastOf((e) => e.event_type === "interaction" && e.source_type === "qr"),
+        lastInteraction: lastOf((e) => e.event_type === "interaction"),
         lastEvent: rows[0] ? { type: rows[0].event_type, at: rows[0].occurred_at } : null,
         eventsToday: rows.filter((e) => e.occurred_at >= todayIso).length,
         interactionsToday: today.length,
         nfcToday: today.filter((e) => e.source_type === "nfc").length,
         qrToday: today.filter((e) => e.source_type === "qr").length,
         interactionsAllTime: interactions.length,
+        nfcAllTime: interactions.filter((e) => e.source_type === "nfc").length,
+        qrAllTime: interactions.filter((e) => e.source_type === "qr").length,
         testEvents: rows.filter((e) => e.event_type === "manufacturing_test").length,
         setupOpens: rows.filter((e) => e.event_type === "setup_open").length,
         inactiveTaps: rows.filter((e) => e.event_type === "inactive_tap").length,
       },
     };
   });
+
+export type TrackingCheckLine = { label: string; ok: boolean; detail: string };
+
+/**
+ * End-to-end tracking check for one plaque.
+ *
+ * Every probe uses the excluded `tl_test=1` flag or writes an explicitly
+ * diagnostic event, so running this never inflates customer analytics.
+ */
+export const runTrackingCheck = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ plaqueId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const caller = await gate();
+    if (!caller.ok) return { ok: false as const, error: caller.error, checks: [] as TrackingCheckLine[] };
+
+    const client = await db();
+    const checks: TrackingCheckLine[] = [];
+    const add = (label: string, passed: boolean, detail: string) => checks.push({ label, ok: passed, detail });
+
+    const { data: plaque } = await client
+      .from("plaques")
+      .select("id, plaque_code, public_slug, status, business_id, location_id")
+      .eq("id", data.plaqueId)
+      .maybeSingle();
+
+    if (!plaque) {
+      add("Plaque exists", false, "No plaque record found");
+      return { ok: true as const, error: null, checks };
+    }
+
+    add("Plaque exists", true, plaque.plaque_code);
+    add("Slug resolves", Boolean(plaque.public_slug), plaque.public_slug ?? "missing");
+    add("Business assigned", Boolean(plaque.business_id), plaque.business_id ? "Assigned" : "No business");
+    add("Location assigned", Boolean(plaque.location_id), plaque.location_id ? "Assigned" : "No location");
+    add(
+      "Plaque live",
+      plaque.status === "active",
+      plaque.status === "paused" ? "Paused — taps record as inactive_tap" : plaque.status,
+    );
+
+    const { data: destination } = await client
+      .from("destinations")
+      .select("id, destination_type, url, active")
+      .eq("plaque_id", plaque.id)
+      .is("effective_to", null)
+      .maybeSingle();
+    add("Destination exists", Boolean(destination), destination?.destination_type ?? "None — taps record as setup_open");
+    add("Destination active", Boolean(destination?.active && destination.url), destination?.url ?? "—");
+
+    // Route probes carry tl_test=1, so they are never counted as customer taps.
+    const { nfcUrl, qrUrl, testUrl } = await import("@/lib/smartlink");
+    const probe = async (label: string, url: string) => {
+      try {
+        const res = await fetch(testUrl(url), { redirect: "manual" });
+        add(label, res.status > 0 && res.status < 500, `HTTP ${res.status}`);
+      } catch (err) {
+        add(label, false, err instanceof Error ? err.message : "unreachable");
+      }
+    };
+    await probe("/n route reachable", nfcUrl(plaque.public_slug));
+    await probe("/q route reachable", qrUrl(plaque.public_slug));
+
+    const { error: writeError } = await client.from("events").insert({
+      business_id: plaque.business_id,
+      plaque_id: plaque.id,
+      location_id: plaque.location_id,
+      event_type: "manufacturing_test",
+      source_type: "nfc",
+      occurred_at: new Date().toISOString(),
+      metadata: { diagnostic: true, tl_test: true },
+    });
+    add("Events table writable", !writeError, writeError ? writeError.message : "Diagnostic event saved (not counted)");
+
+    const { count, error: readError } = await client
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("plaque_id", plaque.id)
+      .eq("event_type", "interaction");
+    add("Analytics can read events", !readError, readError ? readError.message : `${count ?? 0} interactions on record`);
+
+    return { ok: true as const, error: null, checks };
+  });
+

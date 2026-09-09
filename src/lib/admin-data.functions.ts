@@ -1,9 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  REPORT_TIMEZONE,
+  dateKeyInTimezone,
+  startOfTodayInTimezone,
+  startOfWindowInTimezone,
+} from "@/lib/report-time";
 
 /**
  * Platform-owner data access. Every function verifies the caller is a TapLocal
  * admin with their OWN session first, and only then uses the privileged client.
+ *
+ * All reporting days are local days in the TapLocal reporting timezone
+ * (America/Toronto), never UTC days — see src/lib/report-time.ts.
  */
 
 type Denied = { ok: false; error: "unauthorized" | "forbidden" };
@@ -18,15 +27,46 @@ async function db() {
   return supabaseAdmin;
 }
 
+/** Raw rolling window (used for query bounds, not for "day" reporting). */
 function since(days: number) {
   return new Date(Date.now() - days * 86400000).toISOString();
 }
 
-function startOfToday() {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  return d.toISOString();
+/** Local midnight that starts a reporting window of N whole local days. */
+function windowStart(days: number) {
+  return startOfWindowInTimezone(days);
 }
+
+function startOfToday() {
+  return startOfTodayInTimezone();
+}
+
+type SourceRow = { event_type: string; source_type: string | null; occurred_at: string };
+
+/** Total / NFC / QR for one window — always matching periods, never mixed scopes. */
+function sourceCounts(interactions: SourceRow[], from?: string) {
+  const list = from ? interactions.filter((e) => e.occurred_at >= from) : interactions;
+  const nfc = list.filter((e) => e.source_type === "nfc").length;
+  const qr = list.filter((e) => e.source_type === "qr").length;
+  return { total: list.length, nfc, qr, consistent: list.length === nfc + qr };
+}
+
+/** Today / 7d / 30d / all-time, each with its own NFC + QR split. */
+function periodStats(interactions: SourceRow[]) {
+  const lastOf = (predicate: (e: SourceRow) => boolean) =>
+    interactions.filter(predicate).reduce<string | null>((acc, e) => (!acc || e.occurred_at > acc ? e.occurred_at : acc), null);
+  return {
+    timezone: REPORT_TIMEZONE,
+    today: sourceCounts(interactions, startOfToday()),
+    days7: sourceCounts(interactions, windowStart(7)),
+    days30: sourceCounts(interactions, windowStart(30)),
+    allTime: sourceCounts(interactions),
+    lastInteraction: lastOf(() => true),
+    lastNfc: lastOf((e) => e.source_type === "nfc"),
+    lastQr: lastOf((e) => e.source_type === "qr"),
+  };
+}
+
 
 /** Signed-in identity + whether they hold the admin role. */
 export const adminIdentity = createServerFn({ method: "POST" }).handler(async () => {
@@ -77,13 +117,12 @@ export const networkOverview = createServerFn({ method: "POST" }).handler(async 
   const { data: rawEvents } = await client
     .from("events")
     .select("business_id, plaque_id, event_type, source_type, occurred_at")
-    .gte("occurred_at", since(30))
+    .gte("occurred_at", since(45))
     .limit(50000);
   const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
 
   const interactions = events.filter((e) => e.event_type === "interaction");
-  const today = startOfToday();
-  const in7 = since(7);
+  const stats = periodStats(interactions);
   const monthStart = new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1).toISOString();
 
   const countStatus = (s: string) => plaques.filter((p) => p.status === s).length;
@@ -100,44 +139,57 @@ export const networkOverview = createServerFn({ method: "POST" }).handler(async 
     plaquesPacked: countStatus("packed"),
     plaquesFaulty: countStatus("faulty"),
     plaquesActivatedThisMonth: plaques.filter((p) => (p.activated_at ?? "") >= monthStart).length,
-    interactionsToday: interactions.filter((e) => e.occurred_at >= today).length,
-    nfcToday: interactions.filter((e) => e.occurred_at >= today && e.source_type === "nfc").length,
-    qrToday: interactions.filter((e) => e.occurred_at >= today && e.source_type === "qr").length,
-    interactions7: interactions.filter((e) => e.occurred_at >= in7).length,
-    interactions30: interactions.length,
+    /** Each period carries its own NFC/QR split — never mix a period total with all-time sources. */
+    stats,
+    interactionsToday: stats.today.total,
+    nfcToday: stats.today.nfc,
+    qrToday: stats.today.qr,
+    interactions7: stats.days7.total,
+    interactions30: stats.days30.total,
   };
 });
 
 
-/** Newest real taps, scans and account changes. Demo activity is excluded. */
+
+/**
+ * Newest real customer taps/scans and account changes.
+ *
+ * The customer feed shows ONLY event_type = 'interaction', so a single tap can
+ * never appear twice (once as the interaction and once as redirect telemetry).
+ * Operational rows (redirect telemetry, tests, unconfigured taps, taps while
+ * paused) go into a separate diagnostic feed.
+ */
 export const networkActivity = createServerFn({ method: "POST" }).handler(async () => {
   const caller = await gate();
-  if (!caller.ok) return { ok: false as const, error: caller.error, items: [] };
+  if (!caller.ok) return { ok: false as const, error: caller.error, items: [], diagnostics: [] };
   const client = await db();
   const scope = await scopeFor(client);
 
   const { data: rawEvents } = await client
     .from("events")
-    .select("business_id, plaque_id, event_type, source_type, occurred_at")
+    .select("business_id, plaque_id, event_type, source_type, destination_type, device_family, occurred_at")
     .order("occurred_at", { ascending: false })
-    .limit(200);
+    .limit(400);
   const { data: rawActions } = await client
     .from("action_history")
     .select("business_id, plaque_id, action_type, initiated_by, created_at")
     .order("created_at", { ascending: false })
     .limit(200);
 
-  const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e)).slice(0, 25);
+  const visible = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
+  const events = visible.filter((e) => e.event_type === "interaction").slice(0, 25);
+  const opsEvents = visible
+    .filter((e) => e.event_type !== "interaction" && e.event_type !== "redirect_success")
+    .slice(0, 15);
   const actions = (rawActions ?? []).filter((a) => !scope.isDemoRow(a)).slice(0, 25);
 
   const businessIds = new Set<string>();
   const plaqueIds = new Set<string>();
-  for (const e of events) {
+  for (const e of [...events, ...opsEvents]) {
     if (e.business_id) businessIds.add(e.business_id);
     if (e.plaque_id) plaqueIds.add(e.plaque_id);
   }
   for (const a of actions) {
-
     businessIds.add(a.business_id);
     if (a.plaque_id) plaqueIds.add(a.plaque_id);
   }
@@ -146,20 +198,20 @@ export const networkActivity = createServerFn({ method: "POST" }).handler(async 
     ? await client.from("businesses").select("id, name").in("id", [...businessIds])
     : { data: [] };
   const { data: plaqueRows } = plaqueIds.size
-    ? await client.from("plaques").select("id, plaque_code, plaque_name, placement_type").in("id", [...plaqueIds])
+    ? await client.from("plaques").select("id, plaque_code, plaque_name, public_slug, placement_type").in("id", [...plaqueIds])
     : { data: [] };
 
   const bizName = new Map((bizRows ?? []).map((b) => [b.id, b.name]));
   const plaqueMap = new Map((plaqueRows ?? []).map((p) => [p.id, p]));
 
   const items = [
-    ...(events ?? []).map((e) => ({
+    ...events.map((e) => ({
       kind: "event" as const,
       at: e.occurred_at,
       business: e.business_id ? (bizName.get(e.business_id) ?? "Unassigned") : "Unassigned",
       plaque: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.plaque_name ?? plaqueMap.get(e.plaque_id)?.plaque_code ?? "") : "",
       placement: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.placement_type ?? "") : "",
-      label: e.source_type === "qr" ? "QR scan" : e.source_type === "nfc" ? "NFC tap" : e.event_type,
+      label: e.source_type === "qr" ? "QR scan" : "NFC tap",
     })),
     ...(actions ?? []).map((a) => ({
       kind: "action" as const,
@@ -173,8 +225,24 @@ export const networkActivity = createServerFn({ method: "POST" }).handler(async 
     .sort((x, y) => (x.at < y.at ? 1 : -1))
     .slice(0, 30);
 
-  return { ok: true as const, items };
+  const OPS_LABEL: Record<string, string> = {
+    manufacturing_test: "Admin test link — not counted",
+    setup_open: "Tapped but not configured",
+    inactive_tap: "Tapped while paused",
+    redirect_failure: "Redirect failed",
+  };
+
+  const diagnostics = opsEvents.map((e) => ({
+    at: e.occurred_at,
+    business: e.business_id ? (bizName.get(e.business_id) ?? "Unassigned") : "Unassigned",
+    plaque: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.plaque_code ?? "") : "",
+    source: e.source_type === "qr" ? "QR" : e.source_type === "nfc" ? "NFC" : "—",
+    label: OPS_LABEL[e.event_type] ?? e.event_type.replace(/_/g, " "),
+  }));
+
+  return { ok: true as const, items, diagnostics };
 });
+
 
 /** Every business on the platform, with plaque counts and recent engagement. */
 export const listAllBusinesses = createServerFn({ method: "POST" })
@@ -381,14 +449,23 @@ export const getBusinessDetail = createServerFn({ method: "POST" })
           email: identities[m.user_id]?.email ?? null,
           name: identities[m.user_id]?.name ?? null,
         })),
-        performance: {
-          today: interactions.filter((e) => e.occurred_at >= startOfToday()).length,
-          days7: inWindow(7),
-          days30: inWindow(30),
-          allTime: interactions.length,
-          nfc: interactions.filter((e) => e.source_type === "nfc").length,
-          qr: interactions.filter((e) => e.source_type === "qr").length,
-        },
+        performance: (() => {
+          const s = periodStats(interactions);
+          return {
+            timezone: s.timezone,
+            today: s.today.total,
+            days7: s.days7.total,
+            days30: s.days30.total,
+            allTime: s.allTime.total,
+            nfc: s.allTime.nfc,
+            qr: s.allTime.qr,
+            lastInteraction: s.lastInteraction,
+            lastNfc: s.lastNfc,
+            lastQr: s.lastQr,
+            periods: s,
+          };
+        })(),
+
         history: history ?? [],
       },
     };
@@ -569,18 +646,23 @@ export const getPlaqueRecord = createServerFn({ method: "POST" })
         destinations: destinations ?? [],
         placements: placements ?? [],
         programmingEvents: progEvents ?? [],
-        performance: {
-          today: interactions.filter((e) => e.occurred_at >= startOfToday()).length,
-          days7: inWindow(7),
-          days30: inWindow(30),
-          allTime: interactions.length,
-          nfc: interactions.filter((e) => e.source_type === "nfc").length,
-          qr: interactions.filter((e) => e.source_type === "qr").length,
-          lastInteraction: interactions.reduce<string | null>(
-            (acc, e) => (!acc || e.occurred_at > acc ? e.occurred_at : acc),
-            null,
-          ),
-        },
+        performance: (() => {
+          const s = periodStats(interactions);
+          return {
+            timezone: s.timezone,
+            today: s.today.total,
+            days7: s.days7.total,
+            days30: s.days30.total,
+            allTime: s.allTime.total,
+            nfc: s.allTime.nfc,
+            qr: s.allTime.qr,
+            lastInteraction: s.lastInteraction,
+            lastNfc: s.lastNfc,
+            lastQr: s.lastQr,
+            periods: s,
+          };
+        })(),
+
       },
     };
   });
@@ -594,14 +676,20 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const client = await db();
     const scope = await scopeFor(client);
 
-    const [{ data: rawEvents }, { data: rawPlaques }, { data: rawBusinesses }] = await Promise.all([
+    const [{ data: rawEvents }, { data: rawPlaques }, { data: rawBusinesses }, { data: rawAllTime }] = await Promise.all([
       client
         .from("events")
-        .select("business_id, plaque_id, event_type, source_type, destination_type, occurred_at")
-        .gte("occurred_at", since(data.days))
+        .select("business_id, plaque_id, event_type, source_type, destination_type, device_family, occurred_at")
+        .gte("occurred_at", windowStart(data.days))
+        .order("occurred_at", { ascending: false })
         .limit(100000),
-      client.from("plaques").select("id, plaque_code, plaque_name, placement_type, business_id, status"),
+      client.from("plaques").select("id, plaque_code, plaque_name, public_slug, placement_type, business_id, status"),
       client.from("businesses").select("id, name, is_demo"),
+      client
+        .from("events")
+        .select("business_id, plaque_id, event_type, source_type, occurred_at")
+        .eq("event_type", "interaction")
+        .limit(100000),
     ]);
 
     const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
@@ -609,9 +697,9 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const businesses = (rawBusinesses ?? []).filter((b) => !b.is_demo);
 
     const interactions = events.filter((e) => e.event_type === "interaction");
+    const allTimeInteractions = (rawAllTime ?? []).filter((e) => !scope.isDemoRow(e));
     const bizName = new Map(businesses.map((b) => [b.id, b.name]));
     const plaqueMap = new Map(plaques.map((p) => [p.id, p]));
-
 
     const tally = <T extends string>(list: (T | null)[]) => {
       const out: Record<string, number> = {};
@@ -622,9 +710,10 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const perPlaque: Record<string, number> = {};
     for (const e of interactions) if (e.plaque_id) perPlaque[e.plaque_id] = (perPlaque[e.plaque_id] ?? 0) + 1;
 
+    // Days are local reporting days, so an 11 PM Ottawa tap lands on the right bar.
     const perDay: Record<string, number> = {};
     for (const e of interactions) {
-      const day = e.occurred_at.slice(0, 10);
+      const day = dateKeyInTimezone(e.occurred_at);
       perDay[day] = (perDay[day] ?? 0) + 1;
     }
 
@@ -633,16 +722,40 @@ export const networkAnalytics = createServerFn({ method: "POST" })
 
     const livePlaques = (plaques ?? []).filter((p) => p.status === "active");
 
+    const stats = periodStats(allTimeInteractions);
+    const windowCounts = sourceCounts(interactions);
+    // Every interaction must be NFC or QR. If not, tracking needs investigating.
+    const diagnosticWarning =
+      !windowCounts.consistent || !stats.today.consistent || !stats.allTime.consistent
+        ? "Tracking check: some interactions have no NFC/QR source. Total does not equal NFC + QR."
+        : null;
+
+    const latest = interactions.slice(0, 25).map((e) => ({
+      at: e.occurred_at,
+      business: e.business_id ? (bizName.get(e.business_id) ?? "Unassigned") : "Unassigned",
+      plaque: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.plaque_code ?? "") : "",
+      slug: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.public_slug ?? "") : "",
+      plaqueId: e.plaque_id,
+      source: e.source_type === "qr" ? "QR" : "NFC",
+      destination: e.destination_type ?? "—",
+      device: e.device_family ?? "—",
+    }));
+
     return {
       ok: true as const,
       analytics: {
         days: data.days,
-        total: interactions.length,
-        nfc: interactions.filter((e) => e.source_type === "nfc").length,
-        qr: interactions.filter((e) => e.source_type === "qr").length,
+        timezone: REPORT_TIMEZONE,
+        total: windowCounts.total,
+        nfc: windowCounts.nfc,
+        qr: windowCounts.qr,
+        periods: stats,
+        diagnosticWarning,
+        latest,
         perDay: Object.entries(perDay).sort((a, b) => (a[0] < b[0] ? -1 : 1)),
         placements: tally(interactions.map((e) => (e.plaque_id ? (plaqueMap.get(e.plaque_id)?.placement_type ?? null) : null))),
         destinations: tally(interactions.map((e) => e.destination_type)),
+
         topPlaques: Object.entries(perPlaque)
           .sort((a, b) => b[1] - a[1])
           .slice(0, 10)

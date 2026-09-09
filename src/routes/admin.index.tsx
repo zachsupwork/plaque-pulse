@@ -113,15 +113,27 @@ function AdminDashboard() {
 
 
       <div>
-        <SectionTitle>Today</SectionTitle>
+        <SectionTitle>Today{o ? ` (${o.stats.timezone})` : ""}</SectionTitle>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-          <Stat label="Interactions" value={o ? o.interactionsToday : "—"} />
-          <Stat label="NFC" value={o ? o.nfcToday : "—"} />
-          <Stat label="QR" value={o ? o.qrToday : "—"} />
+          <Stat label="Interactions" value={o ? o.stats.today.total : "—"} />
+          <Stat label="NFC" value={o ? o.stats.today.nfc : "—"} />
+          <Stat label="QR" value={o ? o.stats.today.qr : "—"} />
           <Stat label="Active businesses" value={o ? o.businessesActive : "—"} />
           <Stat label="Active plaques" value={o ? o.plaquesActive : "—"} />
         </div>
+        {o ? (
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            Last NFC tap: {o.stats.lastNfc ? ago(o.stats.lastNfc) : "never"} · Last QR scan:{" "}
+            {o.stats.lastQr ? ago(o.stats.lastQr) : "never"}
+          </p>
+        ) : null}
+        {o && !o.stats.today.consistent ? (
+          <p className="mt-1.5 text-[12px] font-semibold text-destructive">
+            Tracking check: today's total does not equal NFC + QR.
+          </p>
+        ) : null}
       </div>
+
 
       <div>
         <SectionTitle>Quick actions</SectionTitle>
@@ -227,6 +239,26 @@ function AdminDashboard() {
           ))}
         </GlassPanel>
       </div>
+
+      {(activity.data?.diagnostics ?? []).length ? (
+        <div>
+          <SectionTitle>Diagnostics — not counted as customer taps</SectionTitle>
+          <GlassPanel className="divide-y divide-border">
+            {(activity.data?.diagnostics ?? []).map((d, i) => (
+              <div key={`${d.at}-${i}`} className="flex items-center justify-between gap-3 p-3.5">
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold">{d.business}</p>
+                  <p className="truncate text-[12px] text-muted-foreground">
+                    {[d.plaque, d.source, d.label].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+                <span className="shrink-0 text-[11px] text-muted-foreground">{ago(d.at)}</span>
+              </div>
+            ))}
+          </GlassPanel>
+        </div>
+      ) : null}
+
     </div>
   );
 }

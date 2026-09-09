@@ -4,25 +4,36 @@ import type { Database } from "@/integrations/supabase/types";
 type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
 
 /**
- * Persist interaction events before redirecting. Analytics correctness beats a
- * few milliseconds of latency, so these inserts are awaited, never fire-and-forget.
- * A logging failure is recorded server-side but never blocks the visitor.
+ * Persist one event before redirecting. Analytics correctness beats a few
+ * milliseconds of latency, so this is awaited, never fire-and-forget.
+ *
+ * The canonical customer interaction is written on its own, never batched with
+ * telemetry: a telemetry failure must never take the interaction down with it.
+ * A logging failure is recorded loudly server-side but never blocks the visitor.
  */
-async function logEvents(rows: EventInsert[]) {
+async function logEvent(row: EventInsert, context: { slug: string; source: string }) {
   try {
-    const { error } = await supabaseAdmin.from("events").insert(rows);
+    const { error } = await supabaseAdmin.from("events").insert(row);
     if (error) {
       console.error(
-        `[TapLocal] EVENT LOGGING FAILED plaque=${rows[0]?.plaque_id ?? "unknown"} reason=${error.message}`,
+        `[TapLocal] ${row.event_type === "interaction" ? "TAPLOCAL INTERACTION SAVE FAILED" : "EVENT LOGGING FAILED"}` +
+          ` event=${row.event_type} plaque=${row.plaque_id ?? "unknown"} slug=${context.slug}` +
+          ` source=${context.source} at=${new Date().toISOString()} code=${error.code ?? "none"} reason=${error.message}`,
       );
       return false;
     }
     return true;
   } catch (err) {
-    console.error(`[TapLocal] EVENT LOGGING FAILED plaque=${rows[0]?.plaque_id ?? "unknown"}`, err);
+    console.error(
+      `[TapLocal] ${row.event_type === "interaction" ? "TAPLOCAL INTERACTION SAVE FAILED" : "EVENT LOGGING FAILED"}` +
+        ` event=${row.event_type} plaque=${row.plaque_id ?? "unknown"} slug=${context.slug}` +
+        ` source=${context.source} at=${new Date().toISOString()}`,
+      err,
+    );
     return false;
   }
 }
+
 
 /** Resolve a public plaque slug to its live destination and record the interaction. */
 export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", request: Request) {
@@ -50,17 +61,20 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
     occurred_at: occurredAt,
   } satisfies Partial<EventInsert>;
 
+  const ctx = { slug, source };
+
   // Disabled by an admin: the tag itself still works, so record the tap as an
   // operational inactive_tap (never a manufacturing test) and show the inactive page.
   if (plaque.status === "paused") {
-    await logEvents([
+    await logEvent(
       {
         ...base,
         event_type: isTest ? "manufacturing_test" : "inactive_tap",
         anonymous_visitor_key: isTest ? null : key,
         metadata: { inactive: true, ...(isTest ? { tl_test: true } : {}) },
       },
-    ]);
+      ctx,
+    );
     return fallback(
       "This TapLocal plaque is currently inactive.",
       "The tag is working — its destination has been turned off. Contact TapLocal to switch it back on.",
@@ -78,13 +92,14 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
   // Not set up yet: the tap itself proves the tag works, so record it for
   // troubleshooting (never as a customer interaction) and send them into setup.
   if (!destination?.url) {
-    await logEvents([
+    await logEvent(
       {
         ...base,
         event_type: isTest ? "manufacturing_test" : "setup_open",
         metadata: { unconfigured: true, ...(isTest ? { tl_test: true } : {}) },
       },
-    ]);
+      ctx,
+    );
     return new Response(null, {
       status: 307,
       headers: { Location: `/setup/${slug}?source=${source}`, "Cache-Control": "no-store" },
@@ -100,15 +115,27 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
 
   if (isTest) {
     // Testing/debugging only — excluded from every customer analytics counter.
-    await logEvents([{ ...shared, event_type: "manufacturing_test", metadata: { tl_test: true } }]);
+    await logEvent({ ...shared, event_type: "manufacturing_test", metadata: { tl_test: true } }, ctx);
   } else {
-    // Exactly one canonical customer interaction, plus operational redirect telemetry.
+    // The canonical customer interaction is saved FIRST and on its own.
     // Analytics counts only event_type = 'interaction'.
-    await logEvents([
+    const interactionSaved = await logEvent(
       { ...shared, event_type: "interaction", anonymous_visitor_key: key, metadata: {} },
-      { ...shared, event_type: "redirect_success", anonymous_visitor_key: key, metadata: { telemetry: true } },
-    ]);
+      ctx,
+    );
+
+    // Operational telemetry is independent: if it fails, the interaction stands.
+    await logEvent(
+      {
+        ...shared,
+        event_type: "redirect_success",
+        anonymous_visitor_key: key,
+        metadata: { telemetry: true, interaction_saved: interactionSaved },
+      },
+      ctx,
+    );
   }
+
 
   return new Response(null, {
     status: 307,

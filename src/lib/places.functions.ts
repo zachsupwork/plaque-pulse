@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { extractSmartLinkSlug } from "@/lib/smartlink";
+import { REPORT_TIMEZONE, startOfTodayInTimezone, startOfWindowInTimezone } from "@/lib/report-time";
 
 /**
  * The Places management centre.
@@ -25,11 +26,16 @@ function since(days: number) {
   return new Date(Date.now() - days * 86_400_000).toISOString();
 }
 
+/** Local reporting day boundary (America/Toronto), never a UTC day. */
 function startOfToday() {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  return d.toISOString();
+  return startOfTodayInTimezone();
 }
+
+/** Whole local days including today, for 7d/30d style windows. */
+function windowStart(days: number) {
+  return startOfWindowInTimezone(days);
+}
+
 
 /** Place ids are the location id, or b_<businessId> when a business has no location row. */
 export function placeKeyForBusiness(businessId: string) {
@@ -165,7 +171,7 @@ type BuiltPlace = ReturnType<typeof buildPlaces>[number];
 
 function buildPlaces(net: Awaited<ReturnType<typeof loadNetwork>>) {
   const today = startOfToday();
-  const in7 = since(7);
+  const in7 = windowStart(7);
 
   const progBy = new Map(net.programming.map((p) => [p.plaque_id, p]));
   const destBy = new Map(net.destinations.map((d) => [d.plaque_id, d]));
@@ -503,7 +509,7 @@ export const getPlaceDetail = createServerFn({ method: "POST" })
     const placementById = new Map(place.plaques.map((p) => [p.id, p.placement]));
 
     const interactions = rawEvents ?? [];
-    const inWindow = (days: number) => interactions.filter((e) => e.occurred_at >= since(days)).length;
+    const inWindow = (days: number) => interactions.filter((e) => e.occurred_at >= windowStart(days)).length;
 
     const perPlaque = place.plaques.map((p) => ({
       id: p.id,
@@ -578,12 +584,22 @@ export const getPlaceDetail = createServerFn({ method: "POST" })
           .filter((p) => p.businessId === place.businessId && p.key !== place.key)
           .map((p) => ({ key: p.key, name: p.locationName, city: p.city, plaqueCount: p.plaqueCount })),
         analytics: {
+          timezone: REPORT_TIMEZONE,
           today: interactions.filter((e) => e.occurred_at >= startOfToday()).length,
+          todayNfc: interactions.filter((e) => e.occurred_at >= startOfToday() && e.source_type === "nfc").length,
+          todayQr: interactions.filter((e) => e.occurred_at >= startOfToday() && e.source_type === "qr").length,
           days7: inWindow(7),
+          days7Nfc: interactions.filter((e) => e.occurred_at >= windowStart(7) && e.source_type === "nfc").length,
+          days7Qr: interactions.filter((e) => e.occurred_at >= windowStart(7) && e.source_type === "qr").length,
           days30: inWindow(30),
           allTime: allTimeTotal,
           nfc: interactions.filter((e) => e.source_type === "nfc").length,
           qr: interactions.filter((e) => e.source_type === "qr").length,
+          lastInteraction: interactions.reduce<string | null>(
+            (acc, e) => (!acc || e.occurred_at > acc ? e.occurred_at : acc),
+            null,
+          ),
+
           perPlaque: perPlaque
             .map((p) => ({ ...p, share: allTimeTotal ? Math.round((p.allTime / allTimeTotal) * 100) : 0 }))
             .sort((a, b) => b.allTime - a.allTime),

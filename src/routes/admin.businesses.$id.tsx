@@ -109,9 +109,9 @@ function BusinessRecord() {
 
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <Stat label="Today" value={performance.today} />
-        <Stat label="7 days" value={performance.days7} />
-        <Stat label="30 days" value={performance.days30} />
+        <Stat label="Today" value={performance.today} hint={`${performance.periods.today.nfc} NFC · ${performance.periods.today.qr} QR`} />
+        <Stat label="7 days" value={performance.days7} hint={`${performance.periods.days7.nfc} NFC · ${performance.periods.days7.qr} QR`} />
+        <Stat label="30 days" value={performance.days30} hint={`${performance.periods.days30.nfc} NFC · ${performance.periods.days30.qr} QR`} />
         <Stat label="All time" value={performance.allTime} hint={`${performance.nfc} NFC · ${performance.qr} QR`} />
       </div>
 
