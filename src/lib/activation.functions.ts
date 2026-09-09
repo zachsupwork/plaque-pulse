@@ -40,11 +40,12 @@ export const lookupPlaqueBySlug = createServerFn({ method: "POST" })
 export const lookupActivation = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ token: z.string().min(6).max(200) }).parse(data))
   .handler(async ({ data }) => {
-    if (data.token === DEMO_TOKEN) return { demo: true as const, rateLimited: false, plaque: DEMO_PLAQUE };
+    if (data.token === DEMO_TOKEN)
+      return { demo: true as const, rateLimited: false, plaque: DEMO_PLAQUE, preconfigured: null };
 
     const { allowActivationAttempt, activationHashes } = await import("./activation-guard.server");
     if (!(await allowActivationAttempt()))
-      return { demo: false as const, rateLimited: true, plaque: null };
+      return { demo: false as const, rateLimited: true, plaque: null, preconfigured: null };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const hashes = await activationHashes(data.token);

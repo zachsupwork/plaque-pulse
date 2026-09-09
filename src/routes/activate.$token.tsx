@@ -229,6 +229,7 @@ function ActivatePage() {
   }
 
   const activePlaque = plaque.data.plaque;
+  const preconfigured = plaque.data.preconfigured;
   const searchResults = results.data?.results ?? [];
   const selectedGoal = GOALS.find((g) => g.value === goal)!;
 
@@ -243,14 +244,19 @@ function ActivatePage() {
           Plaque {activePlaque.plaque_code}
         </p>
 
-        {mode === "start" ? (
+        {mode === "start" && preconfigured ? (
+          <FoundPlaque token={token} plaqueCode={activePlaque.plaque_code} info={preconfigured} />
+        ) : null}
+
+        {mode === "start" && !preconfigured ? (
           <>
             <h1 className="mt-2 font-display text-[27px] leading-tight font-bold tracking-tight text-balance">
-              Let's get your plaque working.
+              Let's set up your plaque.
             </h1>
             <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground text-pretty">
               About a minute. Nothing to install.
             </p>
+
 
             <div className="mt-5 space-y-3">
               <BigChoice
