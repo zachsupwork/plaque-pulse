@@ -267,6 +267,82 @@ export type Database = {
         }
         Relationships: []
       }
+      attribution_candidates: {
+        Row: {
+          badge: string
+          business_id: string | null
+          confidence: number
+          created_at: string
+          detail: string | null
+          event_id: string
+          evidence: Json
+          external_ref: string | null
+          headline: string
+          id: string
+          kind: string
+          occurred_at: string | null
+          plaque_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          badge?: string
+          business_id?: string | null
+          confidence?: number
+          created_at?: string
+          detail?: string | null
+          event_id: string
+          evidence?: Json
+          external_ref?: string | null
+          headline: string
+          id?: string
+          kind: string
+          occurred_at?: string | null
+          plaque_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          badge?: string
+          business_id?: string | null
+          confidence?: number
+          created_at?: string
+          detail?: string | null
+          event_id?: string
+          evidence?: Json
+          external_ref?: string | null
+          headline?: string
+          id?: string
+          kind?: string
+          occurred_at?: string | null
+          plaque_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attribution_candidates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attribution_candidates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attribution_candidates_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_members: {
         Row: {
           business_id: string
@@ -403,6 +479,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contributor_watchlist: {
+        Row: {
+          active: boolean
+          business_id: string | null
+          contributor_id: string | null
+          created_at: string
+          created_by_user_id: string | null
+          display_name: string
+          id: string
+          notes: string | null
+          profile_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          business_id?: string | null
+          contributor_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          display_name: string
+          id?: string
+          notes?: string | null
+          profile_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string | null
+          contributor_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          display_name?: string
+          id?: string
+          notes?: string | null
+          profile_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contributor_watchlist_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversation_messages: {
         Row: {
@@ -617,6 +740,63 @@ export type Database = {
           },
         ]
       }
+      evidence_uploads: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          extracted: Json
+          id: string
+          kind: string
+          match_distance: number | null
+          note: string | null
+          observation_id: string | null
+          perceptual_hash: string | null
+          thumbnail: string | null
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          extracted?: Json
+          id?: string
+          kind?: string
+          match_distance?: number | null
+          note?: string | null
+          observation_id?: string | null
+          perceptual_hash?: string | null
+          thumbnail?: string | null
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          extracted?: Json
+          id?: string
+          kind?: string
+          match_distance?: number | null
+          note?: string | null
+          observation_id?: string | null
+          perceptual_hash?: string | null
+          thumbnail?: string | null
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_uploads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_uploads_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "maps_photo_observations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experiment_variants: {
         Row: {
           configuration: Json
@@ -734,6 +914,81 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_review_observations: {
+        Row: {
+          author_name: string | null
+          author_photo_url: string | null
+          author_profile_url: string | null
+          business_id: string
+          checked_at: string
+          created_at: string
+          evidence: Json
+          external_key: string
+          first_seen_at: string
+          google_place_id: string | null
+          id: string
+          location_id: string | null
+          published_at: string | null
+          rating: number | null
+          relative_time: string | null
+          review_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          author_photo_url?: string | null
+          author_profile_url?: string | null
+          business_id: string
+          checked_at?: string
+          created_at?: string
+          evidence?: Json
+          external_key: string
+          first_seen_at?: string
+          google_place_id?: string | null
+          id?: string
+          location_id?: string | null
+          published_at?: string | null
+          rating?: number | null
+          relative_time?: string | null
+          review_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          author_photo_url?: string | null
+          author_profile_url?: string | null
+          business_id?: string
+          checked_at?: string
+          created_at?: string
+          evidence?: Json
+          external_key?: string
+          first_seen_at?: string
+          google_place_id?: string | null
+          id?: string
+          location_id?: string | null
+          published_at?: string | null
+          rating?: number | null
+          relative_time?: string | null
+          review_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_review_observations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_review_observations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -867,6 +1122,100 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maps_photo_observations: {
+        Row: {
+          business_id: string
+          checked_at: string
+          confidence: number
+          contributor_id: string | null
+          contributor_name: string | null
+          created_at: string
+          evidence: Json
+          first_seen_at: string
+          gallery_rank: number | null
+          gallery_size: number | null
+          id: string
+          location_id: string | null
+          perceptual_hash: string | null
+          photo_ref: string
+          photo_url: string | null
+          previous_status: string | null
+          status: string
+          status_changed_at: string | null
+          updated_at: string
+          verification_type: string
+          watchlist_id: string | null
+        }
+        Insert: {
+          business_id: string
+          checked_at?: string
+          confidence?: number
+          contributor_id?: string | null
+          contributor_name?: string | null
+          created_at?: string
+          evidence?: Json
+          first_seen_at?: string
+          gallery_rank?: number | null
+          gallery_size?: number | null
+          id?: string
+          location_id?: string | null
+          perceptual_hash?: string | null
+          photo_ref: string
+          photo_url?: string | null
+          previous_status?: string | null
+          status?: string
+          status_changed_at?: string | null
+          updated_at?: string
+          verification_type?: string
+          watchlist_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          checked_at?: string
+          confidence?: number
+          contributor_id?: string | null
+          contributor_name?: string | null
+          created_at?: string
+          evidence?: Json
+          first_seen_at?: string
+          gallery_rank?: number | null
+          gallery_size?: number | null
+          id?: string
+          location_id?: string | null
+          perceptual_hash?: string | null
+          photo_ref?: string
+          photo_url?: string | null
+          previous_status?: string | null
+          status?: string
+          status_changed_at?: string | null
+          updated_at?: string
+          verification_type?: string
+          watchlist_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maps_photo_observations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maps_photo_observations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maps_photo_observations_watchlist_id_fkey"
+            columns: ["watchlist_id"]
+            isOneToOne: false
+            referencedRelation: "contributor_watchlist"
             referencedColumns: ["id"]
           },
         ]

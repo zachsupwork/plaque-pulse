@@ -150,6 +150,98 @@ export async function placeDetails(placeId: string, sessionToken?: string): Prom
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Public listing signals: reviews and gallery photos                   */
+/* ------------------------------------------------------------------ */
+
+export type PublicReview = {
+  /** Stable-ish key for deduplication across polls. */
+  key: string;
+  authorName: string | null;
+  authorProfileUrl: string | null;
+  authorPhotoUrl: string | null;
+  rating: number | null;
+  text: string | null;
+  publishedAt: string | null;
+  relativeTime: string | null;
+};
+
+export type PublicPhoto = {
+  /** Google photo resource name — used as the stable reference. */
+  ref: string;
+  /** Position in the gallery Google returns; 0 is the most prominent. */
+  rank: number;
+  authorName: string | null;
+  authorProfileUrl: string | null;
+  widthPx: number | null;
+  heightPx: number | null;
+};
+
+/**
+ * Reads the PUBLIC listing signals Places (New) is permitted to return:
+ * up to five recent reviews and the gallery photo list in Google's own order.
+ * Google is never scraped, and nothing here is invented — a field Google
+ * omits comes back as null so callers can say "not available".
+ */
+export async function placeSignals(
+  placeId: string,
+): Promise<{ reviews: PublicReview[]; photos: PublicPhoto[]; available: boolean }> {
+  const res = await fetch(`${PLACES}/places/${encodeURIComponent(placeId)}`, {
+    headers: {
+      "X-Goog-Api-Key": key(),
+      "X-Goog-FieldMask": "id,reviews,photos",
+    },
+  });
+  if (!res.ok) return { reviews: [], photos: [], available: false };
+
+  const body = (await res.json()) as {
+    reviews?: Array<{
+      name?: string;
+      rating?: number;
+      text?: { text?: string };
+      originalText?: { text?: string };
+      publishTime?: string;
+      relativePublishTimeDescription?: string;
+      authorAttribution?: { displayName?: string; uri?: string; photoUri?: string };
+    }>;
+    photos?: Array<{
+      name?: string;
+      widthPx?: number;
+      heightPx?: number;
+      authorAttributions?: Array<{ displayName?: string; uri?: string }>;
+    }>;
+  };
+
+  const reviews: PublicReview[] = (body.reviews ?? []).map((r, i) => ({
+    key: r.name ?? `${placeId}:${r.publishTime ?? i}`,
+    authorName: r.authorAttribution?.displayName ?? null,
+    authorProfileUrl: r.authorAttribution?.uri ?? null,
+    authorPhotoUrl: r.authorAttribution?.photoUri ?? null,
+    rating: typeof r.rating === "number" ? r.rating : null,
+    text: r.text?.text ?? r.originalText?.text ?? null,
+    publishedAt: r.publishTime ?? null,
+    relativeTime: r.relativePublishTimeDescription ?? null,
+  }));
+
+  const photos: PublicPhoto[] = (body.photos ?? [])
+    .filter((p) => p.name)
+    .map((p, i) => ({
+      ref: p.name!,
+      rank: i,
+      authorName: p.authorAttributions?.[0]?.displayName ?? null,
+      authorProfileUrl: p.authorAttributions?.[0]?.uri ?? null,
+      widthPx: p.widthPx ?? null,
+      heightPx: p.heightPx ?? null,
+    }));
+
+  return { reviews, photos, available: true };
+}
+
+/** Media URL for a gallery photo resource name. Server-side only (carries the key). */
+export function photoMediaUrl(ref: string, maxWidthPx = 640) {
+  return `${PLACES}/${ref}/media?maxWidthPx=${maxWidthPx}&key=${encodeURIComponent(key())}`;
+}
+
 /**
  * Legacy fallback only. The source of truth is googleMapsLinks.writeAReviewUri
  * from Place Details; this is used when Google returns no link at all, so a
