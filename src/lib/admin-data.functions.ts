@@ -151,35 +151,45 @@ export const networkOverview = createServerFn({ method: "POST" }).handler(async 
 
 
 
-/** Newest real taps, scans and account changes. Demo activity is excluded. */
+/**
+ * Newest real customer taps/scans and account changes.
+ *
+ * The customer feed shows ONLY event_type = 'interaction', so a single tap can
+ * never appear twice (once as the interaction and once as redirect telemetry).
+ * Operational rows (redirect telemetry, tests, unconfigured taps, taps while
+ * paused) go into a separate diagnostic feed.
+ */
 export const networkActivity = createServerFn({ method: "POST" }).handler(async () => {
   const caller = await gate();
-  if (!caller.ok) return { ok: false as const, error: caller.error, items: [] };
+  if (!caller.ok) return { ok: false as const, error: caller.error, items: [], diagnostics: [] };
   const client = await db();
   const scope = await scopeFor(client);
 
   const { data: rawEvents } = await client
     .from("events")
-    .select("business_id, plaque_id, event_type, source_type, occurred_at")
+    .select("business_id, plaque_id, event_type, source_type, destination_type, device_family, occurred_at")
     .order("occurred_at", { ascending: false })
-    .limit(200);
+    .limit(400);
   const { data: rawActions } = await client
     .from("action_history")
     .select("business_id, plaque_id, action_type, initiated_by, created_at")
     .order("created_at", { ascending: false })
     .limit(200);
 
-  const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e)).slice(0, 25);
+  const visible = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
+  const events = visible.filter((e) => e.event_type === "interaction").slice(0, 25);
+  const opsEvents = visible
+    .filter((e) => e.event_type !== "interaction" && e.event_type !== "redirect_success")
+    .slice(0, 15);
   const actions = (rawActions ?? []).filter((a) => !scope.isDemoRow(a)).slice(0, 25);
 
   const businessIds = new Set<string>();
   const plaqueIds = new Set<string>();
-  for (const e of events) {
+  for (const e of [...events, ...opsEvents]) {
     if (e.business_id) businessIds.add(e.business_id);
     if (e.plaque_id) plaqueIds.add(e.plaque_id);
   }
   for (const a of actions) {
-
     businessIds.add(a.business_id);
     if (a.plaque_id) plaqueIds.add(a.plaque_id);
   }
@@ -188,20 +198,20 @@ export const networkActivity = createServerFn({ method: "POST" }).handler(async 
     ? await client.from("businesses").select("id, name").in("id", [...businessIds])
     : { data: [] };
   const { data: plaqueRows } = plaqueIds.size
-    ? await client.from("plaques").select("id, plaque_code, plaque_name, placement_type").in("id", [...plaqueIds])
+    ? await client.from("plaques").select("id, plaque_code, plaque_name, public_slug, placement_type").in("id", [...plaqueIds])
     : { data: [] };
 
   const bizName = new Map((bizRows ?? []).map((b) => [b.id, b.name]));
   const plaqueMap = new Map((plaqueRows ?? []).map((p) => [p.id, p]));
 
   const items = [
-    ...(events ?? []).map((e) => ({
+    ...events.map((e) => ({
       kind: "event" as const,
       at: e.occurred_at,
       business: e.business_id ? (bizName.get(e.business_id) ?? "Unassigned") : "Unassigned",
       plaque: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.plaque_name ?? plaqueMap.get(e.plaque_id)?.plaque_code ?? "") : "",
       placement: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.placement_type ?? "") : "",
-      label: e.source_type === "qr" ? "QR scan" : e.source_type === "nfc" ? "NFC tap" : e.event_type,
+      label: e.source_type === "qr" ? "QR scan" : "NFC tap",
     })),
     ...(actions ?? []).map((a) => ({
       kind: "action" as const,
@@ -215,8 +225,24 @@ export const networkActivity = createServerFn({ method: "POST" }).handler(async 
     .sort((x, y) => (x.at < y.at ? 1 : -1))
     .slice(0, 30);
 
-  return { ok: true as const, items };
+  const OPS_LABEL: Record<string, string> = {
+    manufacturing_test: "Admin test link — not counted",
+    setup_open: "Tapped but not configured",
+    inactive_tap: "Tapped while paused",
+    redirect_failure: "Redirect failed",
+  };
+
+  const diagnostics = opsEvents.map((e) => ({
+    at: e.occurred_at,
+    business: e.business_id ? (bizName.get(e.business_id) ?? "Unassigned") : "Unassigned",
+    plaque: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.plaque_code ?? "") : "",
+    source: e.source_type === "qr" ? "QR" : e.source_type === "nfc" ? "NFC" : "—",
+    label: OPS_LABEL[e.event_type] ?? e.event_type.replace(/_/g, " "),
+  }));
+
+  return { ok: true as const, items, diagnostics };
 });
+
 
 /** Every business on the platform, with plaque counts and recent engagement. */
 export const listAllBusinesses = createServerFn({ method: "POST" })
