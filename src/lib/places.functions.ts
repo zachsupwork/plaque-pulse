@@ -584,12 +584,22 @@ export const getPlaceDetail = createServerFn({ method: "POST" })
           .filter((p) => p.businessId === place.businessId && p.key !== place.key)
           .map((p) => ({ key: p.key, name: p.locationName, city: p.city, plaqueCount: p.plaqueCount })),
         analytics: {
+          timezone: REPORT_TIMEZONE,
           today: interactions.filter((e) => e.occurred_at >= startOfToday()).length,
+          todayNfc: interactions.filter((e) => e.occurred_at >= startOfToday() && e.source_type === "nfc").length,
+          todayQr: interactions.filter((e) => e.occurred_at >= startOfToday() && e.source_type === "qr").length,
           days7: inWindow(7),
+          days7Nfc: interactions.filter((e) => e.occurred_at >= windowStart(7) && e.source_type === "nfc").length,
+          days7Qr: interactions.filter((e) => e.occurred_at >= windowStart(7) && e.source_type === "qr").length,
           days30: inWindow(30),
           allTime: allTimeTotal,
           nfc: interactions.filter((e) => e.source_type === "nfc").length,
           qr: interactions.filter((e) => e.source_type === "qr").length,
+          lastInteraction: interactions.reduce<string | null>(
+            (acc, e) => (!acc || e.occurred_at > acc ? e.occurred_at : acc),
+            null,
+          ),
+
           perPlaque: perPlaque
             .map((p) => ({ ...p, share: allTimeTotal ? Math.round((p.allTime / allTimeTotal) * 100) : 0 }))
             .sort((a, b) => b.allTime - a.allTime),
