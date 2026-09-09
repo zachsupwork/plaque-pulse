@@ -509,7 +509,7 @@ export const getPlaceDetail = createServerFn({ method: "POST" })
     const placementById = new Map(place.plaques.map((p) => [p.id, p.placement]));
 
     const interactions = rawEvents ?? [];
-    const inWindow = (days: number) => interactions.filter((e) => e.occurred_at >= since(days)).length;
+    const inWindow = (days: number) => interactions.filter((e) => e.occurred_at >= windowStart(days)).length;
 
     const perPlaque = place.plaques.map((p) => ({
       id: p.id,
