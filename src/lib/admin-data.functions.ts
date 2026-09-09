@@ -449,14 +449,23 @@ export const getBusinessDetail = createServerFn({ method: "POST" })
           email: identities[m.user_id]?.email ?? null,
           name: identities[m.user_id]?.name ?? null,
         })),
-        performance: {
-          today: interactions.filter((e) => e.occurred_at >= startOfToday()).length,
-          days7: inWindow(7),
-          days30: inWindow(30),
-          allTime: interactions.length,
-          nfc: interactions.filter((e) => e.source_type === "nfc").length,
-          qr: interactions.filter((e) => e.source_type === "qr").length,
-        },
+        performance: (() => {
+          const s = periodStats(interactions);
+          return {
+            timezone: s.timezone,
+            today: s.today.total,
+            days7: s.days7.total,
+            days30: s.days30.total,
+            allTime: s.allTime.total,
+            nfc: s.allTime.nfc,
+            qr: s.allTime.qr,
+            lastInteraction: s.lastInteraction,
+            lastNfc: s.lastNfc,
+            lastQr: s.lastQr,
+            periods: s,
+          };
+        })(),
+
         history: history ?? [],
       },
     };
