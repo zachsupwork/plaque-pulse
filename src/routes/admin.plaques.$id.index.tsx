@@ -111,11 +111,29 @@ function PlaqueRecord() {
       {note ? <p className="rounded-xl border border-border bg-foreground/5 p-3 text-[13px]">{note}</p> : null}
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <Stat label="Today" value={performance.today} />
-        <Stat label="7 days" value={performance.days7} />
-        <Stat label="30 days" value={performance.days30} />
+        <Stat
+          label="Today"
+          value={performance.today}
+          hint={`${performance.periods.today.nfc} NFC · ${performance.periods.today.qr} QR`}
+        />
+        <Stat
+          label="7 days"
+          value={performance.days7}
+          hint={`${performance.periods.days7.nfc} NFC · ${performance.periods.days7.qr} QR`}
+        />
+        <Stat
+          label="30 days"
+          value={performance.days30}
+          hint={`${performance.periods.days30.nfc} NFC · ${performance.periods.days30.qr} QR`}
+        />
         <Stat label="All time" value={performance.allTime} hint={`${performance.nfc} NFC · ${performance.qr} QR`} />
       </div>
+      <p className="-mt-2 text-[11px] text-muted-foreground">
+        Days in {performance.timezone}. Last tap:{" "}
+        {performance.lastNfc ? new Date(performance.lastNfc).toLocaleString() : "never"} · Last scan:{" "}
+        {performance.lastQr ? new Date(performance.lastQr).toLocaleString() : "never"}
+      </p>
+
 
       <GlassPanel className="space-y-1.5 p-4 text-[12px]">
         <Row label="Owner" value={business?.name ?? "Unassigned"} />
