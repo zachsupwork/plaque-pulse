@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, StatusChip } from "@/components/taplocal/Field";
-import { getPlaqueTracking } from "@/lib/tap-test.functions";
+import { getPlaqueTracking, runTrackingCheck } from "@/lib/tap-test.functions";
 import { nfcUrl, qrUrl, testUrl } from "@/lib/smartlink";
 
 function when(value: string | null) {
@@ -13,13 +13,17 @@ function when(value: string | null) {
 /** Live tracking diagnostics: is this plaque actually recording taps? */
 export function TrackingStatus({ plaqueId }: { plaqueId: string }) {
   const trackingFn = useServerFn(getPlaqueTracking);
-  const [warn, setWarn] = useState(false);
+  const checkFn = useServerFn(runTrackingCheck);
+  const [realTest, setRealTest] = useState<"nfc" | "qr" | null>(null);
+
+  const check = useMutation({ mutationFn: () => checkFn({ data: { plaqueId } }) });
 
   const q = useQuery({
     queryKey: ["plaque-tracking", plaqueId],
     queryFn: () => trackingFn({ data: { plaqueId } }),
     refetchInterval: 5_000,
   });
+
 
   const t = q.data?.ok ? q.data.tracking : null;
   if (!t) return null;
