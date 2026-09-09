@@ -171,7 +171,7 @@ type BuiltPlace = ReturnType<typeof buildPlaces>[number];
 
 function buildPlaces(net: Awaited<ReturnType<typeof loadNetwork>>) {
   const today = startOfToday();
-  const in7 = since(7);
+  const in7 = windowStart(7);
 
   const progBy = new Map(net.programming.map((p) => [p.plaque_id, p]));
   const destBy = new Map(net.destinations.map((d) => [d.plaque_id, d]));
