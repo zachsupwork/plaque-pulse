@@ -4,25 +4,36 @@ import type { Database } from "@/integrations/supabase/types";
 type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
 
 /**
- * Persist interaction events before redirecting. Analytics correctness beats a
- * few milliseconds of latency, so these inserts are awaited, never fire-and-forget.
- * A logging failure is recorded server-side but never blocks the visitor.
+ * Persist one event before redirecting. Analytics correctness beats a few
+ * milliseconds of latency, so this is awaited, never fire-and-forget.
+ *
+ * The canonical customer interaction is written on its own, never batched with
+ * telemetry: a telemetry failure must never take the interaction down with it.
+ * A logging failure is recorded loudly server-side but never blocks the visitor.
  */
-async function logEvents(rows: EventInsert[]) {
+async function logEvent(row: EventInsert, context: { slug: string; source: string }) {
   try {
-    const { error } = await supabaseAdmin.from("events").insert(rows);
+    const { error } = await supabaseAdmin.from("events").insert(row);
     if (error) {
       console.error(
-        `[TapLocal] EVENT LOGGING FAILED plaque=${rows[0]?.plaque_id ?? "unknown"} reason=${error.message}`,
+        `[TapLocal] ${row.event_type === "interaction" ? "TAPLOCAL INTERACTION SAVE FAILED" : "EVENT LOGGING FAILED"}` +
+          ` event=${row.event_type} plaque=${row.plaque_id ?? "unknown"} slug=${context.slug}` +
+          ` source=${context.source} at=${new Date().toISOString()} code=${error.code ?? "none"} reason=${error.message}`,
       );
       return false;
     }
     return true;
   } catch (err) {
-    console.error(`[TapLocal] EVENT LOGGING FAILED plaque=${rows[0]?.plaque_id ?? "unknown"}`, err);
+    console.error(
+      `[TapLocal] ${row.event_type === "interaction" ? "TAPLOCAL INTERACTION SAVE FAILED" : "EVENT LOGGING FAILED"}` +
+        ` event=${row.event_type} plaque=${row.plaque_id ?? "unknown"} slug=${context.slug}` +
+        ` source=${context.source} at=${new Date().toISOString()}`,
+      err,
+    );
     return false;
   }
 }
+
 
 /** Resolve a public plaque slug to its live destination and record the interaction. */
 export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", request: Request) {
