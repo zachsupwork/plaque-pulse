@@ -40,25 +40,62 @@ export const lookupPlaqueBySlug = createServerFn({ method: "POST" })
 export const lookupActivation = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ token: z.string().min(6).max(200) }).parse(data))
   .handler(async ({ data }) => {
-    if (data.token === DEMO_TOKEN) return { demo: true as const, rateLimited: false, plaque: DEMO_PLAQUE };
+    if (data.token === DEMO_TOKEN)
+      return { demo: true as const, rateLimited: false, plaque: DEMO_PLAQUE, preconfigured: null };
 
     const { allowActivationAttempt, activationHashes } = await import("./activation-guard.server");
     if (!(await allowActivationAttempt()))
-      return { demo: false as const, rateLimited: true, plaque: null };
+      return { demo: false as const, rateLimited: true, plaque: null, preconfigured: null };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const hashes = await activationHashes(data.token);
     const { data: plaque } = await supabaseAdmin
       .from("plaques")
-      .select("id, plaque_code, public_slug, status, configured_at, claimed_at")
+      .select("id, plaque_code, public_slug, status, configured_at, claimed_at, business_id, location_id, placement_type, plaque_name")
       .in("activation_token_hash", hashes)
       .maybeSingle();
 
-    if (!plaque) return { demo: false as const, rateLimited: false, plaque: null };
+    if (!plaque) return { demo: false as const, rateLimited: false, plaque: null, preconfigured: null };
+
+    // A plaque TapLocal already set up for the owner: show what it is, don't make them rebuild it.
+    let preconfigured: {
+      businessName: string;
+      address: string | null;
+      placementType: string | null;
+      plaqueName: string | null;
+      destinationType: string | null;
+      destinationUrl: string | null;
+    } | null = null;
+
+    if (plaque.configured_at && plaque.business_id && !plaque.claimed_at) {
+      const [{ data: business }, { data: location }, { data: destination }] = await Promise.all([
+        supabaseAdmin.from("businesses").select("name").eq("id", plaque.business_id).maybeSingle(),
+        plaque.location_id
+          ? supabaseAdmin.from("locations").select("address, city").eq("id", plaque.location_id).maybeSingle()
+          : Promise.resolve({ data: null }),
+        supabaseAdmin
+          .from("destinations")
+          .select("destination_type, url")
+          .eq("plaque_id", plaque.id)
+          .is("effective_to", null)
+          .eq("active", true)
+          .maybeSingle(),
+      ]);
+
+      preconfigured = {
+        businessName: business?.name ?? "Your business",
+        address: location ? [location.address, location.city].filter(Boolean).join(", ") || null : null,
+        placementType: plaque.placement_type ?? null,
+        plaqueName: plaque.plaque_name ?? null,
+        destinationType: destination?.destination_type ?? null,
+        destinationUrl: destination?.url ?? null,
+      };
+    }
 
     return {
       demo: false as const,
       rateLimited: false,
+      preconfigured,
       plaque: {
         id: plaque.id,
         plaque_code: plaque.plaque_code,

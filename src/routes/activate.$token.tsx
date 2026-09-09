@@ -6,7 +6,8 @@ import { Check, Loader2, MapPin, Mic, Search, Sparkles, Star } from "lucide-reac
 import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
 import { NfcReadyCheck } from "@/components/taplocal/NfcReadyCheck";
-import { completeActivation, lookupActivation } from "@/lib/activation.functions";
+import { claimActivation, completeActivation, lookupActivation } from "@/lib/activation.functions";
+import { useIdentity } from "@/hooks/useAuthSession";
 import { parseActivationCommand } from "@/lib/activation-command.functions";
 import { getBusinessDetails, searchBusinesses } from "@/lib/business-discovery.functions";
 
@@ -229,6 +230,7 @@ function ActivatePage() {
   }
 
   const activePlaque = plaque.data.plaque;
+  const preconfigured = plaque.data.preconfigured;
   const searchResults = results.data?.results ?? [];
   const selectedGoal = GOALS.find((g) => g.value === goal)!;
 
@@ -243,14 +245,19 @@ function ActivatePage() {
           Plaque {activePlaque.plaque_code}
         </p>
 
-        {mode === "start" ? (
+        {mode === "start" && preconfigured ? (
+          <FoundPlaque token={token} plaqueCode={activePlaque.plaque_code} info={preconfigured} />
+        ) : null}
+
+        {mode === "start" && !preconfigured ? (
           <>
             <h1 className="mt-2 font-display text-[27px] leading-tight font-bold tracking-tight text-balance">
-              Let's get your plaque working.
+              Let's set up your plaque.
             </h1>
             <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground text-pretty">
               About a minute. Nothing to install.
             </p>
+
 
             <div className="mt-5 space-y-3">
               <BigChoice
@@ -459,6 +466,96 @@ function ActivatePage() {
         {notice ? <p className="mt-3 text-[12px] text-muted-foreground">{notice}</p> : null}
       </div>
     </Field>
+  );
+}
+
+/** TapLocal already set this plaque up. The owner only has to claim it. */
+function FoundPlaque({
+  token,
+  plaqueCode,
+  info,
+}: {
+  token: string;
+  plaqueCode: string;
+  info: {
+    businessName: string;
+    address: string | null;
+    placementType: string | null;
+    plaqueName: string | null;
+    destinationType: string | null;
+    destinationUrl: string | null;
+  };
+}) {
+  const identity = useIdentity();
+  const claim = useServerFn(claimActivation);
+  const [error, setError] = useState<string | null>(null);
+  const signedIn = Boolean(identity.data?.signedIn);
+
+  const run = useMutation({
+    mutationFn: () => claim({ data: { token } }),
+    onSuccess: (data) => {
+      if (data.ok) window.location.replace("/app");
+      else setError("We couldn't connect this plaque to your account. Contact TapLocal and we'll sort it out.");
+    },
+    onError: () => setError("Something went wrong. Try again."),
+  });
+
+  return (
+    <GlassPanel sheen className="mt-4 space-y-4 p-5">
+      <div>
+        <p className="text-[12px] font-semibold tracking-[0.12em] text-accent uppercase">We found your plaque</p>
+        <h1 className="mt-2 font-display text-[24px] leading-tight font-bold tracking-tight text-balance">
+          {info.businessName}
+        </h1>
+        {info.address ? <p className="mt-1 text-[13px] text-muted-foreground">{info.address}</p> : null}
+      </div>
+
+      <div className="divide-y divide-border rounded-xl border border-border bg-foreground/5">
+        <DetailRow label="Business" value={info.businessName} />
+        <DetailRow label="Plaque" value={info.plaqueName ? `${info.plaqueName} · ${plaqueCode}` : plaqueCode} />
+        <DetailRow
+          label="Placement"
+          value={info.placementType ? (PLACEMENTS.find((p) => p.value === info.placementType)?.label ?? info.placementType) : "Unavailable"}
+        />
+        <DetailRow
+          label="Destination"
+          value={info.destinationUrl ?? info.destinationType ?? "Unavailable"}
+        />
+      </div>
+
+      {signedIn ? (
+        <button
+          type="button"
+          disabled={run.isPending}
+          onClick={() => run.mutate()}
+          className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
+        >
+          {run.isPending ? "Connecting…" : "Claim & continue"}
+        </button>
+      ) : (
+        <Link
+          to="/auth"
+          search={{ returnTo: `/activate/${token}` }}
+          className="block w-full rounded-xl bg-primary px-4 py-3.5 text-center text-[14px] font-bold text-primary-foreground"
+        >
+          Claim &amp; continue
+        </Link>
+      )}
+      <p className="text-[12px] text-muted-foreground text-pretty">
+        Sign in or create your account to take ownership. You can change the destination and placement any time
+        from your portal.
+      </p>
+      {error ? <p className="text-[12px] text-destructive">{error}</p> : null}
+    </GlassPanel>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 p-3 text-[13px]">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 truncate text-right font-semibold">{value}</span>
+    </div>
   );
 }
 
