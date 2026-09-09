@@ -172,6 +172,100 @@ function Analytics() {
             </GlassPanel>
           </div>
 
+          <div>
+            <SectionTitle>Taps per day</SectionTitle>
+            <GlassPanel className="flex h-28 items-end gap-1 p-3.5">
+              {a.perDay.length === 0 ? (
+                <p className="text-[13px] text-muted-foreground">No data yet.</p>
+              ) : null}
+              {a.perDay.map(([day, count]) => (
+                <div key={day} className="flex-1" title={`${day}: ${count}`}>
+                  <div
+                    className="w-full rounded-t bg-primary"
+                    style={{ height: `${Math.max(4, (count / peak) * 88)}px` }}
+                  />
+                </div>
+              ))}
+            </GlassPanel>
+          </div>
+
+          <RankList
+            title="Placements"
+            rows={a.placements.map(([k, n]) => [PLACEMENT_LABEL[k] ?? k, n] as const)}
+          />
+          <RankList
+            title="Destinations"
+            rows={a.destinations.map(([k, n]) => [DESTINATION_LABEL[k] ?? k, n] as const)}
+          />
+
+          <div>
+            <SectionTitle>Busiest plaques</SectionTitle>
+            <GlassPanel className="divide-y divide-border">
+              {a.topPlaques.length === 0 ? (
+                <p className="p-4 text-[13px] text-muted-foreground">No plaque activity yet.</p>
+              ) : null}
+              {a.topPlaques.map((p) => (
+                <Link
+                  key={p.id}
+                  to="/admin/plaques/$id"
+                  params={{ id: p.id }}
+                  className="flex items-center justify-between gap-3 p-3 text-[13px]"
+                >
+                  <span className="min-w-0 truncate">
+                    <span className="font-semibold">{p.label}</span>
+                    {p.business ? <span className="text-muted-foreground"> · {p.business}</span> : null}
+                  </span>
+                  <span className="shrink-0 font-bold">{p.count}</span>
+                </Link>
+              ))}
+            </GlassPanel>
+          </div>
+
+          <div>
+            <SectionTitle>Busiest businesses</SectionTitle>
+            <GlassPanel className="divide-y divide-border">
+              {a.topBusinesses.length === 0 ? (
+                <p className="p-4 text-[13px] text-muted-foreground">No business activity yet.</p>
+              ) : null}
+              {a.topBusinesses.map((b) => (
+                <Link
+                  key={b.id}
+                  to="/admin/interactions"
+                  search={{ period: "window", days, businessId: b.id }}
+                  className="flex items-center justify-between gap-3 p-3 text-[13px]"
+                >
+                  <span className="min-w-0 truncate font-semibold">{b.name}</span>
+                  <span className="shrink-0 font-bold">{b.count}</span>
+                </Link>
+              ))}
+            </GlassPanel>
+          </div>
+
+          <div>
+            <SectionTitle>Silent live plaques</SectionTitle>
+            <GlassPanel className="divide-y divide-border">
+              {a.silentPlaques.length === 0 ? (
+                <p className="p-4 text-[13px] text-muted-foreground">Every live plaque has activity.</p>
+              ) : null}
+              {a.silentPlaques.map((p) => (
+                <Link
+                  key={p.id}
+                  to="/admin/plaques/$id"
+                  params={{ id: p.id }}
+                  className="flex items-center justify-between gap-3 p-3 text-[13px]"
+                >
+                  <span className="min-w-0 truncate font-semibold">{p.label}</span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">{p.business}</span>
+                </Link>
+              ))}
+            </GlassPanel>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 
 function RankList({ title, rows }: { title: string; rows: readonly (readonly [string, number])[] }) {
   const top = Math.max(1, ...rows.map(([, n]) => n));
