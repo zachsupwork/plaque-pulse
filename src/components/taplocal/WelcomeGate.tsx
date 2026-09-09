@@ -19,7 +19,7 @@ export function WelcomeGate() {
           Let's get you into the right place
         </h1>
         <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground text-pretty">
-          Activate a plaque you've received, sign in to your business, or look around a sample account first.
+          Set up a plaque you've received, sign in to your business, or look around a sample account first.
         </p>
       </div>
 
@@ -27,8 +27,11 @@ export function WelcomeGate() {
         <GlassPanel tone="brand" className="flex items-center gap-3 p-4">
           <Radio className="h-5 w-5 shrink-0 text-primary" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold">Activate a plaque</span>
-            <span className="block text-[13px] text-muted-foreground">About a minute, no app needed.</span>
+            <span className="block text-[15px] font-semibold">Set up my plaque</span>
+            <span className="block text-[13px] text-muted-foreground">
+              Claim your TapLocal plaque, connect it to your business, and start managing reviews, links, taps and
+              scans.
+            </span>
           </span>
           <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </GlassPanel>
@@ -38,8 +41,8 @@ export function WelcomeGate() {
         <GlassPanel className="flex items-center gap-3 p-4">
           <User className="h-5 w-5 shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold">Sign in</span>
-            <span className="block text-[13px] text-muted-foreground">Open your own business portal.</span>
+            <span className="block text-[15px] font-semibold">Sign in to my portal</span>
+            <span className="block text-[13px] text-muted-foreground">Access your business dashboard.</span>
           </span>
           <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </GlassPanel>
@@ -56,10 +59,8 @@ export function WelcomeGate() {
         <GlassPanel className="flex items-center gap-3 p-4">
           <PlayCircle className="h-5 w-5 shrink-0 text-accent" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold">Explore the demo</span>
-            <span className="block text-[13px] text-muted-foreground">
-              A sample pizza shop with example data.
-            </span>
+            <span className="block text-[15px] font-semibold">View demo</span>
+            <span className="block text-[13px] text-muted-foreground">See a sample business account.</span>
           </span>
           <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </GlassPanel>

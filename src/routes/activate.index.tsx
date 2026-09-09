@@ -6,13 +6,13 @@ import { BrandLockup } from "@/components/taplocal/Brand";
 export const Route = createFileRoute("/activate/")({
   head: () => ({
     meta: [
-      { title: "Activate a plaque — TapLocal" },
+      { title: "Set up your plaque — TapLocal" },
       {
         name: "description",
-        content: "Enter the activation code printed on your TapLocal card to set up your SmartPlaque.",
+        content: "Enter the setup code printed on your TapLocal card to set up your SmartPlaque.",
       },
-      { property: "og:title", content: "Activate a plaque — TapLocal" },
-      { property: "og:description", content: "Enter your activation code to set up your SmartPlaque." },
+      { property: "og:title", content: "Set up your plaque — TapLocal" },
+      { property: "og:description", content: "Enter your setup code to set up your SmartPlaque." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -44,17 +44,18 @@ function ActivateEntry() {
         </Link>
 
         <h1 className="font-display text-[27px] leading-tight font-bold tracking-tight text-balance">
-          Activate your plaque.
+          Set up your plaque.
         </h1>
         <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground text-pretty">
-          Enter the activation code on the card that came with your plaque. If you tapped or scanned your
-          plaque, you're already on the right page — just follow the link it opened.
+          Enter the setup code from the card that came with your TapLocal plaque. If you already tapped or scanned
+          your plaque, continue from the link it opened. If your business is already connected, sign in to your
+          portal.
         </p>
 
         <GlassPanel className="mt-5 space-y-3 p-5">
           <form onSubmit={go} className="space-y-3">
             <label htmlFor="activation-code" className="block text-[12px] font-semibold text-muted-foreground">
-              Activation code
+              Setup code
             </label>
             <input
               id="activation-code"
