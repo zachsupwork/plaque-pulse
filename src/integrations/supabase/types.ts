@@ -1772,6 +1772,136 @@ export type Database = {
           },
         ]
       }
+      smartlink_failures: {
+        Row: {
+          created_at: string
+          error_code: string | null
+          error_details: string | null
+          error_hint: string | null
+          error_message: string
+          id: string
+          plaque_id: string | null
+          request_id: string | null
+          slug: string
+          source_type: Database["public"]["Enums"]["source_type"]
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string | null
+          error_details?: string | null
+          error_hint?: string | null
+          error_message: string
+          id?: string
+          plaque_id?: string | null
+          request_id?: string | null
+          slug: string
+          source_type: Database["public"]["Enums"]["source_type"]
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          error_code?: string | null
+          error_details?: string | null
+          error_hint?: string | null
+          error_message?: string
+          id?: string
+          plaque_id?: string | null
+          request_id?: string | null
+          slug?: string
+          source_type?: Database["public"]["Enums"]["source_type"]
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smartlink_failures_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smartlink_failures_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "smartlink_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smartlink_requests: {
+        Row: {
+          active_destination_count: number
+          build_id: string | null
+          completed_at: string | null
+          destination_id: string | null
+          device_family: string | null
+          id: string
+          interaction_event_id: string | null
+          is_test: boolean
+          outcome: string
+          plaque_id: string | null
+          redirect_url: string | null
+          requested_at: string
+          slug: string
+          source_type: Database["public"]["Enums"]["source_type"]
+        }
+        Insert: {
+          active_destination_count?: number
+          build_id?: string | null
+          completed_at?: string | null
+          destination_id?: string | null
+          device_family?: string | null
+          id?: string
+          interaction_event_id?: string | null
+          is_test?: boolean
+          outcome?: string
+          plaque_id?: string | null
+          redirect_url?: string | null
+          requested_at?: string
+          slug: string
+          source_type: Database["public"]["Enums"]["source_type"]
+        }
+        Update: {
+          active_destination_count?: number
+          build_id?: string | null
+          completed_at?: string | null
+          destination_id?: string | null
+          device_family?: string | null
+          id?: string
+          interaction_event_id?: string | null
+          is_test?: boolean
+          outcome?: string
+          plaque_id?: string | null
+          redirect_url?: string | null
+          requested_at?: string
+          slug?: string
+          source_type?: Database["public"]["Enums"]["source_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smartlink_requests_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smartlink_requests_interaction_event_id_fkey"
+            columns: ["interaction_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smartlink_requests_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           business_id: string
@@ -1833,7 +1963,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      replace_current_destination: {
+        Args: {
+          _business_id: string
+          _destination_type: Database["public"]["Enums"]["destination_type"]
+          _effective_at?: string
+          _metadata?: Json
+          _plaque_id: string
+          _url: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
