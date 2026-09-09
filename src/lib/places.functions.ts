@@ -25,11 +25,16 @@ function since(days: number) {
   return new Date(Date.now() - days * 86_400_000).toISOString();
 }
 
+/** Local reporting day boundary (America/Toronto), never a UTC day. */
 function startOfToday() {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  return d.toISOString();
+  return startOfTodayInTimezone();
 }
+
+/** Whole local days including today, for 7d/30d style windows. */
+function windowStart(days: number) {
+  return startOfWindowInTimezone(days);
+}
+
 
 /** Place ids are the location id, or b_<businessId> when a business has no location row. */
 export function placeKeyForBusiness(businessId: string) {
