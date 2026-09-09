@@ -646,18 +646,23 @@ export const getPlaqueRecord = createServerFn({ method: "POST" })
         destinations: destinations ?? [],
         placements: placements ?? [],
         programmingEvents: progEvents ?? [],
-        performance: {
-          today: interactions.filter((e) => e.occurred_at >= startOfToday()).length,
-          days7: inWindow(7),
-          days30: inWindow(30),
-          allTime: interactions.length,
-          nfc: interactions.filter((e) => e.source_type === "nfc").length,
-          qr: interactions.filter((e) => e.source_type === "qr").length,
-          lastInteraction: interactions.reduce<string | null>(
-            (acc, e) => (!acc || e.occurred_at > acc ? e.occurred_at : acc),
-            null,
-          ),
-        },
+        performance: (() => {
+          const s = periodStats(interactions);
+          return {
+            timezone: s.timezone,
+            today: s.today.total,
+            days7: s.days7.total,
+            days30: s.days30.total,
+            allTime: s.allTime.total,
+            nfc: s.allTime.nfc,
+            qr: s.allTime.qr,
+            lastInteraction: s.lastInteraction,
+            lastNfc: s.lastNfc,
+            lastQr: s.lastQr,
+            periods: s,
+          };
+        })(),
+
       },
     };
   });
