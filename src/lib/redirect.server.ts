@@ -61,17 +61,20 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
     occurred_at: occurredAt,
   } satisfies Partial<EventInsert>;
 
+  const ctx = { slug, source };
+
   // Disabled by an admin: the tag itself still works, so record the tap as an
   // operational inactive_tap (never a manufacturing test) and show the inactive page.
   if (plaque.status === "paused") {
-    await logEvents([
+    await logEvent(
       {
         ...base,
         event_type: isTest ? "manufacturing_test" : "inactive_tap",
         anonymous_visitor_key: isTest ? null : key,
         metadata: { inactive: true, ...(isTest ? { tl_test: true } : {}) },
       },
-    ]);
+      ctx,
+    );
     return fallback(
       "This TapLocal plaque is currently inactive.",
       "The tag is working — its destination has been turned off. Contact TapLocal to switch it back on.",
@@ -89,13 +92,14 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
   // Not set up yet: the tap itself proves the tag works, so record it for
   // troubleshooting (never as a customer interaction) and send them into setup.
   if (!destination?.url) {
-    await logEvents([
+    await logEvent(
       {
         ...base,
         event_type: isTest ? "manufacturing_test" : "setup_open",
         metadata: { unconfigured: true, ...(isTest ? { tl_test: true } : {}) },
       },
-    ]);
+      ctx,
+    );
     return new Response(null, {
       status: 307,
       headers: { Location: `/setup/${slug}?source=${source}`, "Cache-Control": "no-store" },
@@ -111,15 +115,27 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
 
   if (isTest) {
     // Testing/debugging only — excluded from every customer analytics counter.
-    await logEvents([{ ...shared, event_type: "manufacturing_test", metadata: { tl_test: true } }]);
+    await logEvent({ ...shared, event_type: "manufacturing_test", metadata: { tl_test: true } }, ctx);
   } else {
-    // Exactly one canonical customer interaction, plus operational redirect telemetry.
+    // The canonical customer interaction is saved FIRST and on its own.
     // Analytics counts only event_type = 'interaction'.
-    await logEvents([
+    const interactionSaved = await logEvent(
       { ...shared, event_type: "interaction", anonymous_visitor_key: key, metadata: {} },
-      { ...shared, event_type: "redirect_success", anonymous_visitor_key: key, metadata: { telemetry: true } },
-    ]);
+      ctx,
+    );
+
+    // Operational telemetry is independent: if it fails, the interaction stands.
+    await logEvent(
+      {
+        ...shared,
+        event_type: "redirect_success",
+        anonymous_visitor_key: key,
+        metadata: { telemetry: true, interaction_saved: interactionSaved },
+      },
+      ctx,
+    );
   }
+
 
   return new Response(null, {
     status: 307,
