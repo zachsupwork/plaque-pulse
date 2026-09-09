@@ -113,15 +113,27 @@ function AdminDashboard() {
 
 
       <div>
-        <SectionTitle>Today</SectionTitle>
+        <SectionTitle>Today{o ? ` (${o.stats.timezone})` : ""}</SectionTitle>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-          <Stat label="Interactions" value={o ? o.interactionsToday : "—"} />
-          <Stat label="NFC" value={o ? o.nfcToday : "—"} />
-          <Stat label="QR" value={o ? o.qrToday : "—"} />
+          <Stat label="Interactions" value={o ? o.stats.today.total : "—"} />
+          <Stat label="NFC" value={o ? o.stats.today.nfc : "—"} />
+          <Stat label="QR" value={o ? o.stats.today.qr : "—"} />
           <Stat label="Active businesses" value={o ? o.businessesActive : "—"} />
           <Stat label="Active plaques" value={o ? o.plaquesActive : "—"} />
         </div>
+        {o ? (
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            Last NFC tap: {o.stats.lastNfc ? ago(o.stats.lastNfc) : "never"} · Last QR scan:{" "}
+            {o.stats.lastQr ? ago(o.stats.lastQr) : "never"}
+          </p>
+        ) : null}
+        {o && !o.stats.today.consistent ? (
+          <p className="mt-1.5 text-[12px] font-semibold text-destructive">
+            Tracking check: today's total does not equal NFC + QR.
+          </p>
+        ) : null}
       </div>
+
 
       <div>
         <SectionTitle>Quick actions</SectionTitle>
