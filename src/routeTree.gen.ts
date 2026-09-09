@@ -22,6 +22,7 @@ import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminAreaBuilderRouteImport } from './routes/admin.area-builder'
 import { Route as AdminAssignRouteImport } from './routes/admin.assign'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as AdminMapsRouteImport } from './routes/admin.maps'
 import { Route as AdminMoreRouteImport } from './routes/admin.more'
 import { Route as AdminOfferingsRouteImport } from './routes/admin.offerings'
 import { Route as AdminProvisioningRouteImport } from './routes/admin.provisioning'
@@ -43,6 +44,8 @@ import { Route as AdminBusinessesIndexRouteImport } from './routes/admin.busines
 import { Route as AdminBusinessesIdRouteImport } from './routes/admin.businesses.$id'
 import { Route as AdminInquiriesIndexRouteImport } from './routes/admin.inquiries.index'
 import { Route as AdminInquiriesIdRouteImport } from './routes/admin.inquiries.$id'
+import { Route as AdminInteractionsIndexRouteImport } from './routes/admin.interactions.index'
+import { Route as AdminInteractionsEventIdRouteImport } from './routes/admin.interactions.$eventId'
 import { Route as AdminNfcIndexRouteImport } from './routes/admin.nfc.index'
 import { Route as AdminNfcBatchRouteImport } from './routes/admin.nfc.batch'
 import { Route as AdminNfcReadRouteImport } from './routes/admin.nfc.read'
@@ -131,6 +134,11 @@ const AdminAssignRoute = AdminAssignRouteImport.update({
 const AdminCustomersRoute = AdminCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMapsRoute = AdminMapsRouteImport.update({
+  id: '/maps',
+  path: '/maps',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMoreRoute = AdminMoreRouteImport.update({
@@ -238,6 +246,17 @@ const AdminInquiriesIdRoute = AdminInquiriesIdRouteImport.update({
   path: '/inquiries/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInteractionsIndexRoute = AdminInteractionsIndexRouteImport.update({
+  id: '/interactions/',
+  path: '/interactions/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInteractionsEventIdRoute =
+  AdminInteractionsEventIdRouteImport.update({
+    id: '/interactions/$eventId',
+    path: '/interactions/$eventId',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminNfcIndexRoute = AdminNfcIndexRouteImport.update({
   id: '/nfc/',
   path: '/nfc/',
@@ -371,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/admin/area-builder': typeof AdminAreaBuilderRoute
   '/admin/assign': typeof AdminAssignRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/maps': typeof AdminMapsRoute
   '/admin/more': typeof AdminMoreRoute
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
@@ -391,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/offerings/': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
+  '/admin/interactions/$eventId': typeof AdminInteractionsEventIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
@@ -406,6 +427,7 @@ export interface FileRoutesByFullPath {
   '/admin/batches/': typeof AdminBatchesIndexRoute
   '/admin/businesses/': typeof AdminBusinessesIndexRoute
   '/admin/inquiries/': typeof AdminInquiriesIndexRoute
+  '/admin/interactions/': typeof AdminInteractionsIndexRoute
   '/admin/nfc/': typeof AdminNfcIndexRoute
   '/admin/places/': typeof AdminPlacesIndexRoute
   '/admin/plaques/': typeof AdminPlaquesIndexRoute
@@ -429,6 +451,7 @@ export interface FileRoutesByTo {
   '/admin/area-builder': typeof AdminAreaBuilderRoute
   '/admin/assign': typeof AdminAssignRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/maps': typeof AdminMapsRoute
   '/admin/more': typeof AdminMoreRoute
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
@@ -449,6 +472,7 @@ export interface FileRoutesByTo {
   '/offerings': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
+  '/admin/interactions/$eventId': typeof AdminInteractionsEventIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
@@ -464,6 +488,7 @@ export interface FileRoutesByTo {
   '/admin/batches': typeof AdminBatchesIndexRoute
   '/admin/businesses': typeof AdminBusinessesIndexRoute
   '/admin/inquiries': typeof AdminInquiriesIndexRoute
+  '/admin/interactions': typeof AdminInteractionsIndexRoute
   '/admin/nfc': typeof AdminNfcIndexRoute
   '/admin/places': typeof AdminPlacesIndexRoute
   '/admin/plaques': typeof AdminPlaquesIndexRoute
@@ -490,6 +515,7 @@ export interface FileRoutesById {
   '/admin/area-builder': typeof AdminAreaBuilderRoute
   '/admin/assign': typeof AdminAssignRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/maps': typeof AdminMapsRoute
   '/admin/more': typeof AdminMoreRoute
   '/admin/offerings': typeof AdminOfferingsRoute
   '/admin/provisioning': typeof AdminProvisioningRoute
@@ -510,6 +536,7 @@ export interface FileRoutesById {
   '/offerings/': typeof OfferingsIndexRoute
   '/admin/businesses/$id': typeof AdminBusinessesIdRoute
   '/admin/inquiries/$id': typeof AdminInquiriesIdRoute
+  '/admin/interactions/$eventId': typeof AdminInteractionsEventIdRoute
   '/admin/nfc/batch': typeof AdminNfcBatchRoute
   '/admin/nfc/read': typeof AdminNfcReadRoute
   '/admin/nfc/verify': typeof AdminNfcVerifyRoute
@@ -525,6 +552,7 @@ export interface FileRoutesById {
   '/admin/batches/': typeof AdminBatchesIndexRoute
   '/admin/businesses/': typeof AdminBusinessesIndexRoute
   '/admin/inquiries/': typeof AdminInquiriesIndexRoute
+  '/admin/interactions/': typeof AdminInteractionsIndexRoute
   '/admin/nfc/': typeof AdminNfcIndexRoute
   '/admin/places/': typeof AdminPlacesIndexRoute
   '/admin/plaques/': typeof AdminPlaquesIndexRoute
@@ -552,6 +580,7 @@ export interface FileRouteTypes {
     | '/admin/area-builder'
     | '/admin/assign'
     | '/admin/customers'
+    | '/admin/maps'
     | '/admin/more'
     | '/admin/offerings'
     | '/admin/provisioning'
@@ -572,6 +601,7 @@ export interface FileRouteTypes {
     | '/offerings/'
     | '/admin/businesses/$id'
     | '/admin/inquiries/$id'
+    | '/admin/interactions/$eventId'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
@@ -587,6 +617,7 @@ export interface FileRouteTypes {
     | '/admin/batches/'
     | '/admin/businesses/'
     | '/admin/inquiries/'
+    | '/admin/interactions/'
     | '/admin/nfc/'
     | '/admin/places/'
     | '/admin/plaques/'
@@ -610,6 +641,7 @@ export interface FileRouteTypes {
     | '/admin/area-builder'
     | '/admin/assign'
     | '/admin/customers'
+    | '/admin/maps'
     | '/admin/more'
     | '/admin/offerings'
     | '/admin/provisioning'
@@ -630,6 +662,7 @@ export interface FileRouteTypes {
     | '/offerings'
     | '/admin/businesses/$id'
     | '/admin/inquiries/$id'
+    | '/admin/interactions/$eventId'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
@@ -645,6 +678,7 @@ export interface FileRouteTypes {
     | '/admin/batches'
     | '/admin/businesses'
     | '/admin/inquiries'
+    | '/admin/interactions'
     | '/admin/nfc'
     | '/admin/places'
     | '/admin/plaques'
@@ -670,6 +704,7 @@ export interface FileRouteTypes {
     | '/admin/area-builder'
     | '/admin/assign'
     | '/admin/customers'
+    | '/admin/maps'
     | '/admin/more'
     | '/admin/offerings'
     | '/admin/provisioning'
@@ -690,6 +725,7 @@ export interface FileRouteTypes {
     | '/offerings/'
     | '/admin/businesses/$id'
     | '/admin/inquiries/$id'
+    | '/admin/interactions/$eventId'
     | '/admin/nfc/batch'
     | '/admin/nfc/read'
     | '/admin/nfc/verify'
@@ -705,6 +741,7 @@ export interface FileRouteTypes {
     | '/admin/batches/'
     | '/admin/businesses/'
     | '/admin/inquiries/'
+    | '/admin/interactions/'
     | '/admin/nfc/'
     | '/admin/places/'
     | '/admin/plaques/'
@@ -830,6 +867,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/admin/customers'
       preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/maps': {
+      id: '/admin/maps'
+      path: '/maps'
+      fullPath: '/admin/maps'
+      preLoaderRoute: typeof AdminMapsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/more': {
@@ -977,6 +1021,20 @@ declare module '@tanstack/react-router' {
       path: '/inquiries/$id'
       fullPath: '/admin/inquiries/$id'
       preLoaderRoute: typeof AdminInquiriesIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/interactions/': {
+      id: '/admin/interactions/'
+      path: '/interactions'
+      fullPath: '/admin/interactions/'
+      preLoaderRoute: typeof AdminInteractionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/interactions/$eventId': {
+      id: '/admin/interactions/$eventId'
+      path: '/interactions/$eventId'
+      fullPath: '/admin/interactions/$eventId'
+      preLoaderRoute: typeof AdminInteractionsEventIdRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/nfc/': {
@@ -1155,6 +1213,7 @@ interface AdminRouteChildren {
   AdminAreaBuilderRoute: typeof AdminAreaBuilderRoute
   AdminAssignRoute: typeof AdminAssignRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminMapsRoute: typeof AdminMapsRoute
   AdminMoreRoute: typeof AdminMoreRoute
   AdminOfferingsRoute: typeof AdminOfferingsRoute
   AdminProvisioningRoute: typeof AdminProvisioningRoute
@@ -1164,6 +1223,7 @@ interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminBusinessesIdRoute: typeof AdminBusinessesIdRoute
   AdminInquiriesIdRoute: typeof AdminInquiriesIdRoute
+  AdminInteractionsEventIdRoute: typeof AdminInteractionsEventIdRoute
   AdminNfcBatchRoute: typeof AdminNfcBatchRoute
   AdminNfcReadRoute: typeof AdminNfcReadRoute
   AdminNfcVerifyRoute: typeof AdminNfcVerifyRoute
@@ -1173,6 +1233,7 @@ interface AdminRouteChildren {
   AdminBatchesIndexRoute: typeof AdminBatchesIndexRoute
   AdminBusinessesIndexRoute: typeof AdminBusinessesIndexRoute
   AdminInquiriesIndexRoute: typeof AdminInquiriesIndexRoute
+  AdminInteractionsIndexRoute: typeof AdminInteractionsIndexRoute
   AdminNfcIndexRoute: typeof AdminNfcIndexRoute
   AdminPlacesIndexRoute: typeof AdminPlacesIndexRoute
   AdminPlaquesIndexRoute: typeof AdminPlaquesIndexRoute
@@ -1187,6 +1248,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAreaBuilderRoute: AdminAreaBuilderRoute,
   AdminAssignRoute: AdminAssignRoute,
   AdminCustomersRoute: AdminCustomersRoute,
+  AdminMapsRoute: AdminMapsRoute,
   AdminMoreRoute: AdminMoreRoute,
   AdminOfferingsRoute: AdminOfferingsRoute,
   AdminProvisioningRoute: AdminProvisioningRoute,
@@ -1196,6 +1258,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AdminBusinessesIdRoute: AdminBusinessesIdRoute,
   AdminInquiriesIdRoute: AdminInquiriesIdRoute,
+  AdminInteractionsEventIdRoute: AdminInteractionsEventIdRoute,
   AdminNfcBatchRoute: AdminNfcBatchRoute,
   AdminNfcReadRoute: AdminNfcReadRoute,
   AdminNfcVerifyRoute: AdminNfcVerifyRoute,
@@ -1205,6 +1268,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBatchesIndexRoute: AdminBatchesIndexRoute,
   AdminBusinessesIndexRoute: AdminBusinessesIndexRoute,
   AdminInquiriesIndexRoute: AdminInquiriesIndexRoute,
+  AdminInteractionsIndexRoute: AdminInteractionsIndexRoute,
   AdminNfcIndexRoute: AdminNfcIndexRoute,
   AdminPlacesIndexRoute: AdminPlacesIndexRoute,
   AdminPlaquesIndexRoute: AdminPlaquesIndexRoute,
