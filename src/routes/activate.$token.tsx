@@ -14,9 +14,9 @@ import { getBusinessDetails, searchBusinesses } from "@/lib/business-discovery.f
 export const Route = createFileRoute("/activate/$token")({
   head: () => ({
     meta: [
-      { title: "Activate your SmartPlaque — TapLocal" },
+      { title: "Set up your plaque — TapLocal" },
       { name: "description", content: "Set up your plaque in about a minute. No app, no card reader." },
-      { property: "og:title", content: "Activate your SmartPlaque — TapLocal" },
+      { property: "og:title", content: "Set up your plaque — TapLocal" },
       { property: "og:description", content: "Set up your plaque in about a minute." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -44,27 +44,47 @@ type Place = {
   primaryType: string | null;
 };
 
-const GOALS = [
-  { value: "google_reviews", label: "More Google reviews", destination: "google_review" },
-  { value: "instagram_followers", label: "More Instagram followers", destination: "instagram" },
-  { value: "bookings", label: "More bookings", destination: "booking" },
-  { value: "leads", label: "More enquiries", destination: "quote" },
-  { value: "orders", label: "More orders", destination: "menu" },
-  { value: "website_visits", label: "More website visits", destination: "website" },
+/** The customer-facing version of the admin destination list. */
+const DESTINATIONS = [
+  { value: "google_review", label: "Google Reviews", goal: "google_reviews", needsUrl: false },
+  { value: "instagram", label: "Instagram", goal: "instagram_followers", needsUrl: true },
+  { value: "menu", label: "Menu", goal: "orders", needsUrl: true },
+  { value: "website", label: "Website", goal: "website_visits", needsUrl: true },
+  { value: "booking", label: "Booking", goal: "bookings", needsUrl: true },
+  { value: "custom", label: "Other", goal: "leads", needsUrl: true },
 ] as const;
+
+type DestinationValue = (typeof DESTINATIONS)[number]["value"];
 
 const PLACEMENTS = [
   { value: "front_counter", label: "Front counter" },
-  { value: "checkout", label: "At the checkout" },
-  { value: "table", label: "On the tables" },
-  { value: "reception", label: "Reception desk" },
-  { value: "entrance", label: "By the entrance" },
-  { value: "exit", label: "By the exit" },
-  { value: "waiting_area", label: "Waiting area" },
+  { value: "table", label: "Table" },
+  { value: "entrance", label: "Entrance" },
+  { value: "pickup", label: "Pickup" },
+  { value: "checkout", label: "Checkout" },
+  { value: "other", label: "Other" },
 ];
+
+type Step = "start" | "search" | "tell" | "business" | "account" | "destination" | "placement" | "review" | "done";
+
+const FLOW: Step[] = ["business", "account", "destination", "placement", "review"];
+
+type Draft = {
+  place: Place | null;
+  manualName: string;
+  destination: DestinationValue;
+  destinationUrl: string;
+  placement: string;
+  plaqueName: string;
+  step: Step;
+};
 
 function newSessionToken() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function draftKey(token: string) {
+  return `taplocal-setup-${token}`;
 }
 
 function ActivatePage() {
@@ -73,26 +93,61 @@ function ActivatePage() {
   const search = useServerFn(searchBusinesses);
   const details = useServerFn(getBusinessDetails);
   const complete = useServerFn(completeActivation);
+  const claim = useServerFn(claimActivation);
   const parseCommand = useServerFn(parseActivationCommand);
+  const identity = useIdentity();
+  const signedIn = Boolean(identity.data?.signedIn);
 
   const sessionToken = useRef(newSessionToken());
-  const [mode, setMode] = useState<"start" | "search" | "tell" | "confirm" | "done">("start");
+  const [step, setStep] = useState<Step>("start");
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [place, setPlace] = useState<Place | null>(null);
-  const [goal, setGoal] = useState<(typeof GOALS)[number]["value"]>("google_reviews");
+  const [manualName, setManualName] = useState("");
+  const [destination, setDestination] = useState<DestinationValue>("google_review");
+  const [destinationUrl, setDestinationUrl] = useState("");
   const [placement, setPlacement] = useState("front_counter");
   const [plaqueName, setPlaqueName] = useState("");
-  const [manualUrl, setManualUrl] = useState("");
   const [sentence, setSentence] = useState("");
   const [listening, setListening] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [restored, setRestored] = useState(false);
 
   const plaque = useQuery({
     queryKey: ["activation", token],
     queryFn: () => lookup({ data: { token } }),
     retry: false,
   });
+
+  // Coming back from the sign-in email must not throw away what they already chose.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(draftKey(token));
+      if (raw) {
+        const d = JSON.parse(raw) as Draft;
+        setPlace(d.place ?? null);
+        setManualName(d.manualName ?? "");
+        setDestination(d.destination ?? "google_review");
+        setDestinationUrl(d.destinationUrl ?? "");
+        setPlacement(d.placement ?? "front_counter");
+        setPlaqueName(d.plaqueName ?? "");
+        if (d.step && d.step !== "done") setStep(d.step);
+      }
+    } catch {
+      /* a broken draft simply starts the flow over */
+    }
+    setRestored(true);
+  }, [token]);
+
+  useEffect(() => {
+    if (!restored) return;
+    const draft: Draft = { place, manualName, destination, destinationUrl, placement, plaqueName, step };
+    try {
+      sessionStorage.setItem(draftKey(token), JSON.stringify(draft));
+    } catch {
+      /* private mode — the flow still works, it just can't be resumed */
+    }
+  }, [restored, token, place, manualName, destination, destinationUrl, placement, plaqueName, step]);
 
   useEffect(() => {
     const id = setTimeout(() => setDebounced(query.trim()), 350);
@@ -101,14 +156,13 @@ function ActivatePage() {
 
   const results = useQuery({
     queryKey: ["business-search", debounced],
-    enabled: mode === "search" && debounced.length >= 3,
+    enabled: step === "search" && debounced.length >= 3,
     queryFn: () => search({ data: { query: debounced, sessionToken: sessionToken.current } }),
     retry: false,
   });
 
   const pick = useMutation({
-    mutationFn: (placeId: string) =>
-      details({ data: { placeId, sessionToken: sessionToken.current } }),
+    mutationFn: (placeId: string) => details({ data: { placeId, sessionToken: sessionToken.current } }),
     onSuccess: (data) => {
       if (!data.place) {
         setNotice("We couldn't load that listing. Try another one.");
@@ -116,7 +170,7 @@ function ActivatePage() {
       }
       setPlace(data.place as Place);
       setPlaqueName((name) => name || `${data.place!.name} plaque`);
-      setMode("confirm");
+      setStep("business");
     },
   });
 
@@ -126,33 +180,33 @@ function ActivatePage() {
       const parsed = data.parsed;
       if (!parsed) {
         setNotice("Let's find your business by name instead.");
-        setMode("search");
+        setStep("search");
         return;
       }
-      const matchedGoal = GOALS.find((g) => g.value === parsed.goal_type);
-      if (matchedGoal) setGoal(matchedGoal.value);
+      const matched = DESTINATIONS.find((d) => d.goal === parsed.goal_type);
+      if (matched) setDestination(matched.value);
       if (parsed.placement_type && PLACEMENTS.some((p) => p.value === parsed.placement_type)) {
         setPlacement(parsed.placement_type);
       }
       if (parsed.plaque_name) setPlaqueName(parsed.plaque_name);
       const q = [parsed.business_query, parsed.location_hint].filter(Boolean).join(" ");
       setQuery(q || sentence);
-      setMode("search");
+      setStep("search");
     },
-    onError: () => setMode("search"),
+    onError: () => setStep("search"),
   });
 
   const goLive = useMutation({
-    mutationFn: () => {
-      const destinationType = GOALS.find((g) => g.value === goal)!.destination;
-      return complete({
+    mutationFn: async () => {
+      const chosen = DESTINATIONS.find((d) => d.value === destination)!;
+      const result = await complete({
         data: {
           token,
           business: place
             ? place
             : {
                 placeId: null,
-                name: query || "My business",
+                name: manualName || query || "My business",
                 formattedAddress: null,
                 city: null,
                 region: null,
@@ -160,25 +214,42 @@ function ActivatePage() {
                 latitude: null,
                 longitude: null,
                 phone: null,
-                website: manualUrl || null,
+                website: destinationUrl || null,
                 mapsUri: null,
                 rating: null,
                 reviewCount: null,
                 businessStatus: null,
                 primaryType: null,
               },
-          goalType: goal,
-          destinationType,
-          destinationUrl: manualUrl || null,
+          goalType: chosen.goal,
+          destinationType: chosen.value,
+          destinationUrl: destinationUrl || null,
           placementType: placement,
           plaqueName: plaqueName || "My plaque",
         },
       });
+      if (result.ok && signedIn) {
+        await claim({ data: { token } });
+      }
+      return result;
     },
     onSuccess: (data) => {
-      if (data.ok) setMode("done");
-      else setNotice("We couldn't finish this. Check the code on your card and try again.");
+      if (!data.ok) {
+        setNotice(
+          data.error === "already_assigned"
+            ? "This plaque is already set up for another business. Contact TapLocal and we'll move it over safely."
+            : "We couldn't finish this. Check the code on your card and try again.",
+        );
+        return;
+      }
+      try {
+        sessionStorage.removeItem(draftKey(token));
+      } catch {
+        /* nothing to clean up */
+      }
+      setStep("done");
     },
+    onError: () => setNotice("Something went wrong. Try again."),
   });
 
   function startVoice() {
@@ -212,19 +283,14 @@ function ActivatePage() {
   }
 
   if (plaque.data?.rateLimited) {
-    return (
-      <Message
-        title="Too many tries"
-        body="Wait a few minutes and enter the code from your card again."
-      />
-    );
+    return <Message title="Too many tries" body="Wait a few minutes and enter the code from your card again." />;
   }
 
   if (!plaque.data?.plaque) {
     return (
       <Message
         title="This link isn't valid"
-        body="Activation codes only work once. If your plaque is already set up, open your portal instead."
+        body="Setup codes only work once. If your plaque is already set up, open your portal instead."
       />
     );
   }
@@ -232,7 +298,10 @@ function ActivatePage() {
   const activePlaque = plaque.data.plaque;
   const preconfigured = plaque.data.preconfigured;
   const searchResults = results.data?.results ?? [];
-  const selectedGoal = GOALS.find((g) => g.value === goal)!;
+  const chosen = DESTINATIONS.find((d) => d.value === destination)!;
+  const businessName = place?.name ?? manualName ?? "";
+  const destinationReady = !chosen.needsUrl ? Boolean(place?.placeId) || Boolean(destinationUrl) : Boolean(destinationUrl);
+  const stepIndex = FLOW.indexOf(step);
 
   return (
     <Field>
@@ -245,32 +314,42 @@ function ActivatePage() {
           Plaque {activePlaque.plaque_code}
         </p>
 
-        {mode === "start" && preconfigured ? (
+        {stepIndex >= 0 ? (
+          <div className="mt-3 flex items-center gap-1.5" aria-hidden>
+            {FLOW.map((s, i) => (
+              <span
+                key={s}
+                className={`h-1.5 flex-1 rounded-full ${i <= stepIndex ? "bg-primary" : "bg-foreground/10"}`}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {step === "start" && preconfigured ? (
           <FoundPlaque token={token} plaqueCode={activePlaque.plaque_code} info={preconfigured} />
         ) : null}
 
-        {mode === "start" && !preconfigured ? (
+        {step === "start" && !preconfigured ? (
           <>
             <h1 className="mt-2 font-display text-[27px] leading-tight font-bold tracking-tight text-balance">
               Let's set up your plaque.
             </h1>
             <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground text-pretty">
-              About a minute. Nothing to install.
+              Find your business, pick where a tap should send people, then go live. About a minute.
             </p>
-
 
             <div className="mt-5 space-y-3">
               <BigChoice
                 icon={<Search className="h-5 w-5" />}
                 title="Find my business"
                 body="We'll pull your details from your public Google listing."
-                onClick={() => setMode("search")}
+                onClick={() => setStep("search")}
               />
               <BigChoice
                 icon={<Sparkles className="h-5 w-5" />}
                 title="Just tell TapLocal"
                 body="Say or type it in one sentence and we'll set it up."
-                onClick={() => setMode("tell")}
+                onClick={() => setStep("tell")}
               />
             </div>
 
@@ -280,7 +359,7 @@ function ActivatePage() {
           </>
         ) : null}
 
-        {mode === "tell" ? (
+        {step === "tell" ? (
           <GlassPanel sheen className="mt-4 space-y-3 p-5">
             <h2 className="font-display text-[20px] font-bold tracking-tight text-balance">
               Tell us in one sentence
@@ -314,12 +393,13 @@ function ActivatePage() {
                 {interpret.isPending ? "Reading that…" : "Continue"}
               </button>
             </div>
-            <BackLink onClick={() => setMode("start")} />
+            <BackLink onClick={() => setStep("start")} />
           </GlassPanel>
         ) : null}
 
-        {mode === "search" ? (
+        {step === "search" ? (
           <GlassPanel sheen className="mt-4 space-y-3 p-5">
+            <StepLabel>Step 1 of 5 · Your business</StepLabel>
             <h2 className="font-display text-[20px] font-bold tracking-tight">What's your business called?</h2>
             <input
               value={query}
@@ -352,62 +432,125 @@ function ActivatePage() {
             {debounced.length >= 3 && !results.isFetching && searchResults.length === 0 ? (
               <button
                 type="button"
-                onClick={() => setMode("confirm")}
+                onClick={() => {
+                  setManualName(query);
+                  setStep("business");
+                }}
                 className="text-[12px] font-semibold text-primary underline underline-offset-4"
               >
                 Can't find it? Set it up by hand
               </button>
             ) : null}
 
-            <BackLink onClick={() => setMode("start")} />
+            <BackLink onClick={() => setStep("start")} />
           </GlassPanel>
         ) : null}
 
-        {mode === "confirm" ? (
+        {step === "business" ? (
           <GlassPanel sheen className="mt-4 space-y-4 p-5">
-            <div>
-              <h2 className="font-display text-[20px] leading-tight font-bold tracking-tight text-balance">
-                {place ? "Is this you?" : "Tell us about your business"}
-              </h2>
-              {place ? (
-                <div className="mt-3 rounded-xl border border-border bg-foreground/5 p-3.5">
-                  <p className="text-[15px] font-semibold">{place.name}</p>
-                  {place.formattedAddress ? (
-                    <p className="mt-0.5 flex items-start gap-1.5 text-[12px] text-muted-foreground">
-                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      {place.formattedAddress}
-                    </p>
-                  ) : null}
-                  {typeof place.rating === "number" ? (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                      <Star className="h-3.5 w-3.5 text-accent" />
-                      {place.rating} · {place.reviewCount ?? 0} reviews today
-                    </p>
-                  ) : null}
-                </div>
-              ) : (
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Your business name"
-                  className="mt-3 w-full rounded-xl border border-border bg-foreground/5 px-3.5 py-3 text-[15px] outline-none focus:border-primary/60"
-                />
-              )}
-            </div>
-
-            <Section title="What do you want more of?">
-              <Chips
-                options={GOALS.map((g) => ({ value: g.value, label: g.label }))}
-                value={goal}
-                onChange={(v) => setGoal(v as (typeof GOALS)[number]["value"])}
+            <StepLabel>Step 1 of 5 · Confirm business</StepLabel>
+            <h2 className="font-display text-[20px] leading-tight font-bold tracking-tight text-balance">
+              {place ? "Is this you?" : "Tell us about your business"}
+            </h2>
+            {place ? (
+              <div className="rounded-xl border border-border bg-foreground/5 p-3.5">
+                <p className="text-[15px] font-semibold">{place.name}</p>
+                {place.formattedAddress ? (
+                  <p className="mt-0.5 flex items-start gap-1.5 text-[12px] text-muted-foreground">
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    {place.formattedAddress}
+                  </p>
+                ) : null}
+                {typeof place.rating === "number" ? (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                    <Star className="h-3.5 w-3.5 text-accent" />
+                    {place.rating} · {place.reviewCount ?? 0} reviews today
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <input
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                placeholder="Your business name"
+                className="w-full rounded-xl border border-border bg-foreground/5 px-3.5 py-3 text-[15px] outline-none focus:border-primary/60"
               />
-            </Section>
+            )}
 
-            {selectedGoal.destination !== "google_review" || !place?.placeId ? (
+            <button
+              type="button"
+              disabled={!place && manualName.trim().length < 2}
+              onClick={() => setStep("account")}
+              className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
+            >
+              Yes, continue
+            </button>
+            <BackLink onClick={() => setStep("search")} />
+          </GlassPanel>
+        ) : null}
+
+        {step === "account" ? (
+          <GlassPanel sheen className="mt-4 space-y-4 p-5">
+            <StepLabel>Step 2 of 5 · Your account</StepLabel>
+            <h2 className="font-display text-[20px] font-bold tracking-tight text-balance">
+              {signedIn ? "You're signed in." : "Sign in or create your account"}
+            </h2>
+            <p className="text-[13px] leading-relaxed text-muted-foreground text-pretty">
+              {signedIn
+                ? "This plaque will be connected to your account when you finish."
+                : "We'll email you a link. Come back here and your setup will still be waiting."}
+            </p>
+            {signedIn ? (
+              <button
+                type="button"
+                onClick={() => setStep("destination")}
+                className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground"
+              >
+                Continue
+              </button>
+            ) : (
+              <>
+                <Link
+                  to="/auth"
+                  search={{ returnTo: `/activate/${token}` }}
+                  className="block w-full rounded-xl bg-primary px-4 py-3.5 text-center text-[14px] font-bold text-primary-foreground"
+                >
+                  Sign in / create account
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setStep("destination")}
+                  className="w-full text-[12px] font-semibold text-muted-foreground underline underline-offset-4"
+                >
+                  I'll do this at the end
+                </button>
+              </>
+            )}
+            <BackLink onClick={() => setStep("business")} />
+          </GlassPanel>
+        ) : null}
+
+        {step === "destination" ? (
+          <GlassPanel sheen className="mt-4 space-y-4 p-5">
+            <StepLabel>Step 3 of 5 · Destination</StepLabel>
+            <h2 className="font-display text-[20px] font-bold tracking-tight text-balance">
+              Where should a tap send people?
+            </h2>
+            <Chips
+              options={DESTINATIONS.map((d) => ({ value: d.value, label: d.label }))}
+              value={destination}
+              onChange={(v) => setDestination(v as DestinationValue)}
+            />
+
+            {chosen.value === "google_review" && place?.placeId ? (
+              <p className="text-[12px] text-muted-foreground text-pretty">
+                Every tap opens your Google review box, ready to write.
+              </p>
+            ) : (
               <div>
                 <input
-                  value={manualUrl}
-                  onChange={(e) => setManualUrl(e.target.value)}
+                  value={destinationUrl}
+                  onChange={(e) => setDestinationUrl(e.target.value)}
                   placeholder="https://… where a tap should send people"
                   className="w-full rounded-xl border border-border bg-foreground/5 px-3.5 py-3 text-[15px] outline-none focus:border-primary/60"
                 />
@@ -415,51 +558,93 @@ function ActivatePage() {
                   You can change this any time from your portal.
                 </p>
               </div>
-            ) : (
-              <p className="text-[12px] text-muted-foreground text-pretty">
-                Every tap opens your Google review box, ready to write.
-              </p>
             )}
 
-            <Section title="Where will it sit?">
-              <Chips options={PLACEMENTS} value={placement} onChange={setPlacement} />
-            </Section>
+            <button
+              type="button"
+              disabled={!destinationReady}
+              onClick={() => setStep("placement")}
+              className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
+            >
+              Continue
+            </button>
+            <BackLink onClick={() => setStep("account")} />
+          </GlassPanel>
+        ) : null}
 
+        {step === "placement" ? (
+          <GlassPanel sheen className="mt-4 space-y-4 p-5">
+            <StepLabel>Step 4 of 5 · Placement</StepLabel>
+            <h2 className="font-display text-[20px] font-bold tracking-tight text-balance">Where will it sit?</h2>
+            <Chips options={PLACEMENTS} value={placement} onChange={setPlacement} />
             <input
               value={plaqueName}
               onChange={(e) => setPlaqueName(e.target.value)}
               placeholder="Name it, e.g. Counter plaque"
               className="w-full rounded-xl border border-border bg-foreground/5 px-3.5 py-3 text-[15px] outline-none focus:border-primary/60"
             />
-
             <button
               type="button"
-              disabled={goLive.isPending || (!place && query.trim().length < 2)}
-              onClick={() => goLive.mutate()}
-              className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
+              onClick={() => setStep("review")}
+              className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground"
             >
-              {goLive.isPending ? "Going live…" : "Go live"}
+              Review setup
             </button>
-            <BackLink onClick={() => setMode(place ? "search" : "start")} />
+            <BackLink onClick={() => setStep("destination")} />
           </GlassPanel>
         ) : null}
 
-        {mode === "done" ? (
+        {step === "review" ? (
+          <GlassPanel sheen className="mt-4 space-y-4 p-5">
+            <StepLabel>Step 5 of 5 · Review</StepLabel>
+            <h2 className="font-display text-[20px] font-bold tracking-tight text-balance">Check this over</h2>
+            <div className="divide-y divide-border rounded-xl border border-border bg-foreground/5">
+              <DetailRow label="Business" value={businessName || "Unavailable"} />
+              {place?.formattedAddress ? <DetailRow label="Address" value={place.formattedAddress} /> : null}
+              <DetailRow label="Plaque" value={plaqueName ? `${plaqueName} · ${activePlaque.plaque_code}` : activePlaque.plaque_code} />
+              <DetailRow label="Placement" value={PLACEMENTS.find((p) => p.value === placement)?.label ?? placement} />
+              <DetailRow label="Destination" value={chosen.label} />
+              {destinationUrl ? <DetailRow label="Opens" value={destinationUrl} /> : null}
+              <DetailRow label="Account" value={signedIn ? "Signed in" : "Sign in after setup"} />
+            </div>
+            <button
+              type="button"
+              disabled={goLive.isPending}
+              onClick={() => goLive.mutate()}
+              className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
+            >
+              {goLive.isPending ? "Setting up…" : "Set up my plaque"}
+            </button>
+            <BackLink onClick={() => setStep("placement")} />
+          </GlassPanel>
+        ) : null}
+
+        {step === "done" ? (
           <GlassPanel sheen className="mt-4 p-5 text-center">
             <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-accent/20 text-accent">
               <Check className="h-6 w-6" />
             </span>
             <h2 className="mt-3 font-display text-[22px] font-bold tracking-tight">Your plaque is live</h2>
             <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground text-pretty">
-              Put it {PLACEMENTS.find((p) => p.value === placement)?.label.toLowerCase()} and tap it with your
-              phone to try it. Create your account to see what happens next.
+              Put it on the {(PLACEMENTS.find((p) => p.value === placement)?.label ?? "counter").toLowerCase()} and
+              tap it with your phone to try it.
             </p>
-            <Link
-              to="/app"
-              className="mt-4 inline-block rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-primary-foreground"
-            >
-              Create my account
-            </Link>
+            {signedIn ? (
+              <Link
+                to="/app"
+                className="mt-4 inline-block rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-primary-foreground"
+              >
+                Open my dashboard
+              </Link>
+            ) : (
+              <Link
+                to="/auth"
+                search={{ returnTo: `/activate/${token}` }}
+                className="mt-4 inline-block rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-primary-foreground"
+              >
+                Create my account
+              </Link>
+            )}
           </GlassPanel>
         ) : null}
 
@@ -515,12 +700,13 @@ function FoundPlaque({
         <DetailRow label="Plaque" value={info.plaqueName ? `${info.plaqueName} · ${plaqueCode}` : plaqueCode} />
         <DetailRow
           label="Placement"
-          value={info.placementType ? (PLACEMENTS.find((p) => p.value === info.placementType)?.label ?? info.placementType) : "Unavailable"}
+          value={
+            info.placementType
+              ? (PLACEMENTS.find((p) => p.value === info.placementType)?.label ?? info.placementType)
+              : "Unavailable"
+          }
         />
-        <DetailRow
-          label="Destination"
-          value={info.destinationUrl ?? info.destinationType ?? "Unavailable"}
-        />
+        <DetailRow label="Destination" value={info.destinationUrl ?? info.destinationType ?? "Unavailable"} />
       </div>
 
       {signedIn ? (
@@ -547,6 +733,12 @@ function FoundPlaque({
       </p>
       {error ? <p className="text-[12px] text-destructive">{error}</p> : null}
     </GlassPanel>
+  );
+}
+
+function StepLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{children}</p>
   );
 }
 
@@ -596,22 +788,13 @@ function BigChoice({
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
         {icon}
       </span>
-      <span>
+      <span className="min-w-0">
         <span className="block text-[15px] font-bold">{title}</span>
         <span className="mt-0.5 block text-[12.5px] leading-snug text-muted-foreground text-pretty">
           {body}
         </span>
       </span>
     </button>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <p className="text-[13px] font-semibold">{title}</p>
-      {children}
-    </div>
   );
 }
 
