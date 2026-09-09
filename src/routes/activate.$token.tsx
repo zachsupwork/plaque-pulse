@@ -6,7 +6,8 @@ import { Check, Loader2, MapPin, Mic, Search, Sparkles, Star } from "lucide-reac
 import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
 import { NfcReadyCheck } from "@/components/taplocal/NfcReadyCheck";
-import { completeActivation, lookupActivation } from "@/lib/activation.functions";
+import { claimActivation, completeActivation, lookupActivation } from "@/lib/activation.functions";
+import { useIdentity } from "@/hooks/useAuthSession";
 import { parseActivationCommand } from "@/lib/activation-command.functions";
 import { getBusinessDetails, searchBusinesses } from "@/lib/business-discovery.functions";
 
