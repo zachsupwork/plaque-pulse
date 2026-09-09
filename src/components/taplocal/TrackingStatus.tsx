@@ -56,17 +56,19 @@ export function TrackingStatus({ plaqueId }: { plaqueId: string }) {
           <Row label="Slug" value={t.publicSlug} />
           <Row label="Business" value={t.business ?? "Unassigned"} />
           <Row label="Destination" value={t.destinationType ?? "None"} />
+          <Row label="Last interaction" value={when(t.lastInteraction)} />
           <Row label="Last NFC tap" value={when(t.lastNfcTap)} />
           <Row label="Last QR scan" value={when(t.lastQrScan)} />
           <Row label="Last event" value={t.lastEvent ? `${t.lastEvent.type} · ${when(t.lastEvent.at)}` : "Never"} />
+          <Row label="Interactions today" value={`${t.interactionsToday} (${t.nfcToday} NFC · ${t.qrToday} QR)`} />
           <Row label="Events today" value={String(t.eventsToday)} />
-          <Row label="NFC today" value={String(t.nfcToday)} />
-          <Row label="QR today" value={String(t.qrToday)} />
-          <Row label="Interactions all time" value={String(t.interactionsAllTime)} />
-          <Row label="Test events" value={String(t.testEvents)} />
-          <Row label="Unconfigured taps" value={String(t.setupOpens)} />
-          <Row label="Taps while off" value={String(t.inactiveTaps)} />
+          <Row label="All time" value={`${t.interactionsAllTime} (${t.nfcAllTime} NFC · ${t.qrAllTime} QR)`} />
+          <Row label="Admin test events" value={String(t.testEvents)} />
+          <Row label="Tapped but not configured" value={String(t.setupOpens)} />
+          <Row label="Tapped while paused" value={String(t.inactiveTaps)} />
         </dl>
+
+        <p className="text-[11px] text-muted-foreground">Days shown in {t.timezone} time.</p>
 
         {t.destinationUrl ? (
           <p className="break-all text-[12px] text-muted-foreground">{t.destinationUrl}</p>
@@ -79,7 +81,7 @@ export function TrackingStatus({ plaqueId }: { plaqueId: string }) {
             rel="noreferrer"
             className="rounded-full border border-border px-3 py-1.5 text-[12px] font-semibold"
           >
-            Test tracking (no customer count)
+            Test SmartLink — does not count
           </a>
           <a
             href={testUrl(qrUrl(t.publicSlug))}
@@ -87,37 +89,62 @@ export function TrackingStatus({ plaqueId }: { plaqueId: string }) {
             rel="noreferrer"
             className="rounded-full border border-border px-3 py-1.5 text-[12px] font-semibold"
           >
-            Test QR tracking
+            Test QR link — does not count
           </a>
-          {warn ? (
-            <a
-              href={nfcUrl(t.publicSlug)}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() => setWarn(false)}
-              className="rounded-full bg-destructive px-3 py-1.5 text-[12px] font-semibold text-destructive-foreground"
-            >
-              Confirm — count as a real tap
-            </a>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setWarn(true)}
-              className="rounded-full border border-destructive/40 px-3 py-1.5 text-[12px] font-semibold text-destructive"
-            >
-              Count as real tap
-            </button>
-          )}
+          <button
+            type="button"
+            disabled={check.isPending}
+            onClick={() => check.mutate()}
+            className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[12px] font-semibold text-primary"
+          >
+            {check.isPending ? "Checking…" : "Run tracking check"}
+          </button>
         </div>
-        {warn ? (
-          <p className="text-[12px] text-muted-foreground">
-            This will add a real customer interaction to this business's numbers. Normal testing should use the test
-            buttons above.
-          </p>
+        <p className="text-[12px] text-muted-foreground">Admin tests are excluded from customer analytics.</p>
+
+        {check.data?.ok ? (
+          <ul className="space-y-1 rounded-xl border border-border bg-foreground/[0.03] p-3 text-[12px]">
+            {check.data.checks.map((c) => (
+              <li key={c.label} className="flex items-start justify-between gap-3">
+                <span className={c.ok ? "font-semibold" : "font-semibold text-destructive"}>
+                  {c.ok ? "✓" : "✕"} {c.label}
+                </span>
+                <span className="truncate text-right text-muted-foreground">{c.detail}</span>
+              </li>
+            ))}
+          </ul>
         ) : null}
-        <p className="text-[12px] text-muted-foreground">
-          A test tap records SmartLink resolved, destination resolved and a test event — customer counts stay unchanged.
-        </p>
+
+        <div className="rounded-xl border border-destructive/30 p-3">
+          <p className="text-[12px] font-bold uppercase tracking-wide text-destructive">Record real test interaction</p>
+          <p className="mt-1 text-[12px] text-muted-foreground">This will count as a real customer interaction.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(["nfc", "qr"] as const).map((kind) =>
+              realTest === kind ? (
+                <a
+                  key={kind}
+                  href={kind === "nfc" ? nfcUrl(t.publicSlug) : qrUrl(t.publicSlug)}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setRealTest(null)}
+                  className="rounded-full bg-destructive px-3 py-1.5 text-[12px] font-semibold text-destructive-foreground"
+                >
+                  Confirm — count this {kind.toUpperCase()} interaction
+                </a>
+              ) : (
+                <button
+                  key={kind}
+                  type="button"
+                  onClick={() => setRealTest(kind)}
+                  className="rounded-full border border-destructive/40 px-3 py-1.5 text-[12px] font-semibold text-destructive"
+                >
+                  Test {kind.toUpperCase()}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+
       </GlassPanel>
     </div>
   );
