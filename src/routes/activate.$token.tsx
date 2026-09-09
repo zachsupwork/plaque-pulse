@@ -468,6 +468,96 @@ function ActivatePage() {
   );
 }
 
+/** TapLocal already set this plaque up. The owner only has to claim it. */
+function FoundPlaque({
+  token,
+  plaqueCode,
+  info,
+}: {
+  token: string;
+  plaqueCode: string;
+  info: {
+    businessName: string;
+    address: string | null;
+    placementType: string | null;
+    plaqueName: string | null;
+    destinationType: string | null;
+    destinationUrl: string | null;
+  };
+}) {
+  const identity = useIdentity();
+  const claim = useServerFn(claimActivation);
+  const [error, setError] = useState<string | null>(null);
+  const signedIn = Boolean(identity.data?.signedIn);
+
+  const run = useMutation({
+    mutationFn: () => claim({ data: { token } }),
+    onSuccess: (data) => {
+      if (data.ok) window.location.replace("/app");
+      else setError("We couldn't connect this plaque to your account. Contact TapLocal and we'll sort it out.");
+    },
+    onError: () => setError("Something went wrong. Try again."),
+  });
+
+  return (
+    <GlassPanel sheen className="mt-4 space-y-4 p-5">
+      <div>
+        <p className="text-[12px] font-semibold tracking-[0.12em] text-accent uppercase">We found your plaque</p>
+        <h1 className="mt-2 font-display text-[24px] leading-tight font-bold tracking-tight text-balance">
+          {info.businessName}
+        </h1>
+        {info.address ? <p className="mt-1 text-[13px] text-muted-foreground">{info.address}</p> : null}
+      </div>
+
+      <div className="divide-y divide-border rounded-xl border border-border bg-foreground/5">
+        <DetailRow label="Business" value={info.businessName} />
+        <DetailRow label="Plaque" value={info.plaqueName ? `${info.plaqueName} · ${plaqueCode}` : plaqueCode} />
+        <DetailRow
+          label="Placement"
+          value={info.placementType ? (PLACEMENTS.find((p) => p.value === info.placementType)?.label ?? info.placementType) : "Unavailable"}
+        />
+        <DetailRow
+          label="Destination"
+          value={info.destinationUrl ?? info.destinationType ?? "Unavailable"}
+        />
+      </div>
+
+      {signedIn ? (
+        <button
+          type="button"
+          disabled={run.isPending}
+          onClick={() => run.mutate()}
+          className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
+        >
+          {run.isPending ? "Connecting…" : "Claim & continue"}
+        </button>
+      ) : (
+        <Link
+          to="/auth"
+          search={{ returnTo: `/activate/${token}` }}
+          className="block w-full rounded-xl bg-primary px-4 py-3.5 text-center text-[14px] font-bold text-primary-foreground"
+        >
+          Claim &amp; continue
+        </Link>
+      )}
+      <p className="text-[12px] text-muted-foreground text-pretty">
+        Sign in or create your account to take ownership. You can change the destination and placement any time
+        from your portal.
+      </p>
+      {error ? <p className="text-[12px] text-destructive">{error}</p> : null}
+    </GlassPanel>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 p-3 text-[13px]">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 truncate text-right font-semibold">{value}</span>
+    </div>
+  );
+}
+
 function Message({ title, body }: { title: string; body: string }) {
   return (
     <Field>
