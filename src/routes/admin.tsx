@@ -25,6 +25,8 @@ const SECONDARY = [
   { to: "/admin/offerings", label: "Catalog" },
   { to: "/admin/customers", label: "Customers" },
   { to: "/admin/analytics", label: "Analytics" },
+  { to: "/admin/interactions", label: "Taps & Scans" },
+  { to: "/admin/maps", label: "Maps Watch" },
   { to: "/admin/qr-lookup", label: "Find QR" },
   { to: "/admin/nfc", label: "NFC Tools" },
   { to: "/admin/settings", label: "Settings" },

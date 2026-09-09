@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassPanel, SectionTitle, Stat, StatusChip } from "@/components/taplocal/Field";
 import { networkActivity, networkOverview } from "@/lib/admin-data.functions";
+import { aiToday, liveTapFeed } from "@/lib/interactions.functions";
 import { inquiryCounts } from "@/lib/inquiries.functions";
 import { placesOverview } from "@/lib/places.functions";
 
@@ -41,6 +42,107 @@ const QUICK_ACTIONS = [
   { to: "/demo", label: "Sales mode", tone: "outline" as const },
 ];
 
+
+/** Live NFC + QR activity. Every number and every row opens the detail behind it. */
+function LiveTaps() {
+  const liveFn = useServerFn(liveTapFeed);
+  const aiFn = useServerFn(aiToday);
+  const live = useQuery({ queryKey: ["admin-live-taps"], queryFn: () => liveFn({ data: undefined }), refetchInterval: 4_000 });
+  const ai = useQuery({ queryKey: ["admin-ai-today"], queryFn: () => aiFn({ data: undefined }), refetchInterval: 60_000 });
+
+  const l = live.data?.ok ? live.data : null;
+  const a = ai.data?.ok ? ai.data : null;
+
+  return (
+    <div className="space-y-2.5">
+      <SectionTitle
+        action={
+          <Link to="/admin/interactions" search={{}} className="text-[12px] font-semibold text-primary">
+            Every tap →
+          </Link>
+        }
+      >
+        Live NFC &amp; QR{l ? ` (${l.timezone})` : ""}
+      </SectionTitle>
+
+      {live.data && !live.data.ok ? (
+        <GlassPanel className="border-destructive/40 p-3.5 text-[13px] font-semibold text-destructive">
+          Live tap data is unavailable right now — this is a read problem, not zero activity.
+        </GlassPanel>
+      ) : null}
+
+      <div className="grid grid-cols-3 gap-2.5">
+        {(
+          [
+            ["Today", l?.today.total, "all"],
+            ["NFC taps", l?.today.nfc, "nfc"],
+            ["QR scans", l?.today.qr, "qr"],
+          ] as const
+        ).map(([label, value, source]) => (
+          <Link
+            key={label}
+            to="/admin/interactions"
+            search={{ period: "today", source }}
+            className="rounded-2xl border border-border bg-card p-3.5 text-center shadow-[var(--shadow-soft)]"
+          >
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">{label}</p>
+            <p className="mt-1 font-display text-[22px] font-bold tracking-tight">{value ?? "—"}</p>
+          </Link>
+        ))}
+      </div>
+
+      {l && !l.today.consistent ? (
+        <p className="text-[12px] font-semibold text-destructive">Tracking check: today's total does not equal NFC + QR.</p>
+      ) : null}
+
+      {a ? (
+        <GlassPanel tone="brand" className="p-3.5">
+          <p className="text-[11px] font-semibold tracking-[0.08em] text-accent uppercase">TapLocal AI · today</p>
+          <p className="mt-1 text-[13px] leading-relaxed">
+            {a.interactions} interaction{a.interactions === 1 ? "" : "s"} ({a.nfc} NFC · {a.qr} QR).{" "}
+            {a.possibleReviews} possible review{a.possibleReviews === 1 ? "" : "s"}, {a.newPhotos} new photo
+            {a.newPhotos === 1 ? "" : "s"}, {a.enteredTop3} now prominent on Maps.
+          </p>
+          {a.latest ? (
+            <Link
+              to="/admin/interactions/$eventId"
+              params={{ eventId: a.latest.eventId }}
+              className="mt-1.5 block text-[12px] font-semibold text-primary"
+            >
+              {a.latest.headline} ({a.latest.confidence}%) →
+            </Link>
+          ) : null}
+        </GlassPanel>
+      ) : null}
+
+      <GlassPanel className="divide-y divide-border">
+        {l && l.latest.length === 0 ? (
+          <p className="p-4 text-[13px] text-muted-foreground">No taps or scans in the last two days.</p>
+        ) : null}
+        {(l?.latest ?? []).map((item) => (
+          <Link
+            key={item.id}
+            to="/admin/interactions/$eventId"
+            params={{ eventId: item.id }}
+            className="flex items-center justify-between gap-3 p-3.5"
+          >
+            <span className="min-w-0">
+              <span className="flex items-center gap-2">
+                <StatusChip tone={item.source === "NFC TAP" ? "ok" : "brand"}>{item.source}</StatusChip>
+                <span className="truncate text-[13px] font-semibold">{item.business}</span>
+              </span>
+              <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                {[item.plaque, item.destination, item.device].filter(Boolean).join(" · ")}
+                {item.bestConfidence ? ` · possible outcome ${item.bestConfidence}%` : ""}
+              </span>
+            </span>
+            <span className="shrink-0 text-[11px] text-muted-foreground">{ago(item.at)}</span>
+          </Link>
+        ))}
+      </GlassPanel>
+    </div>
+  );
+}
 
 
 function AdminDashboard() {
