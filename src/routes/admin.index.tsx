@@ -239,6 +239,26 @@ function AdminDashboard() {
           ))}
         </GlassPanel>
       </div>
+
+      {(activity.data?.diagnostics ?? []).length ? (
+        <div>
+          <SectionTitle>Diagnostics — not counted as customer taps</SectionTitle>
+          <GlassPanel className="divide-y divide-border">
+            {(activity.data?.diagnostics ?? []).map((d, i) => (
+              <div key={`${d.at}-${i}`} className="flex items-center justify-between gap-3 p-3.5">
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold">{d.business}</p>
+                  <p className="truncate text-[12px] text-muted-foreground">
+                    {[d.plaque, d.source, d.label].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+                <span className="shrink-0 text-[11px] text-muted-foreground">{ago(d.at)}</span>
+              </div>
+            ))}
+          </GlassPanel>
+        </div>
+      ) : null}
+
     </div>
   );
 }
