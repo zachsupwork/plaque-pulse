@@ -117,13 +117,12 @@ export const networkOverview = createServerFn({ method: "POST" }).handler(async 
   const { data: rawEvents } = await client
     .from("events")
     .select("business_id, plaque_id, event_type, source_type, occurred_at")
-    .gte("occurred_at", since(30))
+    .gte("occurred_at", since(45))
     .limit(50000);
   const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
 
   const interactions = events.filter((e) => e.event_type === "interaction");
-  const today = startOfToday();
-  const in7 = since(7);
+  const stats = periodStats(interactions);
   const monthStart = new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1).toISOString();
 
   const countStatus = (s: string) => plaques.filter((p) => p.status === s).length;
@@ -140,13 +139,16 @@ export const networkOverview = createServerFn({ method: "POST" }).handler(async 
     plaquesPacked: countStatus("packed"),
     plaquesFaulty: countStatus("faulty"),
     plaquesActivatedThisMonth: plaques.filter((p) => (p.activated_at ?? "") >= monthStart).length,
-    interactionsToday: interactions.filter((e) => e.occurred_at >= today).length,
-    nfcToday: interactions.filter((e) => e.occurred_at >= today && e.source_type === "nfc").length,
-    qrToday: interactions.filter((e) => e.occurred_at >= today && e.source_type === "qr").length,
-    interactions7: interactions.filter((e) => e.occurred_at >= in7).length,
-    interactions30: interactions.length,
+    /** Each period carries its own NFC/QR split — never mix a period total with all-time sources. */
+    stats,
+    interactionsToday: stats.today.total,
+    nfcToday: stats.today.nfc,
+    qrToday: stats.today.qr,
+    interactions7: stats.days7.total,
+    interactions30: stats.days30.total,
   };
 });
+
 
 
 /** Newest real taps, scans and account changes. Demo activity is excluded. */
