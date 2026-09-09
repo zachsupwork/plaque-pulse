@@ -1,9 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  REPORT_TIMEZONE,
+  dateKeyInTimezone,
+  startOfTodayInTimezone,
+  startOfWindowInTimezone,
+} from "@/lib/report-time";
 
 /**
  * Platform-owner data access. Every function verifies the caller is a TapLocal
  * admin with their OWN session first, and only then uses the privileged client.
+ *
+ * All reporting days are local days in the TapLocal reporting timezone
+ * (America/Toronto), never UTC days — see src/lib/report-time.ts.
  */
 
 type Denied = { ok: false; error: "unauthorized" | "forbidden" };
@@ -18,15 +27,46 @@ async function db() {
   return supabaseAdmin;
 }
 
+/** Raw rolling window (used for query bounds, not for "day" reporting). */
 function since(days: number) {
   return new Date(Date.now() - days * 86400000).toISOString();
 }
 
-function startOfToday() {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  return d.toISOString();
+/** Local midnight that starts a reporting window of N whole local days. */
+function windowStart(days: number) {
+  return startOfWindowInTimezone(days);
 }
+
+function startOfToday() {
+  return startOfTodayInTimezone();
+}
+
+type SourceRow = { event_type: string; source_type: string | null; occurred_at: string };
+
+/** Total / NFC / QR for one window — always matching periods, never mixed scopes. */
+function sourceCounts(interactions: SourceRow[], from?: string) {
+  const list = from ? interactions.filter((e) => e.occurred_at >= from) : interactions;
+  const nfc = list.filter((e) => e.source_type === "nfc").length;
+  const qr = list.filter((e) => e.source_type === "qr").length;
+  return { total: list.length, nfc, qr, consistent: list.length === nfc + qr };
+}
+
+/** Today / 7d / 30d / all-time, each with its own NFC + QR split. */
+function periodStats(interactions: SourceRow[]) {
+  const lastOf = (predicate: (e: SourceRow) => boolean) =>
+    interactions.filter(predicate).reduce<string | null>((acc, e) => (!acc || e.occurred_at > acc ? e.occurred_at : acc), null);
+  return {
+    timezone: REPORT_TIMEZONE,
+    today: sourceCounts(interactions, startOfToday()),
+    days7: sourceCounts(interactions, windowStart(7)),
+    days30: sourceCounts(interactions, windowStart(30)),
+    allTime: sourceCounts(interactions),
+    lastInteraction: lastOf(() => true),
+    lastNfc: lastOf((e) => e.source_type === "nfc"),
+    lastQr: lastOf((e) => e.source_type === "qr"),
+  };
+}
+
 
 /** Signed-in identity + whether they hold the admin role. */
 export const adminIdentity = createServerFn({ method: "POST" }).handler(async () => {
