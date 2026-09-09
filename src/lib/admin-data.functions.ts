@@ -679,7 +679,7 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const [{ data: rawEvents }, { data: rawPlaques }, { data: rawBusinesses }, { data: rawAllTime }] = await Promise.all([
       client
         .from("events")
-        .select("business_id, plaque_id, event_type, source_type, destination_type, device_family, occurred_at")
+        .select("id, business_id, plaque_id, event_type, source_type, destination_type, device_family, occurred_at")
         .gte("occurred_at", windowStart(data.days))
         .order("occurred_at", { ascending: false })
         .limit(100000),
@@ -731,6 +731,7 @@ export const networkAnalytics = createServerFn({ method: "POST" })
         : null;
 
     const latest = interactions.slice(0, 25).map((e) => ({
+      id: e.id,
       at: e.occurred_at,
       business: e.business_id ? (bizName.get(e.business_id) ?? "Unassigned") : "Unassigned",
       plaque: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.plaque_code ?? "") : "",
