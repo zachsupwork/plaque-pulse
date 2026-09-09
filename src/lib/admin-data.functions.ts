@@ -676,14 +676,20 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const client = await db();
     const scope = await scopeFor(client);
 
-    const [{ data: rawEvents }, { data: rawPlaques }, { data: rawBusinesses }] = await Promise.all([
+    const [{ data: rawEvents }, { data: rawPlaques }, { data: rawBusinesses }, { data: rawAllTime }] = await Promise.all([
       client
         .from("events")
-        .select("business_id, plaque_id, event_type, source_type, destination_type, occurred_at")
-        .gte("occurred_at", since(data.days))
+        .select("business_id, plaque_id, event_type, source_type, destination_type, device_family, occurred_at")
+        .gte("occurred_at", windowStart(data.days))
+        .order("occurred_at", { ascending: false })
         .limit(100000),
-      client.from("plaques").select("id, plaque_code, plaque_name, placement_type, business_id, status"),
+      client.from("plaques").select("id, plaque_code, plaque_name, public_slug, placement_type, business_id, status"),
       client.from("businesses").select("id, name, is_demo"),
+      client
+        .from("events")
+        .select("business_id, plaque_id, event_type, source_type, occurred_at")
+        .eq("event_type", "interaction")
+        .limit(100000),
     ]);
 
     const events = (rawEvents ?? []).filter((e) => !scope.isDemoRow(e));
@@ -691,9 +697,9 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const businesses = (rawBusinesses ?? []).filter((b) => !b.is_demo);
 
     const interactions = events.filter((e) => e.event_type === "interaction");
+    const allTimeInteractions = (rawAllTime ?? []).filter((e) => !scope.isDemoRow(e));
     const bizName = new Map(businesses.map((b) => [b.id, b.name]));
     const plaqueMap = new Map(plaques.map((p) => [p.id, p]));
-
 
     const tally = <T extends string>(list: (T | null)[]) => {
       const out: Record<string, number> = {};
@@ -704,9 +710,10 @@ export const networkAnalytics = createServerFn({ method: "POST" })
     const perPlaque: Record<string, number> = {};
     for (const e of interactions) if (e.plaque_id) perPlaque[e.plaque_id] = (perPlaque[e.plaque_id] ?? 0) + 1;
 
+    // Days are local reporting days, so an 11 PM Ottawa tap lands on the right bar.
     const perDay: Record<string, number> = {};
     for (const e of interactions) {
-      const day = e.occurred_at.slice(0, 10);
+      const day = dateKeyInTimezone(e.occurred_at);
       perDay[day] = (perDay[day] ?? 0) + 1;
     }
 
@@ -715,16 +722,40 @@ export const networkAnalytics = createServerFn({ method: "POST" })
 
     const livePlaques = (plaques ?? []).filter((p) => p.status === "active");
 
+    const stats = periodStats(allTimeInteractions);
+    const windowCounts = sourceCounts(interactions);
+    // Every interaction must be NFC or QR. If not, tracking needs investigating.
+    const diagnosticWarning =
+      !windowCounts.consistent || !stats.today.consistent || !stats.allTime.consistent
+        ? "Tracking check: some interactions have no NFC/QR source. Total does not equal NFC + QR."
+        : null;
+
+    const latest = interactions.slice(0, 25).map((e) => ({
+      at: e.occurred_at,
+      business: e.business_id ? (bizName.get(e.business_id) ?? "Unassigned") : "Unassigned",
+      plaque: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.plaque_code ?? "") : "",
+      slug: e.plaque_id ? (plaqueMap.get(e.plaque_id)?.public_slug ?? "") : "",
+      plaqueId: e.plaque_id,
+      source: e.source_type === "qr" ? "QR" : "NFC",
+      destination: e.destination_type ?? "—",
+      device: e.device_family ?? "—",
+    }));
+
     return {
       ok: true as const,
       analytics: {
         days: data.days,
-        total: interactions.length,
-        nfc: interactions.filter((e) => e.source_type === "nfc").length,
-        qr: interactions.filter((e) => e.source_type === "qr").length,
+        timezone: REPORT_TIMEZONE,
+        total: windowCounts.total,
+        nfc: windowCounts.nfc,
+        qr: windowCounts.qr,
+        periods: stats,
+        diagnosticWarning,
+        latest,
         perDay: Object.entries(perDay).sort((a, b) => (a[0] < b[0] ? -1 : 1)),
         placements: tally(interactions.map((e) => (e.plaque_id ? (plaqueMap.get(e.plaque_id)?.placement_type ?? null) : null))),
         destinations: tally(interactions.map((e) => e.destination_type)),
+
         topPlaques: Object.entries(perPlaque)
           .sort((a, b) => b[1] - a[1])
           .slice(0, 10)
