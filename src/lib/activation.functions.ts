@@ -168,12 +168,15 @@ export const completeActivation = createServerFn({ method: "POST" })
     const hashes = await activationHashes(data.token);
     const { data: plaque } = await supabaseAdmin
       .from("plaques")
-      .select("id, business_id, public_slug, status, claimed_at")
+      .select("id, business_id, public_slug, status, claimed_at, configured_at")
       .in("activation_token_hash", hashes)
       .maybeSingle();
 
     if (!plaque) return { ok: false as const, error: "not_found" as const };
     if (plaque.claimed_at) return { ok: false as const, error: "already_claimed" as const };
+    // A plaque TapLocal already set up for a business is never silently moved to another one.
+    if (plaque.configured_at && plaque.business_id)
+      return { ok: false as const, error: "already_assigned" as const };
 
     const b = data.business;
     const now = new Date().toISOString();
