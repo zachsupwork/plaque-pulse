@@ -617,16 +617,26 @@ function ActivatePage() {
               <DetailRow label="Placement" value={PLACEMENTS.find((p) => p.value === placement)?.label ?? placement} />
               <DetailRow label="Destination" value={chosen.label} />
               {destinationUrl ? <DetailRow label="Opens" value={destinationUrl} /> : null}
-              <DetailRow label="Account" value={signedIn ? "Signed in" : "Sign in after setup"} />
+              <DetailRow label="Account" value={signedIn ? "Signed in" : "Sign in required"} />
             </div>
-            <button
-              type="button"
-              disabled={goLive.isPending}
-              onClick={() => goLive.mutate()}
-              className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
-            >
-              {goLive.isPending ? "Setting up…" : "Set up my plaque"}
-            </button>
+            {signedIn ? (
+              <button
+                type="button"
+                disabled={goLive.isPending}
+                onClick={() => goLive.mutate()}
+                className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
+              >
+                {goLive.isPending ? "Setting up…" : "Set up my plaque"}
+              </button>
+            ) : (
+              <Link
+                to="/auth"
+                search={{ returnTo: `/activate/${token}` }}
+                className="block w-full rounded-xl bg-primary px-4 py-3.5 text-center text-[14px] font-bold text-primary-foreground"
+              >
+                Sign in to finish
+              </Link>
+            )}
             <BackLink onClick={() => setStep("placement")} />
           </GlassPanel>
         ) : null}
@@ -641,22 +651,12 @@ function ActivatePage() {
               Put it on the {(PLACEMENTS.find((p) => p.value === placement)?.label ?? "counter").toLowerCase()} and
               tap it with your phone to try it.
             </p>
-            {signedIn ? (
-              <Link
-                to="/app"
-                className="mt-4 inline-block rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-primary-foreground"
-              >
-                Open my dashboard
-              </Link>
-            ) : (
-              <Link
-                to="/auth"
-                search={{ returnTo: `/activate/${token}` }}
-                className="mt-4 inline-block rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-primary-foreground"
-              >
-                Create my account
-              </Link>
-            )}
+            <Link
+              to="/app"
+              className="mt-4 inline-block rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-primary-foreground"
+            >
+              Open my dashboard
+            </Link>
           </GlassPanel>
         ) : null}
 
