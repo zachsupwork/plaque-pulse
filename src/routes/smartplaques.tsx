@@ -251,7 +251,7 @@ function SmartPlaquesPage() {
             to="/activate"
             className="rounded-xl bg-primary px-5 py-3.5 text-[13px] font-bold tracking-wide text-primary-foreground uppercase"
           >
-            Activate my plaque
+            Set up my plaque
           </Link>
         </div>
 

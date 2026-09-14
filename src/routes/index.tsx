@@ -142,7 +142,7 @@ function MobileMenu() {
             <Link to="/smartplaques" onClick={close} className={item}>SmartPlaques</Link>
             <Link to="/offerings" onClick={close} className={item}>Services & offerings</Link>
             <Link to="/activate" onClick={close} className={item}>
-              Activate a plaque
+              Set up my plaque
             </Link>
             {signedIn ? (
               <Link to="/app" onClick={close} className={item}>My Portal</Link>
@@ -178,7 +178,7 @@ function SiteFooter() {
         <Link to="/smartplaques" className={link}>SmartPlaques</Link>
         <Link to="/offerings" className={link}>Offerings</Link>
         <Link to="/activate" className={link}>
-          Activate a plaque
+          Set up my plaque
         </Link>
         {signedIn ? (
           <Link to="/app" className={link}>My Portal</Link>
@@ -318,7 +318,7 @@ function Marketing() {
                 to="/activate"
                 className="rounded-xl bg-primary px-3.5 py-2 text-[13px] font-bold text-primary-foreground shadow-[var(--shadow-brand)]"
               >
-                Activate my plaque
+                Set up my plaque
               </Link>
             </div>
             <MobileMenu />
@@ -345,7 +345,7 @@ function Marketing() {
                 to="/activate"
                 className="rounded-xl bg-primary px-5 py-3.5 text-[13px] font-bold tracking-wide text-primary-foreground uppercase shadow-[var(--shadow-brand)]"
               >
-                Activate my plaque
+                Set up my plaque
               </Link>
               <Link
                 to="/auth"
@@ -433,7 +433,7 @@ function Marketing() {
                 to="/activate"
                 className="mt-4 inline-block rounded-xl bg-primary px-5 py-3.5 text-[13px] font-bold tracking-wide text-primary-foreground uppercase shadow-[var(--shadow-brand)] md:mt-0"
               >
-                Activate your SmartPlaque
+                Set up my plaque
               </Link>
             </div>
           </EdgePanel>
