@@ -198,6 +198,7 @@ function ActivatePage() {
 
   const goLive = useMutation({
     mutationFn: async () => {
+      if (!signedIn) throw new Error("sign_in_required");
       const chosen = DESTINATIONS.find((d) => d.value === destination)!;
       const result = await complete({
         data: {
@@ -228,9 +229,11 @@ function ActivatePage() {
           plaqueName: plaqueName || "My plaque",
         },
       });
-      if (result.ok && signedIn) {
-        await claim({ data: { token } });
-      }
+      if (!result.ok) return result;
+
+      // The plaque is only "live for you" once it is actually on your account.
+      const claimed = await claim({ data: { token } });
+      if (!claimed.ok) return { ok: false as const, error: "claim_failed" as const };
       return result;
     },
     onSuccess: (data) => {
@@ -238,7 +241,11 @@ function ActivatePage() {
         setNotice(
           data.error === "already_assigned"
             ? "This plaque is already set up for another business. Contact TapLocal and we'll move it over safely."
-            : "We couldn't finish this. Check the code on your card and try again.",
+            : data.error === "already_claimed"
+              ? "This plaque already belongs to an account. Sign in to your portal to manage it."
+              : data.error === "claim_failed"
+                ? "Your plaque was set up, but we couldn't connect it to your account. Contact TapLocal and we'll finish it."
+                : "We couldn't finish this. Check the code on your card and try again.",
         );
         return;
       }
@@ -249,7 +256,12 @@ function ActivatePage() {
       }
       setStep("done");
     },
-    onError: () => setNotice("Something went wrong. Try again."),
+    onError: (e: Error) =>
+      setNotice(
+        e.message === "sign_in_required"
+          ? "Sign in or create your account first — then we can finish setting up your plaque."
+          : "Something went wrong. Try again.",
+      ),
   });
 
   function startVoice() {
