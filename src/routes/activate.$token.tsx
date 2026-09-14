@@ -307,6 +307,15 @@ function ActivatePage() {
     );
   }
 
+  if (plaque.data.plaque.claimed) {
+    return (
+      <Message
+        title="This plaque already belongs to an account"
+        body="Sign in to your portal to manage it. If it isn't your account, email support@taplocal.digital and we'll sort it out."
+      />
+    );
+  }
+
   const activePlaque = plaque.data.plaque;
   const preconfigured = plaque.data.preconfigured;
   const searchResults = results.data?.results ?? [];
@@ -510,7 +519,7 @@ function ActivatePage() {
             <p className="text-[13px] leading-relaxed text-muted-foreground text-pretty">
               {signedIn
                 ? "This plaque will be connected to your account when you finish."
-                : "We'll email you a link. Come back here and your setup will still be waiting."}
+                : "Your plaque has to belong to an account, so sign in first. We'll email you a link — come back here and your setup will still be waiting."}
             </p>
             {signedIn ? (
               <button
@@ -521,22 +530,13 @@ function ActivatePage() {
                 Continue
               </button>
             ) : (
-              <>
-                <Link
-                  to="/auth"
-                  search={{ returnTo: `/activate/${token}` }}
-                  className="block w-full rounded-xl bg-primary px-4 py-3.5 text-center text-[14px] font-bold text-primary-foreground"
-                >
-                  Sign in / create account
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setStep("destination")}
-                  className="w-full text-[12px] font-semibold text-muted-foreground underline underline-offset-4"
-                >
-                  I'll do this at the end
-                </button>
-              </>
+              <Link
+                to="/auth"
+                search={{ returnTo: `/activate/${token}` }}
+                className="block w-full rounded-xl bg-primary px-4 py-3.5 text-center text-[14px] font-bold text-primary-foreground"
+              >
+                Sign in / create account
+              </Link>
             )}
             <BackLink onClick={() => setStep("business")} />
           </GlassPanel>
