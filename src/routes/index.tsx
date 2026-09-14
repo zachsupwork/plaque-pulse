@@ -37,7 +37,7 @@ export const Route = createFileRoute("/")({
 const steps = [
   { n: "1", title: "We prepare your plaque", body: "A unique SmartLink, NFC preprogrammed, QR paired." },
   { n: "2", title: "You receive it", body: "Ready out of the box. No app, no card, no NFC programming." },
-  { n: "3", title: "Activate", body: "Find your business, or just tell TapLocal in one sentence." },
+  { n: "3", title: "Set it up", body: "Find your business, or just tell TapLocal in one sentence." },
   { n: "4", title: "Place it", body: "Counter, table, entrance, reception — wherever people pause." },
   { n: "5", title: "Start learning", body: "Customers tap, TapLocal tracks, Copilot explains what works." },
 ];

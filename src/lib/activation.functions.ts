@@ -181,8 +181,25 @@ export const completeActivation = createServerFn({ method: "POST" })
     const b = data.business;
     const now = new Date().toISOString();
 
-    // 1. Business — reuse the plaque's own if it already has one.
+    // 1. Business — reuse the plaque's own, then any TapLocal business already
+    //    holding this exact Google listing, and only create one as a last resort.
     let businessId = plaque.business_id;
+    let locationId: string | null = null;
+
+    if (!businessId && b.placeId) {
+      const { data: existingLocation } = await supabaseAdmin
+        .from("locations")
+        .select("id, business_id")
+        .eq("google_place_id", b.placeId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (existingLocation) {
+        businessId = existingLocation.business_id;
+        locationId = existingLocation.id;
+      }
+    }
+
     if (!businessId) {
       const { data: created, error } = await supabaseAdmin
         .from("businesses")
@@ -205,8 +222,7 @@ export const completeActivation = createServerFn({ method: "POST" })
     }
 
     // 2. Location — never duplicate the same Google listing for one business.
-    let locationId: string | null = null;
-    if (b.placeId) {
+    if (!locationId && b.placeId) {
       const { data: existing } = await supabaseAdmin
         .from("locations")
         .select("id")
