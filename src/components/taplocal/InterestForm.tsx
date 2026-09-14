@@ -153,7 +153,7 @@ export function InterestForm({
                   onClick={onClose}
                   className="block py-2 text-center text-[13px] font-semibold text-primary"
                 >
-                  Activate a plaque
+                  Set up my plaque
                 </Link>
               ) : null}
             </div>
