@@ -10,6 +10,7 @@ import { adminCreateBusinessFromPlace } from "@/lib/admin-discovery.functions";
 import {
   assignPlaqueToBusiness,
   plaqueAdminSummary,
+  unassignForActivation,
   updatePlaqueBasics,
   type PlaqueAdminSummary,
 } from "@/lib/plaque-manage.functions";
@@ -30,7 +31,66 @@ import {
  * completion. The public slug, NFC link and QR link are never changed here.
  */
 
-type Sheet = "assign" | "destination" | "placement" | "qr" | "more" | null;
+type Sheet = "assign" | "destination" | "placement" | "qr" | "more" | "unassign" | null;
+
+function UnassignSheet({
+  summary,
+  onClose,
+  onDone,
+}: {
+  summary: PlaqueAdminSummary;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const fn = useServerFn(unassignForActivation);
+  const [err, setErr] = useState<string | null>(null);
+  const m = useMutation({
+    mutationFn: () => fn({ data: { plaqueId: summary.plaqueId } }),
+    onSuccess: (res) => {
+      if (res.ok) {
+        onDone();
+        onClose();
+      } else {
+        setErr(
+          res.error === "already_claimed"
+            ? "A customer has already claimed this plaque, so it can't be unassigned."
+            : "That didn't work. Nothing was changed.",
+        );
+      }
+    },
+    onError: () => setErr("That didn't work. Nothing was changed."),
+  });
+  return (
+    <Sheet title="Unassign for customer activation" subtitle={summary.plaqueCode} onClose={onClose}>
+      <ul className="list-disc space-y-1.5 pl-5 text-[13px]">
+        <li>
+          <b>{summary.businessName ?? "The current business"}</b> will be removed, along with its location, placement and
+          destination. History and analytics are kept.
+        </li>
+        <li>
+          QR and NFC links stay the same: <span className="font-mono">/q/{summary.slug}</span> and{" "}
+          <span className="font-mono">/n/{summary.slug}</span>. No reprinting or rewriting.
+        </li>
+        <li>The existing activation code stays valid.</li>
+        <li>The next customer chooses their own business during activation.</li>
+      </ul>
+      {err ? <p className="mt-3 text-[12px] font-semibold text-destructive">{err}</p> : null}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button type="button" onClick={onClose} className="rounded-xl border border-border py-2.5 text-[13px] font-bold">
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={m.isPending}
+          onClick={() => m.mutate()}
+          className="rounded-xl bg-destructive py-2.5 text-[13px] font-bold text-destructive-foreground disabled:opacity-60"
+        >
+          {m.isPending ? "Unassigning…" : "Yes, unassign"}
+        </button>
+      </div>
+    </Sheet>
+  );
+}
 
 export function PlaqueAdminActions({
   plaqueId,
@@ -119,6 +179,13 @@ export function PlaqueAdminActions({
               >
                 Reassign
               </Link>
+              <button
+                type="button"
+                onClick={() => setSheet("unassign")}
+                className="col-span-2 rounded-xl border border-destructive/40 py-2.5 text-[12px] font-bold text-destructive"
+              >
+                Unassign for customer activation
+              </button>
             </>
           ) : (
             <>
@@ -229,6 +296,7 @@ export function PlaqueAdminActions({
       ) : null}
 
       {sheet === "assign" ? <AssignSheet summary={s} onClose={() => setSheet(null)} onDone={refresh} /> : null}
+      {sheet === "unassign" ? <UnassignSheet summary={s} onClose={() => setSheet(null)} onDone={refresh} /> : null}
       {sheet === "destination" ? <DestinationSheet summary={s} onClose={() => setSheet(null)} onDone={refresh} /> : null}
       {sheet === "placement" ? <PlacementSheet summary={s} onClose={() => setSheet(null)} onDone={refresh} /> : null}
       {sheet === "more" ? <MoreSheet summary={s} onClose={() => setSheet(null)} onPick={(next) => setSheet(next)} /> : null}
