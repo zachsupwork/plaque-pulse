@@ -130,6 +130,7 @@ export const provisionPlaques = createServerFn({ method: "POST" })
           plaque_code: plaqueCode,
           public_slug: publicSlug,
           activation_token_hash: await sha256Hex(code),
+          activation_code_encrypted: await (await import("@/lib/activation-crypto.server")).encryptActivationCode(code),
           product_type: data.productType,
           style: data.style,
           base_type: data.baseType,

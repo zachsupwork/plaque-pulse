@@ -1776,6 +1776,7 @@ export type Database = {
       plaques: {
         Row: {
           activated_at: string | null
+          activation_code_encrypted: string | null
           activation_token_hash: string | null
           base_type: string | null
           batch_id: string | null
@@ -1797,6 +1798,7 @@ export type Database = {
         }
         Insert: {
           activated_at?: string | null
+          activation_code_encrypted?: string | null
           activation_token_hash?: string | null
           base_type?: string | null
           batch_id?: string | null
@@ -1818,6 +1820,7 @@ export type Database = {
         }
         Update: {
           activated_at?: string | null
+          activation_code_encrypted?: string | null
           activation_token_hash?: string | null
           base_type?: string | null
           batch_id?: string | null

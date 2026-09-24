@@ -413,6 +413,7 @@ export const claimActivation = createServerFn({ method: "POST" })
         claimed_at: now,
         claimed_by_user_id: context.userId,
         activation_token_hash: null,
+        activation_code_encrypted: null,
       })
       .eq("id", plaque.id);
 
