@@ -662,6 +662,11 @@ function MoreSheet({
         <Link to="/admin/reassign/$plaqueId" params={{ plaqueId: summary.plaqueId }} className={ITEM}>
           Assign / reassign business
         </Link>
+        {summary.assigned ? (
+          <button type="button" onClick={() => onPick("unassign")} className="block w-full rounded-xl border border-destructive/40 px-3.5 py-3 text-left text-[13px] font-bold text-destructive">
+            Unassign for customer activation
+          </button>
+        ) : null}
         <Link to="/admin/analytics" className={ITEM}>
           Analytics
         </Link>
