@@ -364,3 +364,73 @@ export const updatePlaqueBasics = createServerFn({ method: "POST" })
 
     return { ok: true as const, error: null };
   });
+
+/**
+ * Return a wrongly pre-assigned plaque to an unclaimed state so the customer can
+ * pick their own business during activation. Identity, slug, NFC/QR links,
+ * programming records and the activation code are left untouched. History is kept.
+ */
+export const unassignForActivation = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ plaqueId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const caller = await gate();
+    if (!caller.ok) return { ok: false as const, error: caller.error };
+    const client = await db();
+
+    const { data: plaque } = await client
+      .from("plaques")
+      .select("id, business_id, location_id, placement_type, status, claimed_at, claimed_by_user_id, configured_at")
+      .eq("id", data.plaqueId)
+      .maybeSingle();
+    if (!plaque) return { ok: false as const, error: "not_found" as const };
+    if (plaque.claimed_at || plaque.claimed_by_user_id) return { ok: false as const, error: "already_claimed" as const };
+
+    const now = new Date().toISOString();
+
+    const { error: destError } = await client
+      .from("destinations")
+      .update({ active: false, effective_to: now })
+      .eq("plaque_id", plaque.id)
+      .is("effective_to", null);
+    if (destError) return { ok: false as const, error: "failed" as const };
+    await client.from("destinations").update({ active: false }).eq("plaque_id", plaque.id).eq("active", true);
+
+    await client
+      .from("plaque_placement_history")
+      .update({ effective_to: now })
+      .eq("plaque_id", plaque.id)
+      .is("effective_to", null);
+
+    const { error } = await client
+      .from("plaques")
+      .update({
+        business_id: null,
+        location_id: null,
+        placement_type: null,
+        configured_at: null,
+        activated_at: null,
+        status: "sold",
+      })
+      .eq("id", plaque.id)
+      .is("claimed_at", null);
+    if (error) return { ok: false as const, error: "failed" as const };
+
+    if (plaque.business_id) {
+      await client.from("action_history").insert({
+        business_id: plaque.business_id,
+        plaque_id: plaque.id,
+        action_type: "unassigned_for_activation",
+        previous_value: {
+          business_id: plaque.business_id,
+          location_id: plaque.location_id,
+          placement_type: plaque.placement_type,
+          status: plaque.status,
+          configured_at: plaque.configured_at,
+        } as never,
+        new_value: { business_id: null, status: "sold" } as never,
+        initiated_by: "admin",
+        approved_by_user_id: caller.userId,
+      });
+    }
+    return { ok: true as const, error: null };
+  });
