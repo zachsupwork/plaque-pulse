@@ -1,0 +1,2 @@
+ALTER TABLE public.plaques ADD COLUMN IF NOT EXISTS activation_code_encrypted text;
+COMMENT ON COLUMN public.plaques.activation_code_encrypted IS 'AES-GCM encrypted activation code (server key). Cleared when claimed.';
