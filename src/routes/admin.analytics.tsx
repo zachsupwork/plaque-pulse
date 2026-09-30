@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { GlassPanel, SectionTitle, StatusChip } from "@/components/taplocal/Field";
 import { networkAnalytics } from "@/lib/admin-data.functions";
+import { WorthCard } from "@/components/taplocal/WorthCard";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
 
 const search = z.object({
@@ -98,6 +99,8 @@ function Analytics() {
               </Link>
             ))}
           </div>
+
+          <WorthCard businessId={null} days={days} />
 
           <div>
             <SectionTitle>Matching periods ({a.timezone})</SectionTitle>
