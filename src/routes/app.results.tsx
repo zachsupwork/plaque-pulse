@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { WorthCard } from "@/components/taplocal/WorthCard";
 import { GlassPanel } from "@/components/taplocal/Field";
 import { usePortal, useOutcomes, useSnapshots } from "@/hooks/usePortal";
 import { intentBreakdown, sourceSplit, byHourBucket, byDayOfWeek } from "@/lib/metrics";
@@ -32,7 +33,7 @@ const OUTCOME_LABEL: Record<string, string> = {
 };
 
 function ResultsPage() {
-  const { events, plaques } = usePortal();
+  const { events, plaques, businessId } = usePortal();
   const outcomes = useOutcomes();
   const snapshots = useSnapshots();
 
@@ -66,6 +67,8 @@ function ResultsPage() {
         </h1>
         <p className="mt-1 text-[13px] text-muted-foreground">Last 30 days</p>
       </div>
+
+      {businessId ? <WorthCard businessId={businessId} days={30} /> : null}
 
       <GlassPanel tone="signal" className="p-4">
         <p className="text-[12px] font-semibold tracking-[0.08em] text-accent uppercase">We can prove this</p>

@@ -6,6 +6,7 @@ import { getBusinessDetail } from "@/lib/admin-data.functions";
 import { DESTINATION_LABEL, PLACEMENT_LABEL } from "@/lib/taplocal";
 import { nfcUrl, qrUrl } from "@/lib/smartlink";
 import { GoogleBusinessConnection } from "@/components/taplocal/GoogleBusinessConnection";
+import { WorthCard } from "@/components/taplocal/WorthCard";
 import { SocialProfilesPanel } from "@/components/taplocal/InstagramDiscovery";
 
 export const Route = createFileRoute("/admin/businesses/$id")({
@@ -43,6 +44,7 @@ function BusinessRecord() {
 
   return (
     <div className="space-y-6">
+      <WorthCard businessId={id} days={30} />
       <div>
         <Link to="/admin/businesses" className="text-[12px] font-semibold text-muted-foreground">
           ← Businesses

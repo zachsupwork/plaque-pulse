@@ -2254,6 +2254,51 @@ export type Database = {
           },
         ]
       }
+      social_follower_snapshots: {
+        Row: {
+          business_id: string
+          captured_at: string
+          created_at: string
+          followers_count: number
+          id: string
+          social_profile_id: string | null
+          source: string
+        }
+        Insert: {
+          business_id: string
+          captured_at?: string
+          created_at?: string
+          followers_count: number
+          id?: string
+          social_profile_id?: string | null
+          source?: string
+        }
+        Update: {
+          business_id?: string
+          captured_at?: string
+          created_at?: string
+          followers_count?: number
+          id?: string
+          social_profile_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_follower_snapshots_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_follower_snapshots_social_profile_id_fkey"
+            columns: ["social_profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_social_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           business_id: string
