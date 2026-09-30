@@ -51,8 +51,8 @@ export const impactSummary = createServerFn({ method: "POST" })
     if (!auth.ok) return { ok: false as const, error: "forbidden" };
     const { supabaseAdmin: c } = await import("@/integrations/supabase/client.server");
     const since = new Date(Date.now() - data.days * DAY).toISOString();
-    const biz = <Q extends { eq: (k: string, v: string) => Q }>(q: Q) =>
-      data.businessId ? q.eq("business_id", data.businessId) : q;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const biz = (q: any): any => (data.businessId ? q.eq("business_id", data.businessId) : q);
 
     try {
       const [ev, reviews, snaps, followers, cands] = await Promise.all([
@@ -61,24 +61,24 @@ export const impactSummary = createServerFn({ method: "POST" })
             .select("id, business_id, source_type, destination_type, occurred_at")
             .eq("event_type", "interaction")
             .in("source_type", ["nfc", "qr"])
-            .gte("occurred_at", since) as never,
+            .gte("occurred_at", since),
         ).limit(5000),
         biz(
           c.from("google_review_observations")
             .select("id, business_id, author_name, rating, published_at, first_seen_at, evidence")
-            .gte("first_seen_at", since) as never,
+            .gte("first_seen_at", since),
         ).limit(500),
         biz(
           c.from("metric_snapshots")
             .select("business_id, metric_type, metric_value, captured_at")
-            .in("metric_type", ["google_review_count", "google_rating", "avg_transaction_value", "conversion_rate"]) as never,
+            .in("metric_type", ["google_review_count", "google_rating", "avg_transaction_value", "conversion_rate"]),
         ).order("captured_at", { ascending: true }).limit(5000),
         biz(
           c.from("social_follower_snapshots")
-            .select("business_id, social_profile_id, followers_count, captured_at, source") as never,
+            .select("business_id, social_profile_id, followers_count, captured_at, source"),
         ).order("captured_at", { ascending: true }).limit(5000),
         biz(
-          c.from("attribution_candidates").select("event_id, kind, confidence, external_ref").gte("created_at", since) as never,
+          c.from("attribution_candidates").select("event_id, kind, confidence, external_ref").gte("created_at", since),
         ).limit(2000),
       ]);
       if (ev.error) throw ev.error;
