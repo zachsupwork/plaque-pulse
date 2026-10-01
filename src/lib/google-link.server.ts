@@ -65,6 +65,17 @@ export async function syncLocationFromGoogle(
     })
     .eq("id", locationId);
 
+  {
+    const { data: loc } = await client.from("locations").select("business_id").eq("id", locationId).maybeSingle();
+    const { saveListingSnapshots } = await import("./listing-snapshots.server");
+    await saveListingSnapshots(client, {
+      businessId: (loc as { business_id?: string } | null)?.business_id,
+      locationId,
+      rating: place.rating,
+      reviewCount: place.reviewCount,
+    });
+  }
+
   return {
     url: reviewUrl,
     source: reviewUrl ? "google_api" : null,
