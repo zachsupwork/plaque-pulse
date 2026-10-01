@@ -176,6 +176,11 @@ export const adminCreateBusinessFromPlace = createServerFn({ method: "POST" })
       await client.from("businesses").delete().eq("id", business.id);
       return { ok: false as const, error: "failed" as GoogleSearchError, businessId: null, duplicate: false };
     }
+    {
+      const { saveListingSnapshots } = await import("./listing-snapshots.server");
+      await saveListingSnapshots(client, { businessId: business.id, locationId: null, rating: place.rating, reviewCount: place.reviewCount });
+    }
+
 
     await client.from("action_history").insert({
       business_id: business.id,
