@@ -29,6 +29,12 @@ export const IG_METRICS: Record<string, string> = {
   ig_profile_visits: "Profile visits",
   ig_engagement: "Engagement",
   ig_link_clicks: "Link clicks",
+  ig_views: "Views",
+  ig_total_interactions: "Total interactions",
+  ig_likes: "Likes",
+  ig_comments: "Comments",
+  ig_shares: "Shares",
+  ig_saves: "Saves",
 };
 const ACTION_METRICS = ["gbp_direction_requests", "gbp_call_clicks", "gbp_website_clicks", "gbp_bookings"];
 
@@ -114,14 +120,14 @@ export const impactSummary = createServerFn({ method: "POST" })
     const biz = (q: any): any => (data.businessId ? q.eq("business_id", data.businessId) : q);
 
     try {
-      const [ev, reviews, snaps, followers, cands, photos] = await Promise.all([
+      const [ev, reviews, snaps, followers, cands, photos, outs, socials] = await Promise.all([
         biz(
           c.from("events")
-            .select("id, business_id, source_type, destination_type, occurred_at")
+            .select("id, business_id, source_type, destination_type, occurred_at, anonymous_visitor_key")
             .eq("event_type", "interaction")
             .in("source_type", ["nfc", "qr"])
             .gte("occurred_at", prevSince),
-        ).limit(10000),
+        ).order("occurred_at", { ascending: true }).limit(10000),
         biz(
           c.from("google_review_observations")
             .select("id, business_id, author_name, author_profile_url, rating, published_at, first_seen_at, evidence")
@@ -130,7 +136,7 @@ export const impactSummary = createServerFn({ method: "POST" })
         biz(c.from("metric_snapshots").select("business_id, metric_type, metric_value, captured_at"))
           .order("captured_at", { ascending: true })
           .limit(10000),
-        biz(c.from("social_follower_snapshots").select("business_id, social_profile_id, followers_count, captured_at, source"))
+        biz(c.from("social_follower_snapshots").select("business_id, social_profile_id, followers_count, follows_count, media_count, data_scope, captured_at, source"))
           .order("captured_at", { ascending: true })
           .limit(5000),
         biz(c.from("attribution_candidates").select("event_id, kind, confidence, external_ref").gte("created_at", since)).limit(2000),
@@ -139,10 +145,19 @@ export const impactSummary = createServerFn({ method: "POST" })
             .select("id, business_id, contributor_name, status, previous_status, status_changed_at, gallery_rank, verification_type, confidence")
             .gte("status_changed_at", since),
         ).limit(500),
+        biz(c.from("outcomes").select("outcome_type, attribution_type, value, occurred_at").gte("occurred_at", since)).limit(5000),
+        data.businessId
+          ? c.from("business_social_profiles")
+              .select("id, username, profile_url, scope, verification_status, source, evidence, last_checked_at")
+              .eq("business_id", data.businessId)
+              .eq("platform", "instagram")
+              .neq("verification_status", "rejected")
+              .limit(50)
+          : Promise.resolve({ data: [] }),
       ]);
       if (ev.error) throw ev.error;
 
-      type E = { id: string; business_id: string | null; source_type: string; destination_type: string | null; occurred_at: string };
+      type E = { id: string; business_id: string | null; source_type: string; destination_type: string | null; occurred_at: string; anonymous_visitor_key: string | null };
       const allEvents = (ev.data ?? []) as E[];
       const events = allEvents.filter((e) => e.occurred_at >= since);
       const prevEvents = allEvents.filter((e) => e.occurred_at < since);
@@ -200,12 +215,11 @@ export const impactSummary = createServerFn({ method: "POST" })
           reachValues: reach.values,
         };
       });
-      // Count growth can exceed individually-detected reviews (Places returns only a few).
       const countGrowth = reviewCount ? Math.max(0, reviewCount.current - reviewCount.previous) : 0;
       const newReviews = Math.max(reviewRows.length, countGrowth);
 
       /* ---- Instagram followers ---- */
-      type F = { business_id: string; social_profile_id: string | null; followers_count: number; captured_at: string; source: string };
+      type F = { business_id: string; social_profile_id: string | null; followers_count: number; follows_count: number | null; media_count: number | null; data_scope: string; captured_at: string; source: string };
       const fList = (followers.data ?? []) as F[];
       const byKey = new Map<string, F[]>();
       for (const f of fList) {
@@ -223,7 +237,6 @@ export const impactSummary = createServerFn({ method: "POST" })
         gained += last.followers_count - prev;
         if (single && !followerDelta) followerDelta = { previous: prev, current: last.followers_count, source: last.source };
       }
-      // Fallback: follower metric captured as a connected-account snapshot.
       if (!followerDelta && single) {
         const d = levelDelta(snapList, "instagram_followers", since);
         if (d && d.updatedInPeriod) {
@@ -264,7 +277,142 @@ export const impactSummary = createServerFn({ method: "POST" })
         }));
       const prominentGains = photoChanges.filter((p) => !["Gallery only", "Lost prominence"].includes(p.label)).length;
 
-      /* ---- Modelled opportunity: business inputs only, end of chain ---- */
+      /* ---- Return & referral signals (anonymous keys never leave the server) ---- */
+      const vk = (e: E) => (e.anonymous_visitor_key ? `${e.business_id ?? ""}:${e.anonymous_visitor_key}` : null);
+      const firstSeen = new Map<string, string>();
+      const lastSeen = new Map<string, string>();
+      for (const e of allEvents) {
+        const k = vk(e);
+        if (!k) continue;
+        if (!firstSeen.has(k)) firstSeen.set(k, e.occurred_at);
+        lastSeen.set(k, e.occurred_at);
+      }
+      const keyedNow = events.filter((e) => vk(e));
+      const curCount = new Map<string, number>();
+      for (const e of keyedNow) curCount.set(vk(e)!, (curCount.get(vk(e)!) ?? 0) + 1);
+      const uniques = curCount.size;
+      const returning = [...curCount.entries()].filter(([k, n]) => n > 1 || (firstSeen.get(k) ?? since) < since).length;
+      const repeatRate = keyedNow.length ? Math.round(((keyedNow.length - uniques) / keyedNow.length) * 100) : null;
+      // Equal windows around the earliest review/photo outcome in this period.
+      const outcomeTimes = [...reviewRows.map((r) => r.detectedAt), ...photoChanges.filter((p) => !["Gallery only", "Lost prominence"].includes(p.label)).map((p) => p.at)].filter((t) => t >= since).sort();
+      let lift: { anchor: string; windowDays: number; before: number; after: number; up: boolean } | null = null;
+      if (single && outcomeTimes[0]) {
+        const T = new Date(outcomeTimes[0]).getTime();
+        const W = Math.min(7 * DAY, now - T, T - new Date(prevSince).getTime());
+        if (W >= DAY) {
+          const newIn = (a: number, b: number) => [...firstSeen.values()].filter((t) => { const x = new Date(t).getTime(); return x >= a && x < b; }).length;
+          const before = newIn(T - W, T), after = newIn(T, T + W);
+          lift = { anchor: outcomeTimes[0], windowDays: Math.round(W / DAY), before, after, up: after > before };
+        }
+      }
+      // Per-interaction visitor signals for the most recent taps.
+      const recent = [...events].reverse().slice(0, 10);
+      const recentKeys = [...new Set(recent.map((e) => e.anonymous_visitor_key).filter(Boolean))] as string[];
+      const otherBiz = new Map<string, Set<string>>();
+      if (recentKeys.length) {
+        const { data: cross } = await c.from("events").select("anonymous_visitor_key, business_id").eq("event_type", "interaction").in("anonymous_visitor_key", recentKeys).gte("occurred_at", new Date(now - 90 * DAY).toISOString()).limit(5000);
+        for (const x of cross ?? []) {
+          if (!x.anonymous_visitor_key || !x.business_id) continue;
+          otherBiz.set(x.anonymous_visitor_key, (otherBiz.get(x.anonymous_visitor_key) ?? new Set()).add(x.business_id));
+        }
+      }
+      const d30 = new Date(now - 30 * DAY).toISOString();
+      const recentTaps = recent.map((e) => {
+        const k = vk(e);
+        if (!k) return { id: e.id, at: e.occurred_at, source: e.source_type, destination: e.destination_type, visitor: "No visitor signal", taps30d: null, firstSeen: null, lastSeen: null, sameBusinessRepeat: null, otherBusinesses: null };
+        const same = allEvents.filter((x) => vk(x) === k);
+        const fs = firstSeen.get(k)!;
+        return {
+          id: e.id,
+          at: e.occurred_at,
+          source: e.source_type,
+          destination: e.destination_type,
+          visitor: fs < e.occurred_at ? "Returning anonymous visitor" : "First seen",
+          taps30d: same.filter((x) => x.occurred_at >= d30).length,
+          firstSeen: fs,
+          lastSeen: lastSeen.get(k)!,
+          sameBusinessRepeat: same.length > 1,
+          otherBusinesses: Math.max(0, (otherBiz.get(e.anonymous_visitor_key!)?.size ?? 1) - (e.business_id ? 1 : 0)),
+        };
+      });
+      const signals = {
+        uniques,
+        returning,
+        repeatRate,
+        keyedShare: events.length ? Math.round((keyedNow.length / events.length) * 100) : 0,
+        prevUniques: new Set(prevEvents.map(vk).filter(Boolean)).size,
+        lift,
+        recentTaps,
+      };
+
+      /* ---- Instagram intelligence ---- */
+      type SP = { id: string; username: string; profile_url: string; scope: string; verification_status: string; source: string; evidence: Record<string, unknown> | null; last_checked_at: string };
+      const spList = ((socials as { data: unknown }).data ?? []) as SP[];
+      const own = spList.find((s) => s.scope !== "contributor") ?? null;
+      const latestScope = (scope: string) => [...fList].reverse().find((f) => f.data_scope === scope) ?? null;
+      const pub = single ? latestScope("public_profile") : null;
+      const conn = single ? latestScope("connected_account") : null;
+      const igSeries = (m: string) => snapList.filter((s) => s.metric_type === m);
+      const dayVsBaseline = (m: string, t: number) => {
+        const series = igSeries(m);
+        const day = new Date(t).toISOString().slice(0, 10);
+        const onDay = series.filter((s) => s.captured_at.slice(0, 10) === day);
+        const base = series.filter((s) => { const x = new Date(s.captured_at).getTime(); return x < t - DAY / 2 && x >= t - 8 * DAY; });
+        if (!onDay.length || !base.length) return null;
+        const v = onDay.reduce((a, s) => a + s.metric_value, 0);
+        const b = Math.round(base.reduce((a, s) => a + s.metric_value, 0) / base.length);
+        return { metric: m, label: IG_METRICS[m] ?? m, value: v, baseline: b, delta: v - b };
+      };
+      const igTapWindows = single
+        ? [...igTaps].reverse().slice(0, 5).map((t) => {
+            const at = new Date(t.occurred_at).getTime();
+            const before = fList.filter((f) => f.captured_at <= t.occurred_at).pop();
+            const after = fList.find((f) => { const x = new Date(f.captured_at).getTime(); return x > at && x <= at + DAY; });
+            const followerChange = before && after ? { previous: before.followers_count, current: after.followers_count, hours: Math.max(1, Math.round((new Date(after.captured_at).getTime() - at) / 3_600_000)), source: after.data_scope } : null;
+            const insights = ["ig_profile_visits", "ig_reach", "ig_views", "ig_total_interactions", "ig_link_clicks"].map((m) => dayVsBaseline(m, at)).filter(Boolean) as NonNullable<ReturnType<typeof dayVsBaseline>>[];
+            return { eventId: t.id, at: t.occurred_at, source: t.source_type, followerChange, insights };
+          })
+        : [];
+      const contributors = spList.filter((s) => s.scope === "contributor").map((s) => {
+        const e = s.evidence ?? {};
+        const n = (k: string) => (Number.isFinite(Number(e[k])) && e[k] != null ? Number(e[k]) : null);
+        const fol = n("followers_count");
+        const postUrl = (e["post_url"] as string) ?? null;
+        let level: Amp = "Standard";
+        if (postUrl && (fol ?? 0) >= 10_000) level = "High amplification potential";
+        else if (postUrl && (fol ?? 0) >= 1_000) level = "Elevated amplification potential";
+        return {
+          id: s.id,
+          username: s.username,
+          profileUrl: s.profile_url,
+          followers: fol,
+          following: n("follows_count"),
+          media: n("media_count"),
+          postUrl,
+          mentionType: (e["mention_type"] as string) ?? null,
+          checkedAt: s.last_checked_at,
+          level,
+          why: postUrl ? `Public ${String(e["mention_type"] ?? "post")} about this business by an account with ${fol?.toLocaleString() ?? "unknown"} followers` : "No public post/tag/mention recorded — following alone doesn't raise amplification",
+        };
+      });
+      const instagram = {
+        profile: own ? { username: own.username, url: own.profile_url, verification: own.verification_status, source: own.source } : null,
+        publicProfile: pub ? { followers: pub.followers_count, follows: pub.follows_count, media: pub.media_count, at: pub.captured_at, source: pub.source } : null,
+        connectedAccount: conn ? { followers: conn.followers_count, at: conn.captured_at, dailySnapshots: fList.filter((f) => f.data_scope === "connected_account" && f.captured_at >= since).length } : null,
+        tapWindows: igTapWindows,
+        contributors,
+      };
+
+      /* ---- Financial value engine v2 ---- */
+      type O = { outcome_type: string; attribution_type: string; value: number | null; occurred_at: string };
+      const oList = (outs.data ?? []) as O[];
+      const direct = oList.filter((o) => o.attribution_type === "direct");
+      const confirmedValued = direct.filter((o) => Number(o.value) > 0);
+      const confirmed = {
+        total: Math.round(confirmedValued.reduce((a, o) => a + Number(o.value), 0)),
+        count: confirmedValued.length,
+        unvalued: direct.length - confirmedValued.length,
+      };
       const latest = (m: string) => {
         const v = snapList.filter((s) => s.metric_type === m).pop();
         return v ? Number(v.metric_value) : null;
@@ -273,35 +421,56 @@ export const impactSummary = createServerFn({ method: "POST" })
       const conv = single ? latest("conversion_rate") : null;
       const clv = single ? latest("customer_lifetime_value") : null;
       const relevant = reviewTaps.length + igTaps.length;
-      let opportunity: { low: number; high: number; assumptions: string[] } | null = null;
-      if (atv && conv && conv > 0 && conv <= 1 && relevant >= 10) {
-        const base = relevant * conv * atv;
+      const gbpIncr = actionDelta != null && actionDelta > 0 ? actionDelta : 0;
+      const igLink = ig.find((g) => g.metric === "ig_link_clicks");
+      const igIncr = igLink && igLink.hasBefore && igLink.after > igLink.before ? igLink.after - igLink.before : 0;
+      const correlatedCount = oList.filter((o) => o.attribution_type === "correlated").length;
+      let assisted: { low: number; high: number; early: boolean; assumptions: string[] } | null = null;
+      if (atv && conv && conv > 0 && conv <= 1 && events.length > 0) {
+        const funnel = Math.max(events.length, gbpIncr + igIncr);
+        const conversions = Math.max(0, Math.max(funnel * conv, correlatedCount) - direct.length);
+        const early = events.length < 10;
+        const base = conversions * atv;
         const assumptions = [
-          `${relevant} review/Instagram taps observed by TapLocal`,
-          `Conversion rate ${Math.round(conv * 100)}% (entered for this business)`,
-          `Average transaction $${atv.toFixed(2)} (entered for this business)`,
-          "Low end halves the result to allow for customers who would have come anyway",
+          `${events.length} TapLocal taps/scans observed (${relevant} to reviews/Instagram)`,
+          `Incremental Google actions vs previous period: ${gbpIncr ? `+${gbpIncr}` : "none measured"} · Instagram link clicks: ${igIncr ? `+${igIncr}` : "none measured"}`,
+          "Taps and incremental Google/Instagram actions overlap (same customer journey), so only the larger of the two is counted — never both",
+          `Conversion rate ${Math.round(conv * 100)}% · average transaction $${atv.toFixed(2)} (entered for this business)`,
+          `${correlatedCount} attributed (correlated) outcomes used as a floor; ${direct.length} confirmed conversions removed so they aren't counted twice`,
+          early ? "Fewer than 10 taps: early range, low end is 25% of the model" : "Low end halves the model to allow for customers who would have come anyway",
         ];
-        if (actionDelta != null) assumptions.push(`Google actions (calls/directions/clicks/bookings) changed by ${actionDelta >= 0 ? "+" : ""}${actionDelta} vs the previous period — shown for context, not added to the estimate`);
-        if (clv) assumptions.push(`Customer lifetime value $${clv.toFixed(2)} recorded — not used, to keep the estimate conservative`);
-        opportunity = { low: Math.round(base * 0.5), high: Math.round(base), assumptions };
+        if (clv) assumptions.push(`Customer lifetime value $${clv.toFixed(2)} recorded — not used, to stay conservative`);
+        assisted = { low: Math.round(base * (early ? 0.25 : 0.5)), high: Math.round(base), early, assumptions };
       }
+      const igGrowth = ig.filter((g) => g.hasBefore && g.after !== g.before).map((g) => `${IG_METRICS[g.metric]} ${g.before.toLocaleString()} → ${g.after.toLocaleString()}`);
+      const visibility = [
+        newReviews ? `${newReviews} new Google review${newReviews > 1 ? "s" : ""}` : null,
+        rating && rating.current !== rating.previous ? `Rating ${rating.previous.toFixed(1)} → ${rating.current.toFixed(1)}` : null,
+        gbp.length ? (visUp ? "Google search/Maps impressions up vs previous period" : "No Google impressions increase") : null,
+        prominentGains ? `${prominentGains} Google photo prominence gain${prominentGains > 1 ? "s" : ""}` : null,
+        followersKnown ? `${gained >= 0 ? "+" : ""}${gained} Instagram followers` : null,
+        ...igGrowth,
+      ].filter(Boolean) as string[];
+      const opportunity = assisted ? { low: assisted.low, high: assisted.high, assumptions: assisted.assumptions } : null;
 
       const elevated = reviewRows.filter((r) => r.reach !== "Standard").length;
       const linked = reviewRows.filter((r) => r.badge === "INFERRED").length;
       const confidence =
-        opportunity && linked >= 3 ? "Medium" : linked > 0 || gained > 0 || countGrowth > 0 ? "Low" : "Not enough data";
+        assisted && !assisted.early && events.length >= 30 && linked >= 3 ? "Medium" : assisted || linked > 0 || gained > 0 || countGrowth > 0 ? "Low" : "Not enough data";
+      const igAmp = contributors.filter((x) => x.level !== "Standard").length;
 
       /* ---- Evidence chain ---- */
       const timeline: { stage: string; badge: Badge; detail: string; measured: boolean }[] = [
         { stage: "Tap/Scan", badge: "OBSERVED", measured: events.length > 0, detail: `${events.length} taps/scans (${prevEvents.length} in the previous period)` },
-        { stage: "Destination", badge: "OBSERVED", measured: relevant > 0, detail: `${reviewTaps.length} to Google Reviews · ${igTaps.length} to Instagram` },
-        { stage: "Review/Follow", badge: linked ? "INFERRED" : "EXTERNAL", measured: newReviews > 0 || followersKnown, detail: `${newReviews} new reviews${followersKnown ? ` · ${gained >= 0 ? "+" : ""}${gained} followers` : " · followers unavailable"}${linked ? ` · ${linked} within 24h of a review tap` : ""}` },
-        { stage: "Contributor strength", badge: "EXTERNAL", measured: elevated > 0, detail: elevated ? `${elevated} elevated/high-reach reviewer${elevated > 1 ? "s" : ""}` : "No high-reach evidence recorded" },
-        { stage: "Photo/social amplification", badge: photoChanges.some((p) => p.badge === "CONFIRMED") ? "CONFIRMED" : "EXTERNAL", measured: photoChanges.length > 0, detail: photoChanges.length ? `${prominentGains} prominence gains · ${photoChanges.length} photo changes` : "No photo prominence changes recorded" },
-        { stage: "Organic visibility change", badge: "INFERRED", measured: gbp.length > 0, detail: gbp.length ? (visUp ? "Organic visibility increased after this result — possible contribution, not confirmed." : "No visibility increase vs the previous period") : "Google performance data not connected." },
-        { stage: "Calls/Directions/Clicks/Bookings", badge: "EXTERNAL", measured: actionDelta != null, detail: actionDelta != null ? `${actionDelta >= 0 ? "+" : ""}${actionDelta} vs the previous period` : "Not measured" },
-        { stage: "Potential business value", badge: "INFERRED", measured: Boolean(opportunity), detail: opportunity ? `$${opportunity.low.toLocaleString()}–$${opportunity.high.toLocaleString()} modelled` : "Not enough data yet to estimate a reliable dollar value." },
+        { stage: "Destination opened", badge: "OBSERVED", measured: relevant > 0, detail: `${reviewTaps.length} to Google Reviews · ${igTaps.length} to Instagram` },
+        { stage: "Review / follower change", badge: linked ? "INFERRED" : "EXTERNAL", measured: newReviews > 0 || followersKnown, detail: `${newReviews} new reviews${followersKnown ? ` · ${gained >= 0 ? "+" : ""}${gained} followers` : " · followers unavailable"}${linked ? ` · ${linked} within 24h of a review tap` : ""}` },
+        { stage: "Contributor/audience strength", badge: "EXTERNAL", measured: elevated + igAmp > 0, detail: elevated + igAmp ? `${elevated} elevated Google reviewer${elevated === 1 ? "" : "s"} · ${igAmp} Instagram contributor${igAmp === 1 ? "" : "s"} with public reach` : "No high-reach evidence recorded" },
+        { stage: "Google/Instagram amplification", badge: photoChanges.some((p) => p.badge === "CONFIRMED") ? "CONFIRMED" : "EXTERNAL", measured: photoChanges.length > 0 || igGrowth.length > 0, detail: photoChanges.length || igGrowth.length ? `${prominentGains} photo prominence gains${igGrowth.length ? ` · ${igGrowth.join(" · ")}` : ""}` : "No amplification data recorded" },
+        { stage: "Organic visibility", badge: "INFERRED", measured: gbp.length > 0, detail: gbp.length ? (visUp ? "Visibility increased after this result — possible contribution, not confirmed." : "No visibility increase vs the previous period") : "Google performance data not connected." },
+        { stage: "Return/referral signals", badge: "INFERRED", measured: uniques > 0, detail: uniques ? `${uniques} est. unique anonymous visitors · ${returning} returning${lift ? ` · new visitors ${lift.before} → ${lift.after} around first outcome` : ""}` : "No anonymous visitor signal" },
+        { stage: "Calls/directions/profile/link actions", badge: "EXTERNAL", measured: actionDelta != null || Boolean(igLink), detail: actionDelta != null || igLink ? `${actionDelta != null ? `Google ${actionDelta >= 0 ? "+" : ""}${actionDelta}` : "Google not measured"}${igLink ? ` · IG link clicks ${igLink.hasBefore ? `${igLink.before} → ` : ""}${igLink.after}` : ""} vs previous period` : "Not measured" },
+        { stage: "Confirmed conversions", badge: "CONFIRMED", measured: direct.length > 0, detail: direct.length ? `${direct.length} directly tracked${confirmed.total ? ` · $${confirmed.total.toLocaleString()}` : ""}` : "None directly tracked" },
+        { stage: "Financial opportunity", badge: "INFERRED", measured: Boolean(assisted), detail: assisted ? `$${assisted.low.toLocaleString()}–$${assisted.high.toLocaleString()} modelled${assisted.early ? " (early range)" : ""}` : "Needs this business's average sale and conversion rate." },
       ];
 
       return {
@@ -318,6 +487,9 @@ export const impactSummary = createServerFn({ method: "POST" })
         followers: { known: followersKnown, gained, delta: followerDelta },
         gbp: { connected: gbp.length > 0, metrics: gbp.map((g) => ({ ...g, label: GBP_METRICS[g.metric]! })), visibilityUp: visUp },
         instagramInsights: ig.map((g) => ({ ...g, label: IG_METRICS[g.metric]! })),
+        instagram,
+        signals,
+        financial: { confirmed, assisted, visibility, hasInputs: Boolean(atv && conv) },
         photoChanges: photoChanges.slice(0, 8),
         prominentGains,
         elevatedReviews: elevated,
@@ -330,12 +502,15 @@ export const impactSummary = createServerFn({ method: "POST" })
     }
   });
 
-/** Admin records a follower count read from Meta/Instagram (never scraped). */
+/** Admin records Instagram counts read from the public professional profile or the connected account (never scraped). */
 export const recordFollowerCount = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({
       businessId: z.string().uuid(),
       followers: z.number().int().min(0).max(1_000_000_000),
+      follows: z.number().int().min(0).max(1_000_000_000).nullable().default(null),
+      media: z.number().int().min(0).max(10_000_000).nullable().default(null),
+      dataScope: z.enum(["public_profile", "connected_account"]).default("public_profile"),
       source: z.enum(["manual", "meta_api"]).default("manual"),
     }).parse(d),
   )
@@ -349,13 +524,52 @@ export const recordFollowerCount = createServerFn({ method: "POST" })
       .select("id")
       .eq("business_id", data.businessId)
       .eq("platform", "instagram")
+      .neq("scope", "contributor")
       .limit(1)
       .maybeSingle();
     const { error } = await c.from("social_follower_snapshots").insert({
       business_id: data.businessId,
       social_profile_id: profile?.id ?? null,
       followers_count: data.followers,
+      follows_count: data.follows,
+      media_count: data.media,
+      data_scope: data.dataScope,
       source: data.source,
+    });
+    return error ? { ok: false as const, error: error.message } : { ok: true as const };
+  });
+
+/** Admin records a public Instagram Business/Creator account that publicly posted/tagged/mentioned the business. */
+export const recordInstagramContributor = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z.object({
+      businessId: z.string().uuid(),
+      username: z.string().trim().regex(/^@?[A-Za-z0-9._]{1,30}$/),
+      followers: z.number().int().min(0).max(1_000_000_000).nullable(),
+      follows: z.number().int().min(0).max(1_000_000_000).nullable(),
+      media: z.number().int().min(0).max(10_000_000).nullable(),
+      postUrl: z.string().url().max(500).nullable(),
+      mentionType: z.enum(["post", "tag", "mention", "reel", "story"]).default("post"),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/admin-auth.server");
+    const a = await requireAdmin();
+    if (!a.ok) return { ok: false as const, error: a.error };
+    const { supabaseAdmin: c } = await import("@/integrations/supabase/client.server");
+    const username = data.username.replace(/^@/, "").toLowerCase();
+    const { error } = await c.from("business_social_profiles").insert({
+      business_id: data.businessId,
+      platform: "instagram",
+      username,
+      profile_url: `https://www.instagram.com/${username}/`,
+      scope: "contributor",
+      confidence: 100,
+      verification_status: "manual",
+      source: "admin_verified",
+      verified_at: new Date().toISOString(),
+      verified_by_user_id: a.userId,
+      evidence: { followers_count: data.followers, follows_count: data.follows, media_count: data.media, post_url: data.postUrl, mention_type: data.mentionType } as never,
     });
     return error ? { ok: false as const, error: error.message } : { ok: true as const };
   });
