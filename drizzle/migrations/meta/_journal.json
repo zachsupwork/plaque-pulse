@@ -15,6 +15,13 @@
       "when": 1790794292657,
       "tag": "0001_social_follower_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790970285868,
+      "tag": "0002_instagram_intelligence",
+      "breakpoints": true
     }
   ]
 }

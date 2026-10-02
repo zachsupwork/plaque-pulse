@@ -2259,8 +2259,11 @@ export type Database = {
           business_id: string
           captured_at: string
           created_at: string
+          data_scope: string
           followers_count: number
+          follows_count: number | null
           id: string
+          media_count: number | null
           social_profile_id: string | null
           source: string
         }
@@ -2268,8 +2271,11 @@ export type Database = {
           business_id: string
           captured_at?: string
           created_at?: string
+          data_scope?: string
           followers_count: number
+          follows_count?: number | null
           id?: string
+          media_count?: number | null
           social_profile_id?: string | null
           source?: string
         }
@@ -2277,8 +2283,11 @@ export type Database = {
           business_id?: string
           captured_at?: string
           created_at?: string
+          data_scope?: string
           followers_count?: number
+          follows_count?: number | null
           id?: string
+          media_count?: number | null
           social_profile_id?: string | null
           source?: string
         }
