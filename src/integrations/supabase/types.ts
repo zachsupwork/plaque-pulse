@@ -375,6 +375,53 @@ export type Database = {
           },
         ]
       }
+      business_pages: {
+        Row: {
+          accent: string
+          business_id: string
+          buttons: Json
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          share_code: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          accent?: string
+          business_id: string
+          buttons?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          share_code?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accent?: string
+          business_id?: string
+          buttons?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          share_code?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_pages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_social_profiles: {
         Row: {
           business_id: string
@@ -1785,6 +1832,7 @@ export type Database = {
           claimed_by_user_id: string | null
           configured_at: string | null
           created_at: string
+          destination_mode: string
           id: string
           location_id: string | null
           placement_type: string | null
@@ -1807,6 +1855,7 @@ export type Database = {
           claimed_by_user_id?: string | null
           configured_at?: string | null
           created_at?: string
+          destination_mode?: string
           id?: string
           location_id?: string | null
           placement_type?: string | null
@@ -1829,6 +1878,7 @@ export type Database = {
           claimed_by_user_id?: string | null
           configured_at?: string | null
           created_at?: string
+          destination_mode?: string
           id?: string
           location_id?: string | null
           placement_type?: string | null
@@ -2411,6 +2461,9 @@ export type Database = {
         | "manufacturing_test"
         | "setup_open"
         | "inactive_tap"
+        | "page_view"
+        | "link_click"
+        | "referral_visit"
       initiated_by: "owner" | "copilot" | "admin" | "automation"
       intent_type:
         | "review"
@@ -2599,6 +2652,9 @@ export const Constants = {
         "manufacturing_test",
         "setup_open",
         "inactive_tap",
+        "page_view",
+        "link_click",
+        "referral_visit",
       ],
       initiated_by: ["owner", "copilot", "admin", "automation"],
       intent_type: [
