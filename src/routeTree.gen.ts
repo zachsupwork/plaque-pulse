@@ -36,6 +36,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as NSlugRouteImport } from './routes/n.$slug'
 import { Route as OfferingsIndexRouteImport } from './routes/offerings.index'
 import { Route as OfferingsSlugRouteImport } from './routes/offerings.$slug'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ProgramTokenRouteImport } from './routes/program.$token'
 import { Route as QSlugRouteImport } from './routes/q.$slug'
 import { Route as RCodeRouteImport } from './routes/r.$code'
@@ -206,6 +207,11 @@ const OfferingsIndexRoute = OfferingsIndexRouteImport.update({
 const OfferingsSlugRoute = OfferingsSlugRouteImport.update({
   id: '/offerings/$slug',
   path: '/offerings/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProgramTokenRoute = ProgramTokenRouteImport.update({
@@ -414,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/offerings/$slug': typeof OfferingsSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
   '/r/$code': typeof RCodeRoute
@@ -477,6 +484,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/offerings/$slug': typeof OfferingsSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
   '/r/$code': typeof RCodeRoute
@@ -543,6 +551,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/n/$slug': typeof NSlugRoute
   '/offerings/$slug': typeof OfferingsSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
   '/r/$code': typeof RCodeRoute
@@ -610,6 +619,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/offerings/$slug'
+    | '/p/$slug'
     | '/program/$token'
     | '/q/$slug'
     | '/r/$code'
@@ -673,6 +683,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/offerings/$slug'
+    | '/p/$slug'
     | '/program/$token'
     | '/q/$slug'
     | '/r/$code'
@@ -738,6 +749,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/n/$slug'
     | '/offerings/$slug'
+    | '/p/$slug'
     | '/program/$token'
     | '/q/$slug'
     | '/r/$code'
@@ -790,6 +802,7 @@ export interface RootRouteChildren {
   ActivateTokenRoute: typeof ActivateTokenRoute
   NSlugRoute: typeof NSlugRoute
   OfferingsSlugRoute: typeof OfferingsSlugRoute
+  PSlugRoute: typeof PSlugRoute
   ProgramTokenRoute: typeof ProgramTokenRoute
   QSlugRoute: typeof QSlugRoute
   RCodeRoute: typeof RCodeRoute
@@ -991,6 +1004,13 @@ declare module '@tanstack/react-router' {
       path: '/offerings/$slug'
       fullPath: '/offerings/$slug'
       preLoaderRoute: typeof OfferingsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/program/$token': {
@@ -1362,6 +1382,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivateTokenRoute: ActivateTokenRoute,
   NSlugRoute: NSlugRoute,
   OfferingsSlugRoute: OfferingsSlugRoute,
+  PSlugRoute: PSlugRoute,
   ProgramTokenRoute: ProgramTokenRoute,
   QSlugRoute: QSlugRoute,
   RCodeRoute: RCodeRoute,

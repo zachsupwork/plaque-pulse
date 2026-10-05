@@ -8,6 +8,7 @@ import { usePortal, activeDestination } from "@/hooks/usePortal";
 import { DESTINATION_LABEL, PLACEMENT_LABEL, fetchPlacementHistory } from "@/lib/taplocal";
 import { plaqueTrends, sourceSplit, byDayOfWeek } from "@/lib/metrics";
 import { supabase } from "@/integrations/supabase/client";
+import { TapLocalPageEditor } from "@/components/taplocal/TapLocalPageEditor";
 import type { Database } from "@/integrations/supabase/types";
 
 type DestinationType = Database["public"]["Enums"]["destination_type"];
@@ -134,6 +135,8 @@ function PlaqueDetail() {
           ))}
         </div>
       </GlassPanel>
+
+      {businessId ? <TapLocalPageEditor businessId={businessId} plaqueId={id} /> : null}
 
       <GlassPanel className="p-4">
         <p className="font-display text-[14px] font-semibold tracking-tight">Where this plaque sends people</p>
