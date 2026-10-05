@@ -38,6 +38,7 @@ import { Route as OfferingsIndexRouteImport } from './routes/offerings.index'
 import { Route as OfferingsSlugRouteImport } from './routes/offerings.$slug'
 import { Route as ProgramTokenRouteImport } from './routes/program.$token'
 import { Route as QSlugRouteImport } from './routes/q.$slug'
+import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SetupSlugRouteImport } from './routes/setup.$slug'
 import { Route as AdminBatchesIndexRouteImport } from './routes/admin.batches.index'
 import { Route as AdminBusinessesIndexRouteImport } from './routes/admin.businesses.index'
@@ -61,6 +62,7 @@ import { Route as AppNfcVerifyRouteImport } from './routes/app.nfc.verify'
 import { Route as AppNfcWriteRouteImport } from './routes/app.nfc.write'
 import { Route as AppPlaquesIndexRouteImport } from './routes/app.plaques.index'
 import { Route as AppPlaquesIdRouteImport } from './routes/app.plaques.$id'
+import { Route as GoKeyButtonIdRouteImport } from './routes/go.$key.$buttonId'
 import { Route as NfcProgramTokenRouteImport } from './routes/nfc.program.$token'
 import { Route as NfcReturnSessionIdRouteImport } from './routes/nfc.return.$sessionId'
 import { Route as AdminBatchesIdIndexRouteImport } from './routes/admin.batches.$id.index'
@@ -216,6 +218,11 @@ const QSlugRoute = QSlugRouteImport.update({
   path: '/q/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RCodeRoute = RCodeRouteImport.update({
+  id: '/r/$code',
+  path: '/r/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SetupSlugRoute = SetupSlugRouteImport.update({
   id: '/setup/$slug',
   path: '/setup/$slug',
@@ -332,6 +339,11 @@ const AppPlaquesIdRoute = AppPlaquesIdRouteImport.update({
   path: '/plaques/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const GoKeyButtonIdRoute = GoKeyButtonIdRouteImport.update({
+  id: '/go/$key/$buttonId',
+  path: '/go/$key/$buttonId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NfcProgramTokenRoute = NfcProgramTokenRouteImport.update({
   id: '/nfc/program/$token',
   path: '/nfc/program/$token',
@@ -404,6 +416,7 @@ export interface FileRoutesByFullPath {
   '/offerings/$slug': typeof OfferingsSlugRoute
   '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
+  '/r/$code': typeof RCodeRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/activate/': typeof ActivateIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -422,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/app/nfc/verify': typeof AppNfcVerifyRoute
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
+  '/go/$key/$buttonId': typeof GoKeyButtonIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
   '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
   '/admin/batches/': typeof AdminBatchesIndexRoute
@@ -465,6 +479,7 @@ export interface FileRoutesByTo {
   '/offerings/$slug': typeof OfferingsSlugRoute
   '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
+  '/r/$code': typeof RCodeRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/activate': typeof ActivateIndexRoute
   '/admin': typeof AdminIndexRoute
@@ -483,6 +498,7 @@ export interface FileRoutesByTo {
   '/app/nfc/verify': typeof AppNfcVerifyRoute
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
+  '/go/$key/$buttonId': typeof GoKeyButtonIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
   '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
   '/admin/batches': typeof AdminBatchesIndexRoute
@@ -529,6 +545,7 @@ export interface FileRoutesById {
   '/offerings/$slug': typeof OfferingsSlugRoute
   '/program/$token': typeof ProgramTokenRoute
   '/q/$slug': typeof QSlugRoute
+  '/r/$code': typeof RCodeRoute
   '/setup/$slug': typeof SetupSlugRoute
   '/activate/': typeof ActivateIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -547,6 +564,7 @@ export interface FileRoutesById {
   '/app/nfc/verify': typeof AppNfcVerifyRoute
   '/app/nfc/write': typeof AppNfcWriteRoute
   '/app/plaques/$id': typeof AppPlaquesIdRoute
+  '/go/$key/$buttonId': typeof GoKeyButtonIdRoute
   '/nfc/program/$token': typeof NfcProgramTokenRoute
   '/nfc/return/$sessionId': typeof NfcReturnSessionIdRoute
   '/admin/batches/': typeof AdminBatchesIndexRoute
@@ -594,6 +612,7 @@ export interface FileRouteTypes {
     | '/offerings/$slug'
     | '/program/$token'
     | '/q/$slug'
+    | '/r/$code'
     | '/setup/$slug'
     | '/activate/'
     | '/admin/'
@@ -612,6 +631,7 @@ export interface FileRouteTypes {
     | '/app/nfc/verify'
     | '/app/nfc/write'
     | '/app/plaques/$id'
+    | '/go/$key/$buttonId'
     | '/nfc/program/$token'
     | '/nfc/return/$sessionId'
     | '/admin/batches/'
@@ -655,6 +675,7 @@ export interface FileRouteTypes {
     | '/offerings/$slug'
     | '/program/$token'
     | '/q/$slug'
+    | '/r/$code'
     | '/setup/$slug'
     | '/activate'
     | '/admin'
@@ -673,6 +694,7 @@ export interface FileRouteTypes {
     | '/app/nfc/verify'
     | '/app/nfc/write'
     | '/app/plaques/$id'
+    | '/go/$key/$buttonId'
     | '/nfc/program/$token'
     | '/nfc/return/$sessionId'
     | '/admin/batches'
@@ -718,6 +740,7 @@ export interface FileRouteTypes {
     | '/offerings/$slug'
     | '/program/$token'
     | '/q/$slug'
+    | '/r/$code'
     | '/setup/$slug'
     | '/activate/'
     | '/admin/'
@@ -736,6 +759,7 @@ export interface FileRouteTypes {
     | '/app/nfc/verify'
     | '/app/nfc/write'
     | '/app/plaques/$id'
+    | '/go/$key/$buttonId'
     | '/nfc/program/$token'
     | '/nfc/return/$sessionId'
     | '/admin/batches/'
@@ -768,9 +792,11 @@ export interface RootRouteChildren {
   OfferingsSlugRoute: typeof OfferingsSlugRoute
   ProgramTokenRoute: typeof ProgramTokenRoute
   QSlugRoute: typeof QSlugRoute
+  RCodeRoute: typeof RCodeRoute
   SetupSlugRoute: typeof SetupSlugRoute
   ActivateIndexRoute: typeof ActivateIndexRoute
   OfferingsIndexRoute: typeof OfferingsIndexRoute
+  GoKeyButtonIdRoute: typeof GoKeyButtonIdRoute
   NfcProgramTokenRoute: typeof NfcProgramTokenRoute
   NfcReturnSessionIdRoute: typeof NfcReturnSessionIdRoute
   ApiPublicNfcProgramRoute: typeof ApiPublicNfcProgramRoute
@@ -981,6 +1007,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/r/$code': {
+      id: '/r/$code'
+      path: '/r/$code'
+      fullPath: '/r/$code'
+      preLoaderRoute: typeof RCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/setup/$slug': {
       id: '/setup/$slug'
       path: '/setup/$slug'
@@ -1141,6 +1174,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/plaques/$id'
       preLoaderRoute: typeof AppPlaquesIdRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/go/$key/$buttonId': {
+      id: '/go/$key/$buttonId'
+      path: '/go/$key/$buttonId'
+      fullPath: '/go/$key/$buttonId'
+      preLoaderRoute: typeof GoKeyButtonIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/nfc/program/$token': {
       id: '/nfc/program/$token'
@@ -1324,9 +1364,11 @@ const rootRouteChildren: RootRouteChildren = {
   OfferingsSlugRoute: OfferingsSlugRoute,
   ProgramTokenRoute: ProgramTokenRoute,
   QSlugRoute: QSlugRoute,
+  RCodeRoute: RCodeRoute,
   SetupSlugRoute: SetupSlugRoute,
   ActivateIndexRoute: ActivateIndexRoute,
   OfferingsIndexRoute: OfferingsIndexRoute,
+  GoKeyButtonIdRoute: GoKeyButtonIdRoute,
   NfcProgramTokenRoute: NfcProgramTokenRoute,
   NfcReturnSessionIdRoute: NfcReturnSessionIdRoute,
   ApiPublicNfcProgramRoute: ApiPublicNfcProgramRoute,
