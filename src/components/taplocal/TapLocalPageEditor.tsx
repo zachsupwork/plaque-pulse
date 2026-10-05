@@ -59,7 +59,7 @@ export function TapLocalPageEditor({ businessId, plaqueId }: { businessId: strin
 
   const move = (i: number, d: -1 | 1) => setButtons((bs) => {
     const next = [...bs]; const j = i + d; if (j < 0 || j >= next.length) return bs;
-    [next[i], next[j]] = [next[j], next[i]]; return next;
+    const a = next[i]!; next[i] = next[j]!; next[j] = a; return next;
   });
   const patch = (i: number, p: Partial<Btn>) => setButtons((bs) => bs.map((b, k) => (k === i ? { ...b, ...p } : b)));
 
