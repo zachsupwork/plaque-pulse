@@ -13,16 +13,16 @@ type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
  */
 async function logEvent(row: EventInsert, context: { slug: string; source: string }) {
   try {
-    const { error } = await supabaseAdmin.from("events").insert(row);
+    const { data, error } = await supabaseAdmin.from("events").insert(row).select("id").single();
     if (error) {
       console.error(
         `[TapLocal] ${row.event_type === "interaction" ? "TAPLOCAL INTERACTION SAVE FAILED" : "EVENT LOGGING FAILED"}` +
           ` event=${row.event_type} plaque=${row.plaque_id ?? "unknown"} slug=${context.slug}` +
           ` source=${context.source} at=${new Date().toISOString()} code=${error.code ?? "none"} reason=${error.message}`,
       );
-      return false;
+      return null;
     }
-    return true;
+    return data.id as string;
   } catch (err) {
     console.error(
       `[TapLocal] ${row.event_type === "interaction" ? "TAPLOCAL INTERACTION SAVE FAILED" : "EVENT LOGGING FAILED"}` +
@@ -30,7 +30,7 @@ async function logEvent(row: EventInsert, context: { slug: string; source: strin
         ` source=${context.source} at=${new Date().toISOString()}`,
       err,
     );
-    return false;
+    return null;
   }
 }
 
@@ -42,7 +42,7 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
 
   const { data: plaque } = await supabaseAdmin
     .from("plaques")
-    .select("id, business_id, location_id, status")
+    .select("id, business_id, location_id, status, destination_mode")
     .eq("public_slug", slug)
     .maybeSingle();
 
@@ -79,6 +79,22 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
       "This TapLocal plaque is currently inactive.",
       "The tag is working — its destination has been turned off. Contact TapLocal to switch it back on.",
     );
+  }
+
+  // Optional TapLocal Page mode: same permanent link, opens the business's mini page.
+  // The original tap is saved first so analytics can chain tap -> page -> chosen link.
+  if (plaque.destination_mode === "page" && plaque.business_id) {
+    const tapId = await logEvent(
+      isTest
+        ? { ...base, event_type: "manufacturing_test", metadata: { tl_test: true, mode: "page" } }
+        : { ...base, event_type: "interaction", intent_type: "custom", anonymous_visitor_key: key, metadata: { mode: "page" } },
+      ctx,
+    );
+    const qs = new URLSearchParams({ src: source, ...(tapId && !isTest ? { t: tapId } : {}), ...(isTest ? { tl_test: "1" } : {}) });
+    return new Response(null, {
+      status: 307,
+      headers: { Location: `/p/${slug}?${qs}`, "Cache-Control": "no-store" },
+    });
   }
 
   const { data: destination } = await supabaseAdmin
@@ -130,7 +146,7 @@ export async function resolveAndRedirect(slug: string, source: "nfc" | "qr", req
         ...shared,
         event_type: "redirect_success",
         anonymous_visitor_key: key,
-        metadata: { telemetry: true, interaction_saved: interactionSaved },
+        metadata: { telemetry: true, interaction_saved: Boolean(interactionSaved) },
       },
       ctx,
     );
