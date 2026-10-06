@@ -70,6 +70,8 @@ function ResultsPage() {
 
       {businessId ? <WorthCard businessId={businessId} days={30} /> : null}
 
+      <PageFunnel events={events} />
+
       <GlassPanel tone="signal" className="p-4">
         <p className="text-[12px] font-semibold tracking-[0.08em] text-accent uppercase">We can prove this</p>
         <div className="mt-2.5 space-y-1.5">
@@ -216,4 +218,69 @@ function group(rows: Array<{ outcome_type: string }>) {
 
 function prettyMetric(key: string) {
   return key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
+
+const DEST_LABEL: Record<string, string> = {
+  google_review: "Google review", instagram: "Instagram", facebook: "Facebook", menu: "Menu", website: "Website",
+  booking: "Booking", directions: "Directions", call: "Call", coupon: "Offer", loyalty: "Loyalty", custom: "Other link",
+};
+
+/** TapLocal Page funnel. Page views and clicks are never counted as extra plaque taps. */
+function PageFunnel({ events }: { events: import("@/lib/taplocal").EventRow[] }) {
+  const meta = (e: { metadata?: Record<string, unknown> | null }, k: string) => e.metadata?.[k];
+  const taps = events.filter((e) => e.event_type === "interaction");
+  const pageTaps = taps.filter((e) => meta(e, "mode") === "page");
+  const views = events.filter((e) => e.event_type === "page_view");
+  const clicks = events.filter((e) => e.event_type === "link_click");
+  const shares = events.filter((e) => e.event_type === "share_created");
+  const refs = events.filter((e) => e.event_type === "referral_visit");
+  if (!views.length && !clicks.length && !pageTaps.length && !refs.length) return null;
+
+  const visitors = new Set(views.map((v) => v.anonymous_visitor_key).filter(Boolean)).size;
+  const viewsFromTaps = views.filter((v) => typeof meta(v, "tap_event_id") === "string").length;
+  const tapsWithChoice = new Set(clicks.map((c) => meta(c, "tap_event_id")).filter((x) => typeof x === "string")).size;
+  const viewsWithClick = new Set(clicks.map((c) => meta(c, "page_view_id")).filter((x) => typeof x === "string")).size;
+  const rate = views.length ? Math.round((viewsWithClick / views.length) * 100) : null;
+  const byDest = new Map<string, number>();
+  for (const c of clicks) byDest.set(c.destination_type ?? "custom", (byDest.get(c.destination_type ?? "custom") ?? 0) + 1);
+  const confirmedRefs = refs.filter((r) => meta(r, "confirmed_referral") === true).length;
+  const shareLinkVisits = refs.length - confirmedRefs;
+
+  const stat = (label: string, value: string | number) => (
+    <div className="rounded-xl border border-border bg-foreground/5 p-2.5">
+      <p className="font-display text-[20px] font-bold">{value}</p>
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+    </div>
+  );
+
+  return (
+    <GlassPanel className="p-4">
+      <p className="text-[12px] font-semibold tracking-[0.08em] text-accent uppercase">TapLocal Page · last 30 days</p>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {stat("Plaque taps", taps.length)}
+        {stat("Page views", views.length)}
+        {stat("Unique visitors", visitors)}
+        {stat("Button clicks", clicks.length)}
+        {stat("View → click", rate === null ? "—" : `${rate}%`)}
+        {stat("Shares", shares.length)}
+      </div>
+      <p className="mt-3 text-[12px] font-semibold">Funnel</p>
+      <p className="mt-1 text-[13px] text-muted-foreground">
+        {pageTaps.length} page-mode taps → {viewsFromTaps} page views → {tapsWithChoice} chose a link → see “What could this be worth?” for possible outcomes
+      </p>
+      {byDest.size ? (
+        <div className="mt-3 space-y-1">
+          <p className="text-[12px] font-semibold">Clicks by destination</p>
+          {[...byDest.entries()].sort((a, b) => b[1] - a[1]).map(([d, n]) => (
+            <p key={d} className="flex justify-between text-[13px]"><span>{DEST_LABEL[d] ?? d}</span><span className="font-semibold">{n}</span></p>
+          ))}
+        </div>
+      ) : null}
+      <p className="mt-3 text-[12px] text-muted-foreground">
+        {confirmedRefs} confirmed referral{confirmedRefs === 1 ? "" : "s"} (opened from a unique share link)
+        {shareLinkVisits ? ` · ${shareLinkVisits} confirmed share-link visit${shareLinkVisits === 1 ? "" : "s"}` : ""}
+        . Page views and clicks are not counted as extra taps.
+      </p>
+    </GlassPanel>
+  );
 }
