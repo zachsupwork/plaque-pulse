@@ -2084,6 +2084,63 @@ export type Database = {
           },
         ]
       }
+      referral_links: {
+        Row: {
+          business_id: string
+          created_at: string
+          first_visit_at: string | null
+          id: string
+          page_view_id: string | null
+          plaque_id: string | null
+          share_event_id: string | null
+          source_type: string | null
+          tap_event_id: string | null
+          token: string
+          visit_count: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          first_visit_at?: string | null
+          id?: string
+          page_view_id?: string | null
+          plaque_id?: string | null
+          share_event_id?: string | null
+          source_type?: string | null
+          tap_event_id?: string | null
+          token: string
+          visit_count?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          first_visit_at?: string | null
+          id?: string
+          page_view_id?: string | null
+          plaque_id?: string | null
+          share_event_id?: string | null
+          source_type?: string | null
+          tap_event_id?: string | null
+          token?: string
+          visit_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_links_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: false
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       setup_requests: {
         Row: {
           approved_at: string | null
@@ -2464,6 +2521,7 @@ export type Database = {
         | "page_view"
         | "link_click"
         | "referral_visit"
+        | "share_created"
       initiated_by: "owner" | "copilot" | "admin" | "automation"
       intent_type:
         | "review"
@@ -2655,6 +2713,7 @@ export const Constants = {
         "page_view",
         "link_click",
         "referral_visit",
+        "share_created",
       ],
       initiated_by: ["owner", "copilot", "admin", "automation"],
       intent_type: [
