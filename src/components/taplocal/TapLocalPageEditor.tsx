@@ -6,13 +6,13 @@ import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2, ExternalLink } from "luc
 import { GlassPanel } from "@/components/taplocal/Field";
 import { getMyPage, saveMyPage, setPlaqueMode, suggestPageButtons } from "@/lib/business-page.functions";
 
-type Kind = "google_review" | "instagram" | "menu" | "website" | "booking" | "directions" | "call" | "facebook" | "tiktok" | "offer" | "custom";
+type Kind = "google_review" | "instagram" | "menu" | "website" | "booking" | "directions" | "call" | "facebook" | "tiktok" | "offer" | "loyalty" | "custom";
 type Btn = { id: string; kind: Kind; label: string; url: string; enabled: boolean };
 
 const KINDS: Array<[Kind, string]> = [
   ["google_review", "Leave a Google review"], ["instagram", "Follow on Instagram"], ["menu", "See the menu"],
   ["website", "Order / Website"], ["booking", "Book now"], ["directions", "Get directions"], ["call", "Call us"],
-  ["facebook", "Facebook"], ["tiktok", "TikTok"], ["offer", "Today's offer"], ["custom", "Link"],
+  ["facebook", "Facebook"], ["tiktok", "TikTok"], ["offer", "Today's offer"], ["loyalty", "Join our rewards"], ["custom", "Link"],
 ];
 
 const ACCENTS = ["#3b82f6", "#10b981", "#f97316", "#e11d48", "#8b5cf6", "#111827"];
