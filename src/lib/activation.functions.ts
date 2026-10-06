@@ -144,6 +144,7 @@ const completeSchema = z.object({
   ]),
   destinationUrl: z.string().max(500).nullable(),
   placementType: z.string().min(1).max(60),
+  destinationMode: z.enum(["direct", "page"]).optional(),
   plaqueName: z.string().min(1).max(80),
 });
 
@@ -347,8 +348,15 @@ export const completeActivation = createServerFn({ method: "POST" })
         status: "configured_unclaimed",
         activated_at: now,
         configured_at: now,
+        destination_mode: data.destinationMode ?? "direct",
       })
       .eq("id", plaque.id);
+
+    // TapLocal Page mode: prepare the page, seeded with the links we already know.
+    if (data.destinationMode === "page") {
+      const { getOrCreatePage } = await import("./business-page.server");
+      await getOrCreatePage(businessId).catch((err) => console.error("[TapLocal] page creation failed", err));
+    }
 
     await supabaseAdmin.from("action_history").insert({
       business_id: businessId,

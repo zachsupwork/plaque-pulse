@@ -107,6 +107,7 @@ function ActivatePage() {
   const [destination, setDestination] = useState<DestinationValue>("google_review");
   const [destinationUrl, setDestinationUrl] = useState("");
   const [placement, setPlacement] = useState("front_counter");
+  const [mode, setMode] = useState<"direct" | "page">("direct");
   const [plaqueName, setPlaqueName] = useState("");
   const [sentence, setSentence] = useState("");
   const [listening, setListening] = useState(false);
@@ -226,6 +227,7 @@ function ActivatePage() {
           destinationType: chosen.value,
           destinationUrl: destinationUrl || null,
           placementType: placement,
+          destinationMode: mode,
           plaqueName: plaqueName || "My plaque",
         },
       });
@@ -548,6 +550,19 @@ function ActivatePage() {
             <h2 className="font-display text-[20px] font-bold tracking-tight text-balance">
               Where should a tap send people?
             </h2>
+            <Chips
+              options={[
+                { value: "direct", label: "Straight to one link" },
+                { value: "page", label: "TapLocal Page (several links)" },
+              ]}
+              value={mode}
+              onChange={(v) => setMode(v as "direct" | "page")}
+            />
+            {mode === "page" ? (
+              <p className="text-[12px] text-muted-foreground text-pretty">
+                A tap opens a small page with your review, Instagram, menu and more. Pick the main link below — we'll add the others we find, and you can edit them in your portal.
+              </p>
+            ) : null}
             <Chips
               options={DESTINATIONS.map((d) => ({ value: d.value, label: d.label }))}
               value={destination}

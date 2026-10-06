@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type PageButtonKind =
   | "google_review" | "instagram" | "menu" | "website" | "booking" | "directions"
-  | "call" | "facebook" | "tiktok" | "offer" | "custom";
+  | "call" | "facebook" | "tiktok" | "offer" | "loyalty" | "custom";
 
 export type PageButton = { id: string; kind: PageButtonKind; label: string; url: string; enabled: boolean };
 
@@ -17,6 +17,7 @@ export const BUTTON_LABEL: Record<PageButtonKind, string> = {
   facebook: "Facebook",
   tiktok: "TikTok",
   offer: "Today's offer",
+  loyalty: "Join our rewards",
   custom: "Link",
 };
 
@@ -25,7 +26,7 @@ export function buttonDestinationType(kind: PageButtonKind) {
   const map: Record<PageButtonKind, string> = {
     google_review: "google_review", instagram: "instagram", menu: "menu", website: "website",
     booking: "booking", directions: "directions", call: "call", facebook: "facebook",
-    tiktok: "custom", offer: "coupon", custom: "custom",
+    tiktok: "custom", offer: "coupon", loyalty: "loyalty", custom: "custom",
   };
   return map[kind] as "custom";
 }

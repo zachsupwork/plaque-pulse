@@ -88,6 +88,8 @@ export type EventRow = {
   destination_type: string | null;
   anonymous_visitor_key: string | null;
   occurred_at: string;
+  id?: string;
+  metadata?: Record<string, unknown> | null;
 };
 
 /**
@@ -164,7 +166,7 @@ export async function fetchEvents(businessId: string, days = 30) {
   const { data, error } = await supabase
     .from("events")
     .select(
-      "plaque_id, event_type, source_type, intent_type, destination_type, anonymous_visitor_key, occurred_at",
+      "id, plaque_id, event_type, source_type, intent_type, destination_type, anonymous_visitor_key, occurred_at, metadata",
     )
     .eq("business_id", businessId)
     .gte("occurred_at", since)

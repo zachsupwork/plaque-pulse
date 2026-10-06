@@ -159,6 +159,15 @@ export const impactSummary = createServerFn({ method: "POST" })
 
       type E = { id: string; business_id: string | null; source_type: string; destination_type: string | null; occurred_at: string; anonymous_visitor_key: string | null };
       const allEvents = (ev.data ?? []) as E[];
+      // TapLocal Page taps inherit the link the visitor chose (still counted once, as the tap).
+      {
+        const { pageChoices } = await import("./attribution.server");
+        const pending = allEvents.filter((e) => !e.destination_type).map((e) => e.id);
+        if (pending.length) {
+          const chosen = await pageChoices(c, pending);
+          for (const e of allEvents) if (!e.destination_type && chosen.has(e.id)) e.destination_type = chosen.get(e.id)!;
+        }
+      }
       const events = allEvents.filter((e) => e.occurred_at >= since);
       const prevEvents = allEvents.filter((e) => e.occurred_at < since);
       const reviewTaps = events.filter((e) => e.destination_type === "google_review");

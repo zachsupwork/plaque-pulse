@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const buttonSchema = z.object({
   id: z.string().min(1).max(20),
-  kind: z.enum(["google_review", "instagram", "menu", "website", "booking", "directions", "call", "facebook", "tiktok", "offer", "custom"]),
+  kind: z.enum(["google_review", "instagram", "menu", "website", "booking", "directions", "call", "facebook", "tiktok", "offer", "loyalty", "custom"]),
   label: z.string().min(1).max(60),
   url: z.string().min(3).max(1000).refine((u) => /^(https?:|tel:|mailto:)/i.test(u), "Must be a web, tel: or mailto: link"),
   enabled: z.boolean(),
@@ -30,6 +30,14 @@ export const getPublicPage = createServerFn({ method: "GET" })
     const request = getRequest();
     const { data: biz } = await supabaseAdmin.from("businesses").select("name").eq("id", page.business_id).maybeSingle();
 
+    // Only a visit through a per-share token is a confirmed referral; the static link is just a share-link visit.
+    let referral: { confirmed: boolean; shareLink: boolean } = { confirmed: false, shareLink: false };
+    if (data.rv && !data.test) {
+      const { data: rvEv } = await supabaseAdmin.from("events").select("metadata").eq("id", data.rv).eq("event_type", "referral_visit").maybeSingle();
+      const m = (rvEv?.metadata ?? {}) as Record<string, unknown>;
+      referral = { confirmed: m["confirmed_referral"] === true, shareLink: Boolean(rvEv) };
+    }
+
     const { data: view } = await supabaseAdmin.from("events").insert({
       event_type: data.test ? "manufacturing_test" : "page_view",
       business_id: page.business_id,
@@ -41,7 +49,8 @@ export const getPublicPage = createServerFn({ method: "GET" })
       metadata: {
         tap_event_id: data.t ?? null,
         referral_event_id: data.rv ?? null,
-        confirmed_referral: Boolean(data.rv),
+        confirmed_referral: referral.confirmed,
+        confirmed_share_link_visit: referral.shareLink && !referral.confirmed,
         ...(data.test ? { tl_test: true, page_view: true } : {}),
       },
     }).select("id").single();
@@ -132,4 +141,44 @@ export const setPlaqueMode = createServerFn({ method: "POST" })
       previous_value: { mode: plaque.destination_mode }, new_value: { mode: data.mode },
     });
     return { ok: true };
+  });
+
+/** Public: "Share this business" was actually used — mint a unique referral token tied to this tap/page view. */
+export const createShareLink = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({
+      key: z.string().min(2).max(64),
+      viewId: z.string().uuid().nullable().optional(),
+      tapId: z.string().uuid().nullable().optional(),
+      src: z.enum(["nfc", "qr"]).nullable().optional(),
+      test: z.boolean().optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { resolvePageKey, anonVisitor, coarseDevice } = await import("./business-page.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const found = await resolvePageKey(data.key);
+    if (!found) throw new Error("not_found");
+    const { page, plaque } = found;
+    // Preview/test shares fall back to the static link so they never create referral proof.
+    if (data.test) return { path: `/r/${page.share_code}` };
+    const request = getRequest();
+    const token = `s${crypto.randomUUID().replace(/-/g, "").slice(0, 13)}`;
+    const { data: ev } = await supabaseAdmin.from("events").insert({
+      event_type: "share_created",
+      business_id: page.business_id,
+      plaque_id: plaque?.id ?? null,
+      location_id: plaque?.location_id ?? null,
+      source_type: data.src ?? null,
+      device_family: coarseDevice(request),
+      anonymous_visitor_key: anonVisitor(request),
+      metadata: { referral_token: token, tap_event_id: data.tapId ?? null, page_view_id: data.viewId ?? null },
+    }).select("id").single();
+    const { error } = await supabaseAdmin.from("referral_links").insert({
+      token, business_id: page.business_id, plaque_id: plaque?.id ?? null,
+      tap_event_id: data.tapId ?? null, page_view_id: data.viewId ?? null,
+      share_event_id: ev?.id ?? null, source_type: data.src ?? null,
+    });
+    if (error) return { path: `/r/${page.share_code}` };
+    return { path: `/r/${token}` };
   });

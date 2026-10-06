@@ -249,6 +249,34 @@ function score(input: { minutesAfter: number; destinationMatches: boolean; compe
 }
 
 /**
+ * TapLocal Page mode: the canonical tap has no destination of its own; the visitor's
+ * choice is a link_click chained by metadata.tap_event_id. Returns tapId -> chosen
+ * destination so attribution can use it WITHOUT counting the click as another tap.
+ */
+export async function pageChoices(client: AnyClient, tapIds: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const rank = (d: string) => (d === "google_review" ? 0 : d === "instagram" ? 1 : 2);
+  for (let i = 0; i < tapIds.length; i += 200) {
+    const chunk = tapIds.slice(i, i + 200);
+    if (!chunk.length) break;
+    const { data } = await client
+      .from("events")
+      .select("destination_type, metadata, occurred_at")
+      .eq("event_type", "link_click")
+      .in("metadata->>tap_event_id", chunk)
+      .order("occurred_at", { ascending: true })
+      .limit(5000);
+    for (const row of (data ?? []) as Array<{ destination_type: string | null; metadata: Record<string, unknown> | null }>) {
+      const tap = row.metadata?.["tap_event_id"];
+      if (typeof tap !== "string" || !row.destination_type) continue;
+      const prev = out.get(tap);
+      if (!prev || rank(row.destination_type) < rank(prev)) out.set(tap, row.destination_type);
+    }
+  }
+  return out;
+}
+
+/**
  * Looks around one interaction for possible downstream results. Everything
  * returned is a CANDIDATE. Nothing here proves that this visitor did anything.
  */
@@ -261,6 +289,12 @@ export async function analyzeInteraction(client: AnyClient, eventId: string) {
 
   if (!event || event.event_type !== "interaction" || !event.business_id) {
     return { ok: false as const, candidates: [] as Candidate[] };
+  }
+
+  // Page-mode taps take their destination from the link the visitor chose on the TapLocal Page.
+  if (!event.destination_type) {
+    const chosen = (await pageChoices(client, [event.id])).get(event.id);
+    if (chosen) event.destination_type = chosen;
   }
 
   const tapAt: string = event.occurred_at;

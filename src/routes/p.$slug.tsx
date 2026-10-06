@@ -1,8 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { Share2 } from "lucide-react";
-import { getPublicPage } from "@/lib/business-page.functions";
+import { createShareLink, getPublicPage } from "@/lib/business-page.functions";
 import { smartlinkBase } from "@/lib/smartlink";
 
 const searchSchema = z.object({
@@ -48,6 +49,7 @@ function PublicPage() {
   const page = Route.useLoaderData();
   const search = Route.useSearch();
   const [copied, setCopied] = useState(false);
+  const mintShare = useServerFn(createShareLink);
 
   const qs = new URLSearchParams();
   if (search.t) qs.set("t", search.t);
@@ -58,8 +60,12 @@ function PublicPage() {
   const suffix = qs.toString() ? `?${qs}` : "";
 
   async function share() {
-    const url = `${smartlinkBase()}/r/${page.shareCode}`;
     try {
+      const uuid = (v?: string) => (v && /^[0-9a-f-]{36}$/i.test(v) ? v : null);
+      const { path } = await mintShare({
+        data: { key: page.key, viewId: page.viewId, tapId: uuid(search.t), src: search.src ?? null, test: search.tl_test === "1" },
+      }).catch(() => ({ path: `/r/${page.shareCode}` }));
+      const url = `${smartlinkBase()}${path}`;
       if (navigator.share) await navigator.share({ title: page.name, url });
       else {
         await navigator.clipboard.writeText(url);
