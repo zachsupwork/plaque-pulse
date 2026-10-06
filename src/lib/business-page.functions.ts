@@ -35,7 +35,7 @@ export const getPublicPage = createServerFn({ method: "GET" })
     if (data.rv && !data.test) {
       const { data: rvEv } = await supabaseAdmin.from("events").select("metadata").eq("id", data.rv).eq("event_type", "referral_visit").maybeSingle();
       const m = (rvEv?.metadata ?? {}) as Record<string, unknown>;
-      referral = { confirmed: m.confirmed_referral === true, shareLink: Boolean(rvEv) };
+      referral = { confirmed: m["confirmed_referral"] === true, shareLink: Boolean(rvEv) };
     }
 
     const { data: view } = await supabaseAdmin.from("events").insert({
