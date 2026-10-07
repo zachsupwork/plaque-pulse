@@ -631,7 +631,7 @@ function ActivatePage() {
             >
               Continue
             </button>
-            <BackLink onClick={() => setStep("account")} />
+            <BackLink onClick={() => setStep(signedIn ? "business" : "account")} />
           </GlassPanel>
         ) : null}
 
