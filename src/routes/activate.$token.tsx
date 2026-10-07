@@ -7,6 +7,7 @@ import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
 import { NfcReadyCheck } from "@/components/taplocal/NfcReadyCheck";
 import { claimActivation, completeActivation, lookupActivation } from "@/lib/activation.functions";
+import { loadActivationDraft, saveActivationDraft } from "@/lib/activation-draft.functions";
 import { useIdentity } from "@/hooks/useAuthSession";
 import { parseActivationCommand } from "@/lib/activation-command.functions";
 import { getBusinessDetails, searchBusinesses } from "@/lib/business-discovery.functions";
@@ -535,7 +536,10 @@ function ActivatePage() {
             <button
               type="button"
               disabled={!place && manualName.trim().length < 2}
-              onClick={() => setStep("account")}
+              onClick={() => {
+                setBusinessConfirmed(true);
+                setStep("account");
+              }}
               className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
             >
               Yes, continue
@@ -704,6 +708,15 @@ function ActivatePage() {
             >
               Open my dashboard
             </Link>
+            {mode === "page" && activePlaque.id !== "demo" ? (
+              <Link
+                to="/app/plaques/$id"
+                params={{ id: activePlaque.id }}
+                className="mt-2 block text-[13px] font-semibold text-primary"
+              >
+                Edit my TapLocal Page
+              </Link>
+            ) : null}
           </GlassPanel>
         ) : null}
 
