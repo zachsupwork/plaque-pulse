@@ -153,7 +153,7 @@ function ActivatePage() {
     }
     loadDraft({ data: { token } })
       .then((res) => {
-        if (!cancelled && res.draft) apply(res.draft as unknown as Draft);
+        if (!cancelled && res.draft) apply(JSON.parse(res.draft) as Draft);
       })
       .catch(() => {})
       .finally(() => {

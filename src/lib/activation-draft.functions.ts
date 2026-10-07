@@ -30,7 +30,7 @@ export const loadActivationDraft = createServerFn({ method: "POST" })
       .select("draft")
       .eq("plaque_id", found.id)
       .maybeSingle();
-    return { draft: (row?.draft as Record<string, unknown> | null) ?? null };
+    return { draft: row?.draft ? JSON.stringify(row.draft) : null };
   });
 
 export const saveActivationDraft = createServerFn({ method: "POST" })
