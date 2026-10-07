@@ -36,6 +36,13 @@
       "when": 1791312806978,
       "tag": "0004_referral_links",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791400057706,
+      "tag": "0005_activation_drafts",
+      "breakpoints": true
     }
   ]
 }

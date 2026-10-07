@@ -425,6 +425,8 @@ export const claimActivation = createServerFn({ method: "POST" })
       })
       .eq("id", plaque.id);
 
+    await supabaseAdmin.from("activation_drafts").delete().eq("plaque_id", plaque.id);
+
     await supabaseAdmin.from("action_history").insert({
       business_id: plaque.business_id,
       plaque_id: plaque.id,

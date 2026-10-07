@@ -7,6 +7,7 @@ import { Field, GlassPanel } from "@/components/taplocal/Field";
 import { BrandLockup } from "@/components/taplocal/Brand";
 import { NfcReadyCheck } from "@/components/taplocal/NfcReadyCheck";
 import { claimActivation, completeActivation, lookupActivation } from "@/lib/activation.functions";
+import { loadActivationDraft, saveActivationDraft } from "@/lib/activation-draft.functions";
 import { useIdentity } from "@/hooks/useAuthSession";
 import { parseActivationCommand } from "@/lib/activation-command.functions";
 import { getBusinessDetails, searchBusinesses } from "@/lib/business-discovery.functions";
@@ -77,6 +78,8 @@ type Draft = {
   placement: string;
   plaqueName: string;
   step: Step;
+  mode?: "direct" | "page";
+  businessConfirmed?: boolean;
 };
 
 function newSessionToken() {
@@ -113,6 +116,9 @@ function ActivatePage() {
   const [listening, setListening] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
+  const [businessConfirmed, setBusinessConfirmed] = useState(false);
+  const loadDraft = useServerFn(loadActivationDraft);
+  const saveDraft = useServerFn(saveActivationDraft);
 
   const plaque = useQuery({
     queryKey: ["activation", token],
@@ -120,35 +126,62 @@ function ActivatePage() {
     retry: false,
   });
 
-  // Coming back from the sign-in email must not throw away what they already chose.
+  // Coming back from the sign-in email (possibly in a new tab or device) must not throw
+  // away what they already chose. The server draft is the source of truth; sessionStorage
+  // is only a fast local cache.
   useEffect(() => {
+    let cancelled = false;
+    function apply(d: Draft) {
+      setPlace(d.place ?? null);
+      setManualName(d.manualName ?? "");
+      setDestination(d.destination ?? "google_review");
+      setDestinationUrl(d.destinationUrl ?? "");
+      setPlacement(d.placement ?? "front_counter");
+      setPlaqueName(d.plaqueName ?? "");
+      if (d.mode === "page" || d.mode === "direct") setMode(d.mode);
+      let next: Step = d.step && d.step !== "done" ? d.step : "start";
+      // A confirmed business is never searched for again.
+      if (d.businessConfirmed && ["start", "search", "tell", "business"].includes(next)) next = "account";
+      setStep(next);
+      setBusinessConfirmed(Boolean(d.businessConfirmed));
+    }
     try {
       const raw = sessionStorage.getItem(draftKey(token));
-      if (raw) {
-        const d = JSON.parse(raw) as Draft;
-        setPlace(d.place ?? null);
-        setManualName(d.manualName ?? "");
-        setDestination(d.destination ?? "google_review");
-        setDestinationUrl(d.destinationUrl ?? "");
-        setPlacement(d.placement ?? "front_counter");
-        setPlaqueName(d.plaqueName ?? "");
-        if (d.step && d.step !== "done") setStep(d.step);
-      }
+      if (raw) apply(JSON.parse(raw) as Draft);
     } catch {
-      /* a broken draft simply starts the flow over */
+      /* ignore broken cache */
     }
-    setRestored(true);
+    loadDraft({ data: { token } })
+      .then((res) => {
+        if (!cancelled && res.draft) apply(JSON.parse(res.draft) as Draft);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setRestored(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   useEffect(() => {
-    if (!restored) return;
-    const draft: Draft = { place, manualName, destination, destinationUrl, placement, plaqueName, step };
+    if (!restored || step === "done") return;
+    const draft: Draft = { place, manualName, destination, destinationUrl, placement, plaqueName, step, mode, businessConfirmed };
     try {
       sessionStorage.setItem(draftKey(token), JSON.stringify(draft));
     } catch {
-      /* private mode — the flow still works, it just can't be resumed */
+      /* private mode */
     }
-  }, [restored, token, place, manualName, destination, destinationUrl, placement, plaqueName, step]);
+    const id = setTimeout(() => {
+      saveDraft({ data: { token, draft: draft as unknown as Record<string, unknown> } }).catch(() => {});
+    }, 400);
+    return () => clearTimeout(id);
+  }, [restored, token, place, manualName, destination, destinationUrl, placement, plaqueName, step, mode, businessConfirmed]);
+
+  // Already signed in (e.g. just back from the email link): don't make them press through the account step.
+  useEffect(() => {
+    if (restored && step === "account" && signedIn) setStep("destination");
+  }, [restored, step, signedIn]);
 
   useEffect(() => {
     const id = setTimeout(() => setDebounced(query.trim()), 350);
@@ -503,7 +536,10 @@ function ActivatePage() {
             <button
               type="button"
               disabled={!place && manualName.trim().length < 2}
-              onClick={() => setStep("account")}
+              onClick={() => {
+                setBusinessConfirmed(true);
+                setStep("account");
+              }}
               className="w-full rounded-xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground disabled:opacity-50"
             >
               Yes, continue
@@ -595,7 +631,7 @@ function ActivatePage() {
             >
               Continue
             </button>
-            <BackLink onClick={() => setStep("account")} />
+            <BackLink onClick={() => setStep(signedIn ? "business" : "account")} />
           </GlassPanel>
         ) : null}
 
@@ -672,6 +708,15 @@ function ActivatePage() {
             >
               Open my dashboard
             </Link>
+            {mode === "page" && activePlaque.id !== "demo" ? (
+              <Link
+                to="/app/plaques/$id"
+                params={{ id: activePlaque.id }}
+                className="mt-2 block text-[13px] font-semibold text-primary"
+              >
+                Edit my TapLocal Page
+              </Link>
+            ) : null}
           </GlassPanel>
         ) : null}
 
