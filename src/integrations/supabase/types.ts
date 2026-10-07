@@ -86,6 +86,35 @@ export type Database = {
         }
         Relationships: []
       }
+      activation_drafts: {
+        Row: {
+          created_at: string
+          draft: Json
+          plaque_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          draft?: Json
+          plaque_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          draft?: Json
+          plaque_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_drafts_plaque_id_fkey"
+            columns: ["plaque_id"]
+            isOneToOne: true
+            referencedRelation: "plaques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       area_batches: {
         Row: {
           area_query: string
