@@ -146,6 +146,8 @@ const completeSchema = z.object({
   placementType: z.string().min(1).max(60),
   destinationMode: z.enum(["direct", "page"]).optional(),
   plaqueName: z.string().min(1).max(80),
+  /** "Just testing": a throwaway demo business whose traffic never counts as customer analytics. */
+  testing: z.boolean().optional(),
 });
 
 /**
@@ -187,7 +189,7 @@ export const completeActivation = createServerFn({ method: "POST" })
     let businessId = plaque.business_id;
     let locationId: string | null = null;
 
-    if (!businessId && b.placeId) {
+    if (!businessId && b.placeId && !data.testing) {
       const { data: existingLocation } = await supabaseAdmin
         .from("locations")
         .select("id, business_id")
@@ -209,7 +211,7 @@ export const completeActivation = createServerFn({ method: "POST" })
           industry: b.primaryType ?? "other",
           timezone: "America/Toronto",
           status: "active",
-          is_demo: false,
+          is_demo: Boolean(data.testing),
         })
         .select("id")
         .single();
@@ -275,6 +277,8 @@ export const completeActivation = createServerFn({ method: "POST" })
       const resolved = locationId ? await reviewDestinationForLocation(supabaseAdmin, locationId) : null;
       url = resolved?.url ?? googleReviewUrl(b.placeId);
     }
+    // TapLocal Page / testing: taps open the page, so the stored link is only a fallback.
+    if (!url && (data.destinationMode === "page" || data.testing)) url = "https://taplocaldigital.lovable.app";
     if (!url) return { ok: false as const, error: "no_destination" as const };
 
     await supabaseAdmin
